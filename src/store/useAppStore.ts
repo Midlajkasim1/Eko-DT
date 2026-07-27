@@ -33,6 +33,12 @@ interface AppState {
   ambientOcclusion: boolean
   outlineEdges: boolean
   pbrMaterials: boolean
+  iblEnabled: boolean
+  syncIblWithSun: boolean
+  envIntensity: number
+  envRotation: number
+  aoRadius: number
+  aoIntensity: number
   materialPickerActive: boolean
   selectedMaterialElement: { modelId: string, id: number, category?: string } | null
   copiedMaterial: any | null
@@ -41,7 +47,7 @@ interface AppState {
   setProgress: (progress: number, label?: string) => void
   setError: (error: string) => void
   setRealisticMode: (enabled: boolean) => void
-  setLightingParams: (params: Partial<{ exposure: number, lightIntensity: number, ambientIntensity: number, timeOfDay: number, bloomStrength: number, bloomThreshold: number, bloomEnabled: boolean, fogDensity: number, cloudDensity: number, cloudShadowsEnabled: boolean, cloudSpeed: number, dofEnabled: boolean, dofFocus: number, dofAperture: number, dofMaxBlur: number, visualSaturation: number, visualTemperature: number, visualContrast: number, visualVignette: number, godRaysEnabled: boolean, godRayStrength: number, chromaticAberration: number, autoFocus: boolean, ambientOcclusion: boolean, outlineEdges: boolean, pbrMaterials: boolean }>) => void
+  setLightingParams: (params: Partial<{ exposure: number, lightIntensity: number, ambientIntensity: number, timeOfDay: number, bloomStrength: number, bloomThreshold: number, bloomEnabled: boolean, fogDensity: number, cloudDensity: number, cloudShadowsEnabled: boolean, cloudSpeed: number, dofEnabled: boolean, dofFocus: number, dofAperture: number, dofMaxBlur: number, visualSaturation: number, visualTemperature: number, visualContrast: number, visualVignette: number, godRaysEnabled: boolean, godRayStrength: number, chromaticAberration: number, autoFocus: boolean, ambientOcclusion: boolean, outlineEdges: boolean, pbrMaterials: boolean, iblEnabled: boolean, syncIblWithSun: boolean, envIntensity: number, envRotation: number, aoRadius: number, aoIntensity: number }>) => void
   setMaterialPickerActive: (active: boolean) => void
   setSelectedMaterialElement: (element: { modelId: string, id: number, category?: string } | null) => void
   setCopiedMaterial: (material: any) => void
@@ -80,6 +86,12 @@ export const useAppStore = create<AppState>((set) => ({
   ambientOcclusion: false,
   outlineEdges: false,
   pbrMaterials: true,
+  iblEnabled: true,
+  syncIblWithSun: true,
+  envIntensity: 1.0,
+  envRotation: 0,
+  aoRadius: 50.0,
+  aoIntensity: 5.0,
   materialPickerActive: false,
   selectedMaterialElement: null,
   copiedMaterial: null,

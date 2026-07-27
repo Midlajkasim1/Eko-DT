@@ -28,7 +28,7 @@ export interface FragmentsEngine {
   world: any
   components: OBC.Components
   dispose: () => Promise<void>
-  setLightingParams: (params: { realisticMode: boolean, exposure: number, lightIntensity: number, ambientIntensity: number, timeOfDay: number, bloomStrength: number, bloomThreshold: number, bloomEnabled?: boolean, fogDensity: number, cloudDensity: number, cloudShadowsEnabled?: boolean, cloudSpeed: number, dofEnabled: boolean, dofFocus: number, dofAperture: number, dofMaxBlur: number, visualSaturation?: number, visualTemperature?: number, visualContrast?: number, visualVignette?: number, godRaysEnabled?: boolean, godRayStrength?: number, chromaticAberration?: number, autoFocus?: boolean, ambientOcclusion?: boolean, outlineEdges?: boolean, pbrMaterials?: boolean }) => void
+  setLightingParams: (params: { realisticMode: boolean, exposure: number, lightIntensity: number, ambientIntensity: number, timeOfDay: number, bloomStrength: number, bloomThreshold: number, bloomEnabled?: boolean, fogDensity: number, cloudDensity: number, cloudShadowsEnabled?: boolean, cloudSpeed: number, dofEnabled: boolean, dofFocus: number, dofAperture: number, dofMaxBlur: number, visualSaturation?: number, visualTemperature?: number, visualContrast?: number, visualVignette?: number, godRaysEnabled?: boolean, godRayStrength?: number, chromaticAberration?: number, autoFocus?: boolean, ambientOcclusion?: boolean, outlineEdges?: boolean, pbrMaterials?: boolean, iblEnabled?: boolean, syncIblWithSun?: boolean, envIntensity?: number, envRotation?: number, aoRadius?: number, aoIntensity?: number }) => void
 }
 
 export async function initFragmentsEngine(
@@ -77,10 +77,10 @@ export async function initFragmentsEngine(
   sky.scale.setScalar(500000)
   
   const skyUniforms = sky.material.uniforms
-  skyUniforms['turbidity'].value = 10
-  skyUniforms['rayleigh'].value = 2
+  skyUniforms['turbidity'].value = 5.0
+  skyUniforms['rayleigh'].value = 2.0
   skyUniforms['mieCoefficient'].value = 0.005
-  skyUniforms['mieDirectionalG'].value = 0.8
+  skyUniforms['mieDirectionalG'].value = 0.98
   
   const rAmbient = new THREE.HemisphereLight(0xffffff, 0x444455, 0.4)
   
@@ -133,7 +133,7 @@ export async function initFragmentsEngine(
   let autoFocusEnabled = false
   let isPbrEnabled = true
 
-  const setLightingParams = (params: { realisticMode: boolean, exposure: number, lightIntensity: number, ambientIntensity: number, timeOfDay: number, bloomStrength: number, bloomThreshold: number, bloomEnabled?: boolean, fogDensity: number, cloudDensity: number, cloudShadowsEnabled?: boolean, cloudSpeed: number, dofEnabled: boolean, dofFocus: number, dofAperture: number, dofMaxBlur: number, visualSaturation?: number, visualTemperature?: number, visualContrast?: number, visualVignette?: number, godRaysEnabled?: boolean, godRayStrength?: number, chromaticAberration?: number, autoFocus?: boolean, ambientOcclusion?: boolean, outlineEdges?: boolean, pbrMaterials?: boolean }) => {
+  const setLightingParams = (params: { realisticMode: boolean, exposure: number, lightIntensity: number, ambientIntensity: number, timeOfDay: number, bloomStrength: number, bloomThreshold: number, bloomEnabled?: boolean, fogDensity: number, cloudDensity: number, cloudShadowsEnabled?: boolean, cloudSpeed: number, dofEnabled: boolean, dofFocus: number, dofAperture: number, dofMaxBlur: number, visualSaturation?: number, visualTemperature?: number, visualContrast?: number, visualVignette?: number, godRaysEnabled?: boolean, godRayStrength?: number, chromaticAberration?: number, autoFocus?: boolean, ambientOcclusion?: boolean, outlineEdges?: boolean, pbrMaterials?: boolean, iblEnabled?: boolean, syncIblWithSun?: boolean, envIntensity?: number, envRotation?: number, aoRadius?: number, aoIntensity?: number }) => {
     isRealistic = params.realisticMode
     isPbrEnabled = params.pbrMaterials !== false
     cloudMat.uniforms.cloudDensity.value = params.cloudDensity
@@ -158,6 +158,8 @@ export async function initFragmentsEngine(
     
     if (ssaoPass) {
       ssaoPass.enabled = params.realisticMode && params.ambientOcclusion !== false
+      if (params.aoRadius !== undefined) ssaoPass.configuration.aoRadius = params.aoRadius
+      if (params.aoIntensity !== undefined) ssaoPass.configuration.intensity = params.aoIntensity
     }
     
     if (edgePass) {
@@ -301,8 +303,33 @@ export async function initFragmentsEngine(
         cloudsDome.castShadow = false
       }
       
+      let maxRadius = 10000
+      const currentModelCount = fragments.models ? fragments.models.list.size : 0;
+      
+      if (world.scene.three.userData.maxRadius && world.scene.three.userData.cachedModelCount === currentModelCount) {
+        maxRadius = world.scene.three.userData.maxRadius
+      } else if (currentModelCount > 0) {
+        const box = new THREE.Box3()
+        for (const model of fragments.models.list.values()) {
+          const obj = (model as any).object || (model as any)
+          if (obj && typeof obj.updateWorldMatrix === 'function') {
+            box.expandByObject(obj)
+          }
+        }
+        if (!box.isEmpty()) {
+          const size = new THREE.Vector3()
+          box.getSize(size)
+          // Pad the bounding box radius by 1.2x to ensure shadows aren't clipped
+          maxRadius = Math.max(size.x, size.y, size.z) * 0.6
+          world.scene.three.userData.maxRadius = maxRadius
+          world.scene.three.userData.cachedModelCount = currentModelCount
+        }
+      }
+
+      // Ensure the sun is placed far enough outside the bounding box
+      const sunDistance = Math.max(10000, maxRadius * 4)
       const sunPosition = new THREE.Vector3()
-      sunPosition.setFromSphericalCoords(10000, phi, theta)
+      sunPosition.setFromSphericalCoords(sunDistance, phi, theta)
       sky.material.uniforms['sunPosition'].value.copy(sunPosition)
       
       // We don't set rDir position here because we will update it in the render loop to follow the camera
@@ -315,7 +342,33 @@ export async function initFragmentsEngine(
       world.renderer.three.shadowMap.autoUpdate = true
       world.renderer.three.toneMapping = THREE.ACESFilmicToneMapping
       world.renderer.three.toneMappingExposure = params.exposure
-      world.scene.three.environment = envTexture
+      
+      if (params.iblEnabled !== false) {
+        world.scene.three.environment = envTexture
+        if (params.envIntensity !== undefined) world.scene.three.environmentIntensity = params.envIntensity
+        if (params.syncIblWithSun) {
+          world.scene.three.environmentRotation.y = azimuthRad
+        } else if (params.envRotation !== undefined) {
+          world.scene.three.environmentRotation.y = params.envRotation
+        }
+      } else {
+        world.scene.three.environment = null
+      }
+      
+      // Dynamic Shadow Camera Scaling
+      // We restrict the shadow camera coverage area to keep shadows crisp near the camera
+      // while still accommodating the maximum radius of the scene for the depth planes.
+      const SHADOW_COVERAGE = Math.min(maxRadius, 1500)
+      rDir.shadow.camera.left = -SHADOW_COVERAGE
+      rDir.shadow.camera.right = SHADOW_COVERAGE
+      rDir.shadow.camera.top = SHADOW_COVERAGE
+      rDir.shadow.camera.bottom = -SHADOW_COVERAGE
+      rDir.shadow.camera.near = 1
+      // Far plane must extend past the target by at least the radius of the scene
+      rDir.shadow.camera.far = sunDistance + (maxRadius * 2)
+      // Dynamically scale shadow bias to prevent acne on large scenes
+      rDir.shadow.bias = -0.0005 * Math.max(1.0, maxRadius / 10000)
+      rDir.shadow.camera.updateProjectionMatrix()
       
       // Add Atmospheric Fog (matches the hazy horizon)
       world.scene.three.fog = new THREE.FogExp2(0x88aacc, params.fogDensity)
@@ -367,7 +420,7 @@ export async function initFragmentsEngine(
     })
   }
 
-  setLightingParams({ realisticMode: false, exposure: 0.85, lightIntensity: 1.2, ambientIntensity: 0.3, timeOfDay: 14.5, bloomStrength: 0.15, bloomThreshold: 1.5, fogDensity: 0.00015, cloudDensity: 0.5, cloudSpeed: 1.0, dofEnabled: false, dofFocus: 2000.0, dofAperture: 0.0001, dofMaxBlur: 0.01, ambientOcclusion: false, outlineEdges: false, pbrMaterials: true })
+  setLightingParams({ realisticMode: false, exposure: 0.85, lightIntensity: 1.2, ambientIntensity: 0.3, timeOfDay: 14.5, bloomStrength: 0.15, bloomThreshold: 1.5, fogDensity: 0.00015, cloudDensity: 0.5, cloudSpeed: 1.0, dofEnabled: false, dofFocus: 2000.0, dofAperture: 0.0001, dofMaxBlur: 0.01, ambientOcclusion: false, outlineEdges: false, pbrMaterials: true, iblEnabled: true, syncIblWithSun: true, envIntensity: 1.0, envRotation: 0.0, aoRadius: 50.0, aoIntensity: 5.0 })
 
   world.camera = new OBC.SimpleCamera(components)
 
@@ -403,8 +456,8 @@ export async function initFragmentsEngine(
   ssaoPass = new N8AOPass(world.scene.three, world.camera.three, window.innerWidth, window.innerHeight)
   ssaoPass.configuration.aoRadius = 50.0 // Increased to 50 to account for millimeter scale models
   ssaoPass.configuration.intensity = 5.0
-  ssaoPass.configuration.aoSamples = 16
-  ssaoPass.configuration.denoiseSamples = 4
+  ssaoPass.configuration.aoSamples = 32
+  ssaoPass.configuration.denoiseSamples = 8
   ssaoPass.configuration.denoiseRadius = 12
   ssaoPass.configuration.distanceFalloff = 1.0
   ssaoPass.configuration.halfRes = false // Disabled halfRes to fix ANGLE washout bug on Windows

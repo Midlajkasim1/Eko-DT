@@ -136,6 +136,12 @@ export function RenderPanel() {
   const ambientOcclusion    = useAppStore(s => s.ambientOcclusion)
   const outlineEdges        = useAppStore(s => s.outlineEdges)
   const pbrMaterials        = useAppStore(s => s.pbrMaterials)
+  const iblEnabled          = useAppStore(s => s.iblEnabled)
+  const syncIblWithSun      = useAppStore(s => s.syncIblWithSun)
+  const envIntensity        = useAppStore(s => s.envIntensity)
+  const envRotation         = useAppStore(s => s.envRotation)
+  const aoRadius            = useAppStore(s => s.aoRadius)
+  const aoIntensity         = useAppStore(s => s.aoIntensity)
 
   const setRealisticMode  = useAppStore(s => s.setRealisticMode)
   const setLightingParams = useAppStore(s => s.setLightingParams)
@@ -227,6 +233,24 @@ export function RenderPanel() {
                 onChange={v => setLightingParams({ lightIntensity: v })} />
               <Slider label="Ambient Light" value={ambientIntensity} min={0} max={3} step={0.1}
                 onChange={v => setLightingParams({ ambientIntensity: v })} />
+              
+              <SectionDivider label="HDRI Environment" />
+              <Toggle label="Enable HDRI"
+                checked={iblEnabled}
+                onChange={v => setLightingParams({ iblEnabled: v })} />
+              {iblEnabled && (
+                <>
+                  <Toggle label="Sync Rotation with Sun"
+                    checked={syncIblWithSun}
+                    onChange={v => setLightingParams({ syncIblWithSun: v })} />
+                  <Slider label="HDRI Intensity" value={envIntensity} min={0} max={3} step={0.05}
+                    onChange={v => setLightingParams({ envIntensity: v })} />
+                  {!syncIblWithSun && (
+                    <Slider label="HDRI Rotation" value={envRotation} min={0} max={6.28} step={0.01}
+                      onChange={v => setLightingParams({ envRotation: v })} />
+                  )}
+                </>
+              )}
 
               {/* ── Clouds ───────────────────────────────────────────── */}
               <SectionDivider label="Clouds" />
@@ -304,6 +328,14 @@ export function RenderPanel() {
               <Toggle label="Ambient Occlusion"
                 checked={ambientOcclusion}
                 onChange={v => setLightingParams({ ambientOcclusion: v })} />
+              {ambientOcclusion && (
+                <>
+                  <Slider label="AO Radius" value={aoRadius} min={1.0} max={200.0} step={1.0}
+                    onChange={v => setLightingParams({ aoRadius: v })} />
+                  <Slider label="AO Intensity" value={aoIntensity} min={0.0} max={20.0} step={0.1}
+                    onChange={v => setLightingParams({ aoIntensity: v })} />
+                </>
+              )}
               <Toggle label="Fine Outlines"
                 checked={outlineEdges}
                 onChange={v => setLightingParams({ outlineEdges: v })} />
