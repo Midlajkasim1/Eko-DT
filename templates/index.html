@@ -1,2846 +1,467 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Digital Twin Dashboard</title>
-    <meta
-      name="description"
-      content="Modular Digital Twin Dashboard Template with live FIN data integration"
-    />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-    />
-    <link
-      href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
-      rel="stylesheet"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="./static/css/overview.css" rel="stylesheet" />
-    <style>
-      /* ═══════════════════════════════════════════════════════════════
-       DESIGN SYSTEM — v1.2 EKO Frame
-       ═══════════════════════════════════════════════════════════════ */
-      :root {
-        /* Glassmorphism Variables */
-        --glass-bg: rgba(6, 12, 20, 0.88);
-        --glass-bg-light: rgba(6, 12, 20, 0.65);
-        --glass-border: rgba(255, 255, 255, 0.12);
-        --glass-border-bright: rgba(255, 255, 255, 0.22);
-        --glass-highlight: rgba(255, 255, 255, 0.04);
-        --glass-inner: rgba(255, 255, 255, 0.03);
-
-        /* Typography */
-        --font-display: 'Sora', system-ui, sans-serif;
-        --font-body: 'DM Sans', system-ui, sans-serif;
-        --font-mono: 'JetBrains Mono', monospace;
-
-        --hud-bg: #02040a;
-        --arc-bg: rgba(4, 8, 14, 0.95);
-
-        /* Core Colors — v1.2 refined palette */
-        --primary: #00e5ff;
-        --primary-bright: #5eead4;
-        --primary-dim: #0891b2;
-        --primary-glow: rgba(0, 229, 255, 0.5);
-        --primary-subtle: rgba(0, 229, 255, 0.08);
-        --accent-violet: #818cf8;
-        --accent-emerald: #34d399;
-        --accent-amber: #fbbf24;
-        --accent-rose: #fb7185;
-
-        /* Text */
-        --text-main: #f0f9ff;
-        --text-sub: #94a3b8;
-        --text-dim: rgba(240, 249, 255, 0.4);
-        --text-muted: rgba(148, 163, 184, 0.7);
-
-        /* Status Colors */
-        --success: #10b981;
-        --success-glow: rgba(16, 185, 129, 0.4);
-        --warning: #f59e0b;
-        --danger: #f43f5e;
-        --info: #3b82f6;
-
-        /* Spacing */
-        --header-height: 140px;
-        --radius-sm: 8px;
-        --radius-md: 12px;
-        --radius-lg: 20px;
-        --radius-pill: 50px;
-      }
-
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      body {
-        background: transparent;
-        font-family: var(--font-body);
-        overflow: hidden; /* strictly no scrollbars */
-        width: 100vw;
-        height: 100vh;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        pointer-events: none; /* Let clicks pass through body */
-      }
-
-      /* Make interactive elements clickable */
-      .dashboard-header,
-      .side-panel,
-      .sub-panel,
-      .admin-overlay,
-      .admin-panel,
-      .admin-toggle,
-      .quit-confirm {
-        pointer-events: auto;
-      }
-
-      /* ═══════════════════════════════════════════════════════════════
-       ANIMATIONS — v1.2
-       ═══════════════════════════════════════════════════════════════ */
-      @keyframes arcPulse {
-        0%, 100% { filter: drop-shadow(0 4px 24px rgba(0, 229, 255, 0.18)); }
-        50% { filter: drop-shadow(0 4px 32px rgba(0, 229, 255, 0.38)); }
-      }
-
-      @keyframes lineMove {
-        0% { stroke-dashoffset: 2800; }
-        100% { stroke-dashoffset: 0; }
-      }
-
-      @keyframes pillGlow {
-        0%, 100% {
-          box-shadow:
-            0 8px 32px rgba(0, 0, 0, 0.28),
-            inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-        }
-        50% {
-          box-shadow:
-            0 8px 32px rgba(0, 0, 0, 0.28),
-            0 0 24px rgba(0, 229, 255, 0.18),
-            inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-        }
-      }
-
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-12px) scale(0.98); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
-      }
-
-      @keyframes slideDown {
-        from { opacity: 0; transform: translateX(-50%) translateY(-16px); }
-        to { opacity: 1; transform: translateX(-50%) translateY(0); }
-      }
-
-      @keyframes editPulse {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.5); }
-        50% { box-shadow: 0 0 0 7px rgba(0, 229, 255, 0); }
-      }
-
-      @keyframes shimmer {
-        0% { opacity: 0.4; }
-        50% { opacity: 1; }
-        100% { opacity: 0.4; }
-      }
-
-      @keyframes cardEntrance {
-        from { opacity: 0; transform: translateY(-8px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      /* ═══════════════════════════════════════════════════════════════
-       HUD CONTAINER
-       ═══════════════════════════════════════════════════════════════ */
-      .hud-container {
-        position: absolute;
-        top: 0;
-        width: 100%;
-        height: 90px;
-        pointer-events: none;
-        z-index: 1000;
-      }
-
-      /* ─── SVG Arc Layer ─── */
-      .hud-svg-layer {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1;
-        pointer-events: none !important;
-      }
-
-      .hud-svg-layer svg,
-      .hud-svg-layer path {
-        pointer-events: none !important;
-      }
-
-      .hud-svg-layer svg {
-        filter: drop-shadow(0 4px 20px rgba(0, 240, 255, 0.15));
-        /* animation: arcPulse 4s ease-in-out infinite; */
-      }
-
-      .hud-svg-layer .animated-line {
-        /* Removed heavy stroke animations */
-        filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.7));
-      }
-
-      /* ─── Content Layer ─── */
-      .hud-content {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 2;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        padding: 0 20px;
-        pointer-events: none !important;
-      }
-
-      .hud-content > div {
-        pointer-events: auto !important;
-      }
-
-      .left-section {
-        display: flex;
-        gap: clamp(8px, 1vw, 15px);
-        align-items: flex-start;
-        margin-top: clamp(6px, 1vh, 10px);
-        z-index: 1;
-      }
-
-      .right-section {
-        display: flex;
-        flex-direction: row-reverse; /* Build from right to left */
-        gap: clamp(8px, 1vw, 15px);
-        align-items: flex-start;
-        margin-top: clamp(6px, 1vh, 10px);
-        z-index: 1;
-      }
-
-      .center-section {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        max-width: 500px;
-        margin-top: 45px;
-        z-index: 10;
-      }
-
-      /* ═══════════════════════════════════════════════════════════════
-       INFO CARDS — v1.2
-       ═══════════════════════════════════════════════════════════════ */
-      .left-section,
-      .right-section {
-        display: flex;
-        gap: clamp(10px, 1.2vw, 18px);
-        align-items: flex-start;
-        margin-top: 15px;
-        flex-wrap: nowrap;
-        padding-top: 8px;
-      }
-
-      .dt-info-card {
-        display: flex;
-        align-items: center;
-        gap: clamp(7px, 0.9vw, 11px);
-        position: relative;
-        min-width: 0;
-        flex-shrink: 1;
-        transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-        animation: cardEntrance 0.5s ease forwards;
-      }
-
-      /* Stagger left cards following arc curve */
-      .dt-info-card:nth-child(1) { transform: translateY(0px); animation-delay: 0.05s; }
-      .dt-info-card:nth-child(2) { transform: translateY(9px); animation-delay: 0.10s; }
-      .dt-info-card:nth-child(3) { transform: translateY(18px); animation-delay: 0.15s; }
-
-      /* Stagger right cards */
-      .dt-info-card.right-1 { transform: translateY(0px); animation-delay: 0.05s; }
-      .dt-info-card.right-2 { transform: translateY(9px); animation-delay: 0.10s; }
-      .dt-info-card.right-3 { transform: translateY(18px); animation-delay: 0.15s; }
-
-      .info-icon-box {
-        width: 40px;
-        height: 40px;
-        border-radius: var(--radius-sm);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        flex-shrink: 0;
-        background: var(--glass-bg);
-        backdrop-filter: blur(16px) saturate(160%);
-        -webkit-backdrop-filter: blur(16px) saturate(160%);
-        border: 1px solid var(--glass-border);
-        border-top: 1px solid var(--glass-border-bright);
-        box-shadow:
-          0 8px 24px rgba(0, 0, 0, 0.24),
-          inset 0 1px 0 rgba(255, 255, 255, 0.06);
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-      }
-
-      .info-icon-box:hover {
-        transform: translateY(-3px) scale(1.04);
-        box-shadow:
-          0 16px 40px rgba(0, 0, 0, 0.4),
-          0 0 24px var(--primary-glow),
-          inset 0 1px 0 rgba(255, 255, 255, 0.14);
-        border-color: rgba(0, 229, 255, 0.25);
-      }
-
-      .info-icon-box::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: inherit;
-        background: linear-gradient(145deg, rgba(255,255,255,0.06) 0%, transparent 60%);
-        pointer-events: none;
-      }
-
-      .info-icon-box::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 10%;
-        right: 10%;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
-        opacity: 0.5;
-        pointer-events: none;
-      }
-
-      .info-icon-box i {
-        font-size: 19px;
-        z-index: 2;
-      }
-
-      /* Icon accent colors — v1.2 refined */
-      .info-icon-box.date  { color: #a78bfa; border-color: rgba(167, 139, 250, 0.18); }
-      .info-icon-box.time  { color: var(--accent-emerald); border-color: rgba(52, 211, 153, 0.18); }
-      .info-icon-box.temp  { color: #fb923c; border-color: rgba(251, 146, 60, 0.18); }
-      .info-icon-box.humid { color: #38bdf8; border-color: rgba(56, 189, 248, 0.18); }
-      .info-icon-box.air   { color: var(--accent-rose); border-color: rgba(251, 113, 133, 0.18); }
-      .info-icon-box.sky   { color: #4ade80; border-color: rgba(74, 222, 128, 0.18); }
-
-      .info-text {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        min-width: 0;
-        gap: 1px;
-      }
-
-      .info-text h4 {
-        font-family: var(--font-display);
-        font-size: 8.5px;
-        color: var(--text-muted);
-        letter-spacing: 0.8px;
-        text-transform: uppercase;
-        font-weight: 600;
-        white-space: nowrap;
-      }
-
-      .info-text p {
-        font-family: var(--font-display);
-        font-size: 15px;
-        color: var(--text-main);
-        font-weight: 700;
-        letter-spacing: 0.2px;
-        line-height: 1.1;
-        text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
-        white-space: nowrap;
-      }
-
-      /* ═══════════════════════════════════════════════════════════════
-       CENTER SECTION — Control Pill v1.2
-       ═══════════════════════════════════════════════════════════════ */
-
-      .pill-marker {
-        width: 0;
-        height: 0;
-        border-left: 7px solid transparent;
-        border-right: 7px solid transparent;
-        border-bottom: 7px solid var(--primary-bright);
-        margin-bottom: 5px;
-        order: -1;
-        filter: drop-shadow(0 0 6px rgba(0, 229, 255, 0.7));
-      }
-
-      .control-pill {
-        position: relative;
-        width: 100%;
-        max-width: 520px;
-        height: 42px;
-        border-radius: var(--radius-pill);
-        background: var(--glass-bg);
-        backdrop-filter: blur(20px) saturate(180%);
-        -webkit-backdrop-filter: blur(20px) saturate(180%);
-        border: 1px solid var(--glass-border);
-        border-top: 1px solid var(--glass-border-bright);
-        box-shadow:
-          0 8px 32px rgba(0, 0, 0, 0.35),
-          0 0 0 1px rgba(0, 229, 255, 0.06),
-          inset 0 1px 0 rgba(255, 255, 255, 0.06);
-        display: flex;
-        justify-content: space-evenly;
-        align-items: center;
-        padding: 0 12px;
-        gap: 2px;
-        animation: pillGlow 5s ease-in-out infinite;
-      }
-
-      .control-pill::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: inherit;
-        background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
-        pointer-events: none;
-      }
-
-      .control-pill::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 15%;
-        right: 15%;
-        height: 1px;
-        border-radius: var(--radius-pill);
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
-        opacity: 0.55;
-        pointer-events: none;
-      }
-
-      /* ─── Nav Buttons v1.2 ─── */
-      .nav-btn {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        border: 1px solid transparent;
-        background: transparent;
-        color: var(--text-sub);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-        z-index: 2;
-        flex-shrink: 0;
-        position: relative;
-      }
-
-      .nav-btn i {
-        font-size: 16px;
-        transition: color 0.2s ease;
-      }
-
-      .nav-btn:hover {
-        color: var(--primary-bright);
-        background: rgba(0, 229, 255, 0.12);
-        border-color: rgba(0, 229, 255, 0.2);
-        transform: translateY(-2px) scale(1.08);
-        box-shadow: 0 0 14px var(--primary-glow), 0 4px 12px rgba(0,0,0,0.2);
-      }
-
-      .nav-btn.active {
-        color: var(--primary-bright);
-        background: rgba(0, 229, 255, 0.16);
-        border-color: rgba(0, 229, 255, 0.3);
-        box-shadow: 0 0 12px var(--primary-glow);
-      }
-
-      .nav-btn:active {
-        transform: translateY(0) scale(1);
-      }
-
-      /* Tooltip on hover */
-      .nav-btn[data-tooltip]:hover::after {
-        content: attr(data-tooltip);
-        position: absolute;
-        top: 120%;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(6, 12, 20, 0.95);
-        color: var(--text-main);
-        font-family: var(--font-display);
-        font-size: 10px;
-        font-weight: 600;
-        padding: 4px 10px;
-        border-radius: 6px;
-        white-space: nowrap;
-        border: 1px solid var(--glass-border-bright);
-        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-        z-index: 100;
-        pointer-events: none;
-      }
-
-      /* ═══════════════════════════════════════════════════════════════
-       SUB-PANELS — v1.2
-       ═══════════════════════════════════════════════════════════════ */
-      .sub-panel {
-        position: absolute;
-        top: 107px;
-        left: 50%;
-        transform: translateX(-50%) translateY(-12px);
-        width: max-content;
-        min-width: 200px;
-        padding: 8px 14px;
-        background: rgba(6, 12, 20, 0.92);
-        backdrop-filter: blur(24px) saturate(200%);
-        -webkit-backdrop-filter: blur(24px) saturate(200%);
-        border: 1px solid var(--glass-border-bright);
-        border-radius: var(--radius-pill);
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 8px;
-        opacity: 0;
-        pointer-events: none;
-        transition: all 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
-        z-index: 500;
-        box-shadow:
-          0 12px 40px rgba(0, 0, 0, 0.4),
-          0 0 0 1px rgba(0, 229, 255, 0.06),
-          inset 0 1px 0 rgba(255,255,255,0.05);
-      }
-
-      .sub-panel.active {
-        opacity: 1;
-        pointer-events: auto;
-        transform: translateX(-50%) translateY(0);
-        animation: slideDown 0.3s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
-      }
-
-      .sub-panel-btn {
-        padding: 5px 14px;
-        background: var(--glass-inner);
-        border: 1px solid var(--glass-border);
-        border-radius: 20px;
-        color: var(--text-sub);
-        font-family: var(--font-display);
-        font-size: 11.5px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        white-space: nowrap;
-        letter-spacing: 0.3px;
-      }
-
-      .sub-panel-btn:hover {
-        background: rgba(0, 229, 255, 0.12);
-        border-color: rgba(0, 229, 255, 0.3);
-        color: var(--primary-bright);
-        box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
-      }
-
-      .sub-panel-btn.active {
-        background: rgba(0, 229, 255, 0.2);
-        border-color: var(--primary-bright);
-        color: var(--primary-bright);
-        box-shadow: 0 0 14px rgba(0, 229, 255, 0.3);
-      }
-
-      /* ═══════════════════════════════════════════════════════════════
-       SIDE PANEL — v1.2
-       ═══════════════════════════════════════════════════════════════ */
-      .side-panel {
-        position: absolute !important;
-        left: 20px !important;
-        top: 155px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 10px !important;
-        z-index: 900 !important;
-        pointer-events: auto !important;
-      }
-
-      .side-btn {
-        display: flex;
-        align-items: center;
-        gap: 0px;
-        padding: 10px;
-        width: 44px;
-        min-width: 44px;
-        height: 44px;
-        border-radius: var(--radius-md);
-        cursor: pointer;
-        overflow: hidden;
-        position: relative;
-        transition: all 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
-        border: 1px solid var(--glass-border);
-        border-top: 1px solid var(--glass-border-bright);
-        background: var(--glass-bg);
-        backdrop-filter: blur(16px) saturate(160%);
-        -webkit-backdrop-filter: blur(16px) saturate(160%);
-        color: var(--text-main);
-        font-family: var(--font-display);
-        font-size: 11.5px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-        text-decoration: none;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
-      }
-
-      .side-btn i {
-        font-size: 18px;
-        color: var(--primary-bright);
-        flex-shrink: 0;
-        width: 22px;
-        display: flex;
-        justify-content: center;
-        transition: transform 0.3s ease;
-      }
-
-      .side-btn span {
-        opacity: 0;
-        max-width: 0;
-        white-space: nowrap;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        display: inline-block;
-      }
-
-      .side-btn:hover {
-        width: max-content;
-        padding: 10px 16px;
-        gap: 10px;
-        background: rgba(6, 12, 20, 0.92);
-        border-color: rgba(0, 229, 255, 0.3);
-        box-shadow: 0 6px 24px rgba(0, 229, 255, 0.12), 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
-      }
-
-      .side-btn:hover i {
-        transform: scale(1.1);
-      }
-
-      .side-btn:hover span {
-        opacity: 1;
-        max-width: 300px;
-      }
-
-      .side-btn.active {
-        background: linear-gradient(135deg, rgba(0,229,255,0.18) 0%, rgba(0,229,255,0.04) 100%);
-        border-color: rgba(0, 229, 255, 0.35);
-        box-shadow: 0 0 20px rgba(0, 229, 255, 0.15), 0 4px 12px rgba(0,0,0,0.2);
-      }
-
-      /* ═══════════════════════════════════════════════════════════════
-       ADMIN PANEL — v1.2
-       ═══════════════════════════════════════════════════════════════ */
-      .admin-toggle {
-        position: absolute;
-        bottom: 20px;
-        right: 20px;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: var(--glass-bg);
-        border: 1px solid var(--glass-border-bright);
-        color: var(--primary-bright);
-        font-size: 22px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 2000;
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        backdrop-filter: blur(16px) saturate(160%);
-        -webkit-backdrop-filter: blur(16px) saturate(160%);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
-      }
-
-      .admin-toggle:hover {
-        background: rgba(0, 229, 255, 0.14);
-        border-color: rgba(0, 229, 255, 0.35);
-        box-shadow: 0 0 24px var(--primary-glow), 0 6px 20px rgba(0,0,0,0.3);
-        transform: scale(1.12) rotate(15deg);
-      }
-
-      .admin-toggle.active {
-        animation: editPulse 2s infinite;
-        background: rgba(0, 229, 255, 0.18);
-        border-color: rgba(0, 229, 255, 0.4);
-      }
-
-      /* Admin Overlay */
-      .admin-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(2, 6, 12, 0.65);
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
-        z-index: 1500;
-        display: none;
-        justify-content: center;
-        align-items: center;
-      }
-
-      .admin-overlay.active {
-        display: flex;
-        animation: fadeIn 0.25s ease;
-      }
-
-      .admin-modal {
-        width: 92%;
-        max-width: 920px;
-        max-height: 86vh;
-        overflow-y: auto;
-        background: rgba(6, 12, 22, 0.94);
-        backdrop-filter: blur(28px) saturate(200%);
-        -webkit-backdrop-filter: blur(28px) saturate(200%);
-        border: 1px solid var(--glass-border-bright);
-        border-radius: var(--radius-lg);
-        padding: 32px;
-        animation: fadeIn 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
-        box-shadow:
-          0 32px 80px rgba(0, 0, 0, 0.6),
-          0 0 0 1px rgba(0, 229, 255, 0.05),
-          inset 0 1px 0 rgba(255,255,255,0.04);
-      }
-
-      .admin-modal::-webkit-scrollbar { width: 5px; }
-      .admin-modal::-webkit-scrollbar-thumb { background: rgba(0, 229, 255, 0.3); border-radius: 3px; }
-      .admin-modal::-webkit-scrollbar-track { background: transparent; }
-
-      .admin-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-        padding-bottom: 16px;
-        border-bottom: 1px solid var(--glass-border);
-      }
-
-      .admin-header h2 {
-        color: var(--text-main);
-        font-family: var(--font-display);
-        font-size: 19px;
-        font-weight: 700;
-        letter-spacing: -0.3px;
-      }
-
-      .admin-header h2 i {
-        color: var(--primary-bright);
-        margin-right: 10px;
-      }
-
-      .admin-close {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: var(--glass-inner);
-        border: 1px solid var(--glass-border);
-        color: var(--text-sub);
-        font-size: 18px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-      }
-
-      .admin-close:hover {
-        background: rgba(244, 63, 94, 0.14);
-        border-color: rgba(244, 63, 94, 0.35);
-        color: #fda4af;
-        transform: rotate(90deg);
-      }
-
-      /* Admin Tabs */
-      .admin-tabs {
-        display: flex;
-        gap: 6px;
-        margin-bottom: 22px;
-        flex-wrap: wrap;
-        padding: 4px;
-        background: rgba(0,0,0,0.2);
-        border-radius: var(--radius-pill);
-        border: 1px solid var(--glass-border);
-        width: fit-content;
-      }
-
-      .admin-tab {
-        padding: 7px 18px;
-        border-radius: var(--radius-pill);
-        background: transparent;
-        border: 1px solid transparent;
-        color: var(--text-sub);
-        font-family: var(--font-display);
-        font-size: 12.5px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        letter-spacing: 0.2px;
-      }
-
-      .admin-tab:hover {
-        background: rgba(0, 229, 255, 0.08);
-        color: var(--primary-bright);
-      }
-
-      .admin-tab.active {
-        background: rgba(0, 229, 255, 0.16);
-        border-color: rgba(0, 229, 255, 0.25);
-        color: var(--primary-bright);
-        box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
-      }
-
-      /* Admin Content Sections */
-      .admin-section {
-        display: none;
-      }
-      .admin-section.active {
-        display: block;
-        animation: fadeIn 0.2s ease;
-      }
-
-      .admin-section h3 {
-        color: var(--text-main);
-        font-size: 15px;
-        margin-bottom: 15px;
-        font-weight: 600;
-      }
-
-      /* Widget Grid in Admin — v1.2 */
-      .widget-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-        gap: 10px;
-      }
-
-      .widget-card {
-        padding: 14px;
-        background: var(--glass-inner);
-        border: 1px solid var(--glass-border);
-        border-radius: var(--radius-md);
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .widget-card:hover {
-        background: rgba(0, 229, 255, 0.07);
-        border-color: rgba(0, 229, 255, 0.25);
-        transform: translateY(-1px);
-      }
-
-      .widget-card.enabled {
-        background: rgba(0, 229, 255, 0.09);
-        border-color: rgba(0, 229, 255, 0.3);
-      }
-
-      .widget-card i {
-        font-size: 22px;
-        color: var(--primary-bright);
-        flex-shrink: 0;
-      }
-
-      .widget-card .widget-info { flex: 1; min-width: 0; }
-      .widget-card .widget-info h4 { color: var(--text-main); font-family: var(--font-display); font-size: 12.5px; font-weight: 600; margin-bottom: 2px; }
-      .widget-card .widget-info p  { color: var(--text-sub); font-size: 11px; }
-
-      .widget-toggle {
-        width: 40px;
-        height: 22px;
-        border-radius: 11px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid var(--glass-border);
-        cursor: pointer;
-        position: relative;
-        transition: all 0.3s ease;
-        flex-shrink: 0;
-      }
-
-      .widget-toggle::after {
-        content: "";
-        position: absolute;
-        top: 3px;
-        left: 3px;
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        background: var(--text-sub);
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      }
-
-      .widget-toggle.on {
-        background: rgba(0, 229, 255, 0.3);
-        border-color: rgba(0, 229, 255, 0.4);
-        box-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
-      }
-
-      .widget-toggle.on::after {
-        left: 21px;
-        background: var(--primary-bright);
-        box-shadow: 0 0 6px rgba(0, 229, 255, 0.6);
-      }
-
-      /* Config JSON area */
-      .config-area {
-        width: 100%;
-        min-height: 200px;
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid var(--glass-border);
-        border-radius: 10px;
-        color: var(--primary-bright);
-        font-family: var(--font-mono);
-        font-size: 12px;
-        padding: 15px;
-        resize: vertical;
-        outline: none;
-      }
-
-      .config-area:focus {
-        border-color: var(--primary);
-      }
-
-      .admin-actions {
-        display: flex;
-        gap: 10px;
-        margin-top: 15px;
-      }
-
-      .admin-btn {
-        padding: 10px 20px;
-        border-radius: 10px;
-        font-family: var(--font-display);
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        border: 1px solid var(--glass-border);
-      }
-
-      .admin-btn-primary {
-        background: rgba(0, 240, 255, 0.2);
-        border-color: var(--primary);
-        color: var(--primary-bright);
-      }
-
-      .admin-btn-primary:hover {
-        background: rgba(0, 240, 255, 0.3);
-        box-shadow: 0 0 15px var(--primary-glow);
-      }
-
-      .admin-btn-secondary {
-        background: rgba(255, 255, 255, 0.05);
-        color: var(--text-sub);
-      }
-
-      .admin-btn-secondary:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: var(--text-main);
-      }
-
-      .admin-btn-danger {
-        background: rgba(239, 68, 68, 0.1);
-        border-color: rgba(239, 68, 68, 0.3);
-        color: #fca5a5;
-      }
-
-      .admin-btn-danger:hover {
-        background: rgba(239, 68, 68, 0.2);
-      }
-
-      /* Nav button list in admin */
-      .nav-item-list {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .nav-item-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 14px;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid var(--glass-border);
-        border-radius: 10px;
-        transition: all 0.2s ease;
-      }
-
-      .nav-item-row:hover {
-        background: rgba(255, 255, 255, 0.06);
-      }
-
-      .nav-item-row i {
-        font-size: 18px;
-        color: var(--primary-bright);
-        width: 24px;
-        text-align: center;
-      }
-
-      .nav-item-row span {
-        flex: 1;
-        color: var(--text-main);
-        font-size: 13px;
-        font-weight: 500;
-      }
-
-      .nav-item-row .drag-handle {
-        color: var(--text-dim);
-        cursor: grab;
-        font-size: 16px;
-      }
-
-      .nav-item-row .remove-btn {
-        color: var(--text-dim);
-        cursor: pointer;
-        font-size: 16px;
-        transition: color 0.2s;
-      }
-
-      .nav-item-row .remove-btn:hover {
-        color: var(--danger);
-      }
-
-      /* FIN Config */
-      .fin-config-group {
-        margin-bottom: 15px;
-      }
-
-      .fin-config-group label {
-        display: block;
-        color: var(--text-sub);
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 6px;
-      }
-
-      .fin-config-group input {
-        width: 100%;
-        padding: 10px 14px;
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid var(--glass-border);
-        border-radius: 8px;
-        color: var(--text-main);
-        font-family: var(--font-display);
-        font-size: 13px;
-        outline: none;
-        transition: border-color 0.2s;
-      }
-
-      .fin-config-group input:focus {
-        border-color: var(--primary);
-      }
-
-      .fin-status {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px;
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid var(--glass-border);
-        margin-bottom: 15px;
-      }
-
-      .fin-status-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: var(--danger);
-      }
-
-      .fin-status-dot.connected {
-        background: var(--success);
-      }
-
-      .fin-status-text {
-        color: var(--text-sub);
-        font-size: 13px;
-      }
-
-      /* ═══════════════════════════════════════════════════════════════
-       EDIT MODE INDICATORS
-       ═══════════════════════════════════════════════════════════════ */
-      body.edit-mode .info-card,
-      body.edit-mode .nav-btn,
-      body.edit-mode .side-btn {
-        outline: 1px dashed rgba(0, 240, 255, 0.4);
-        outline-offset: 3px;
-        cursor: pointer;
-      }
-
-      body.edit-mode .info-card:hover,
-      body.edit-mode .nav-btn:hover,
-      body.edit-mode .side-btn:hover {
-        outline-color: var(--primary-bright);
-      }
-
-      /* ═══════════════════════════════════════════════════════════════
-       RESPONSIVE
-       ═══════════════════════════════════════════════════════════════ */
-      @media (max-width: 1100px) {
-        .hud-container {
-          height: auto;
-          min-height: 100px;
-        }
-        .hud-content {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 15px;
-          padding: 15px;
-        }
-        .left-section,
-        .right-section {
-          gap: 20px;
-          margin-top: 0;
-          justify-content: center;
-          max-width: 100%;
-          width: 100%;
-          flex-wrap: wrap;
-        }
-        .info-card:nth-child(1),
-        .info-card:nth-child(2),
-        .info-card:nth-child(3),
-        .info-card.right-1,
-        .info-card.right-2,
-        .info-card.right-3 {
-          transform: translateY(0);
-        }
-        .center-section {
-          margin-top: 5px;
-          width: 100%;
-          max-width: 600px;
-        }
-        .side-panel {
-          position: relative;
-          left: 0;
-          top: 0;
-          flex-direction: row;
-          flex-wrap: wrap;
-          gap: 8px;
-        }
-        .side-btn {
-          min-width: auto;
-        }
-      }
-
-      /* ═══════════════════════════════════════════════════════════════
-       QUIT CONFIRMATION
-       ═══════════════════════════════════════════════════════════════ */
-      .quit-confirm {
-        position: fixed;
-        top: 80px;
-        left: 50%;
-        transform: translateX(-50%) translateY(-20px);
-        background: var(--glass-bg);
-        border: 1px solid var(--glass-border);
-        border-radius: 12px;
-        padding: 20px 30px;
-        backdrop-filter: blur(20px);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-        z-index: 10000;
-        opacity: 0;
-        pointer-events: none;
-        transition: all 0.3s ease;
-        min-width: 320px;
-      }
-
-      .quit-confirm.show {
-        opacity: 1;
-        pointer-events: auto;
-        transform: translateX(-50%) translateY(0);
-      }
-
-      .quit-confirm-text {
-        color: var(--text-main);
-        font-size: 16px;
-        margin-bottom: 20px;
-        text-align: center;
-        font-weight: 600;
-      }
-
-      .quit-confirm-buttons {
-        display: flex;
-        gap: 12px;
-        justify-content: center;
-      }
-
-      .quit-btn {
-        padding: 10px 24px;
-        border: 1px solid var(--glass-border);
-        border-radius: 8px;
-        background: var(--glass-highlight);
-        color: var(--text-main);
-        font-family: var(--font-display);
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-
-      .quit-btn:hover {
-        background: var(--glass-border);
-        transform: translateY(-2px);
-      }
-      .quit-btn.confirm {
-        background: rgba(239, 68, 68, 0.2);
-        border-color: rgba(239, 68, 68, 0.5);
-        color: #fca5a5;
-      }
-      .quit-btn.confirm:hover {
-        background: rgba(239, 68, 68, 0.3);
-      }
-      .quit-btn.confirm:hover {
-        background: rgba(239, 68, 68, 0.3);
-      }
-
-      /* Uniform Scaling Wrapper */
-      #dt-wrapper {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-      }
-    </style>
-  </head>
-
-  <body>
-    <div id="dt-wrapper">
-      <!-- ═══════════════════════════════════════════════════════════════
-         HEADER — Arc + Info Cards + Control Pill
-         ═══════════════════════════════════════════════════════════════ -->
-      <div class="hud-container" id="hudContainer">
-        <!-- SVG Arc Background -->
-        <div class="hud-svg-layer">
-          <svg
-            width="100%"
-            height="100%"
-            viewBox="0 0 1400 200"
-            preserveAspectRatio="none"
-          >
-            <defs>
-              <linearGradient id="arcGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="rgba(8, 20, 16, 0.95)" />
-                <stop offset="50%" stop-color="rgba(8, 20, 16, 0.85)" />
-                <stop offset="100%" stop-color="rgba(6, 16, 12, 0.75)" />
-              </linearGradient>
-            </defs>
-            <!-- Filled arc -->
-            <path
-              d="M 0,0 L 0,20 C 200,20 350,20 450,60 C 550,100 600,140 700,140 C 800,140 850,100 950,60 C 1050,20 1200,20 1400,20 L 1400,0 Z"
-              fill="url(#arcGrad)"
-              opacity="0.9"
-            />
-            <!-- Static edge stroke -->
-            <path
-              d="M 0,20 C 200,20 350,20 450,60 C 550,100 600,140 700,140 C 800,140 850,100 950,60 C 1050,20 1200,20 1400,20"
-              fill="none"
-              stroke="rgba(0, 240, 255, 0.5)"
-              stroke-width="2"
-              vector-effect="non-scaling-stroke"
-            />
-            <!-- Animated neon line -->
-            <path
-              class="animated-line"
-              d="M 0,20 C 200,20 350,20 450,60 C 550,100 600,140 700,140 C 800,140 850,100 950,60 C 1050,20 1200,20 1400,20"
-              fill="none"
-              stroke="rgba(103, 232, 249, 0.9)"
-              stroke-width="4"
-              vector-effect="non-scaling-stroke"
-            />
-            <!-- Shimmer -->
-            <path
-              d="M 0,18 C 200,18 350,18 450,58 C 550,98 600,138 700,138 C 800,138 850,98 950,58 C 1050,18 1200,18 1400,18"
-              fill="none"
-              stroke="rgba(255,255,255,0.1)"
-              stroke-width="1"
-              vector-effect="non-scaling-stroke"
-            />
-          </svg>
-        </div>
-
-        <!-- Content Layer -->
-        <div class="hud-content">
-          <!-- LEFT SECTION -->
-          <div class="left-section" id="leftInfoCards"></div>
-
-          <!-- CENTER SECTION -->
-          <div class="center-section">
-            <div class="pill-marker"></div>
-            <div class="control-pill" id="controlPill"></div>
-          </div>
-
-          <!-- RIGHT SECTION -->
-          <div class="right-section" id="rightInfoCards"></div>
-        </div>
+<html lang="en" data-theme="dark" data-nav="max">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Digital Twin Dashboard</title>
+  <link rel="stylesheet" href="/static/css/dashboard.css?v=1" />
+</head>
+<body>
+  <div class="app-shell">
+
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-icon">E</div>
+        <span class="brand-text">EKO</span>
       </div>
 
-      <!-- Sub-panels (rendered dynamically) -->
-      <div id="subPanelsContainer"></div>
-
-      <!-- Dashboards Container -->
-      <div id="dashboardsContainer"></div>
-
-      <!-- Side Panel Quick Buttons -->
-      <div class="side-panel" id="sidePanel"></div>
-
-      <!-- Quit Confirmation -->
-      <div class="quit-confirm" id="quitConfirm">
-        <div class="quit-confirm-text">Are you sure you want to quit?</div>
-        <div class="quit-confirm-buttons">
-          <button class="quit-btn" onclick="DashboardAdmin.closeQuit()">
-            Cancel
+      <nav class="header-breadcrumb" aria-label="Breadcrumb">
+        <span class="crumb-text" data-i18n="dt">Digital Twin</span>
+        <span class="crumb-sep" aria-hidden="true">/</span>
+        <span class="crumb-dropdown">
+          <button class="crumb-trigger" id="propSwitcher" aria-haspopup="menu" aria-expanded="false">
+            <span id="crumbName">Marsa Al Arab</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
           </button>
-          <button
-            class="quit-btn confirm"
-            onclick="DashboardAdmin.confirmQuit()"
-          >
-            Quit
-          </button>
-        </div>
+          <div class="dropdown-menu" id="propMenu" role="menu" aria-label="Properties">
+            <button role="menuitem" class="dropdown-item" data-action="portfolio">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect></svg>
+              <span data-i18n="portOverview">Portfolio overview</span>
+            </button>
+            <div class="dropdown-divider"></div>
+            <button role="menuitem" class="dropdown-item active" data-key="maa"><span>Marsa Al Arab</span><span class="item-sub">Dubai</span></button>
+            <button role="menuitem" class="dropdown-item" data-key="p2"><span>Property Two</span><span class="item-sub">Dubai</span></button>
+            <button role="menuitem" class="dropdown-item" data-key="p3"><span>Property Three</span><span class="item-sub">Abu Dhabi</span></button>
+            <button role="menuitem" class="dropdown-item" data-key="p4"><span>Property Four</span><span class="item-sub">Riyadh</span></button>
+          </div>
+        </span>
+        <span class="crumb-sep" aria-hidden="true">/</span>
+        <span class="crumb-module" id="crumbModule">Operations</span>
+      </nav>
+
+      <div class="header-badges">
+        <span class="badge badge-live"><span class="pulse-dot"></span><span data-i18n="live">LIVE</span></span>
+        <span class="badge" data-i18n="onprem">ON-PREMISES</span>
+        <button class="badge badge-systems" id="systemsBtn" aria-haspopup="dialog" aria-expanded="false">
+          <span class="status-dot status-ok"></span><span>Systems 6/6</span>
+        </button>
       </div>
 
-    </div>
+      <div class="header-spacer"></div>
 
-    <!-- FIN Login Modal Overlay -->
-    <div class="admin-overlay" id="finLoginOverlay">
-      <div class="admin-modal" style="max-width: 400px;">
-        <div class="admin-header">
-          <h2><i class="bx bx-server"></i> Connect to FIN</h2>
-          <button class="admin-close" onclick="document.getElementById('finLoginOverlay').classList.remove('active')">
-            <i class="bx bx-x"></i>
-          </button>
+      <div class="header-actions">
+        <span class="clock" id="liveClock">11:42:18</span>
+        <div class="lang-toggle" role="group" aria-label="Language">
+          <button class="lang-btn active" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="ar">عربي</button>
         </div>
-        <div class="admin-section active" style="padding-top: 10px;">
-          <p style="color: var(--text-sub); font-size: 13px; margin-bottom: 20px;">
-            Please enter your FIN credentials to start live data polling.
-          </p>
-          <div class="form-group" style="margin-bottom: 15px;">
-            <label style="display:block; margin-bottom: 5px; color: #fff; font-size: 13px;">Username</label>
-            <input type="text" id="finUsername" placeholder="e.g. admin" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: #fff; outline: none;">
-          </div>
-          <div class="form-group" style="margin-bottom: 20px;">
-            <label style="display:block; margin-bottom: 5px; color: #fff; font-size: 13px;">Authentication Key</label>
-            <input type="password" id="finPassword" placeholder="Enter your key" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: #fff; outline: none;">
-          </div>
-          <div id="finLoginError" style="color: #ef4444; font-size: 12px; margin-bottom: 15px; display: none;"></div>
-          <button class="admin-btn admin-btn-primary" style="width: 100%; justify-content: center; padding: 12px;" onclick="Dashboard.submitFinLogin()">
-            Connect Server
-          </button>
-        </div>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle theme (T)">
+          <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+          <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+        </button>
+        <button class="icon-btn" aria-label="Notifications, 3 unread" title="Notifications">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+          <span class="notif-badge">3</span>
+        </button>
+        <button class="avatar-btn" id="userMenu" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu">AY</button>
       </div>
-    </div>
+    </header>
 
-    <!-- Admin Overlay Modal (Keep outside wrapper so it scales differently or stays full screen) -->
-    <div class="admin-overlay" id="adminOverlay">
-      <div class="admin-modal">
-        <div class="admin-header">
-          <h2><i class="bx bx-dashboard"></i>Dashboard Admin</h2>
-          <button class="admin-close" onclick="DashboardAdmin.close()">
-            <i class="bx bx-x"></i>
-          </button>
+    <div class="app-body">
+      <aside class="app-sidebar" id="appSidebar" aria-label="Modules">
+
+        <button class="nav-item active" data-module="operations">
+          <span class="nav-indicator"></span>
+          <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"></path><path d="M3.34 19a10 10 0 1 1 17.32 0"></path></svg>
+          <svg class="nav-icon-badge" aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="var(--s1)" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+          <span class="nav-label">Operations</span>
+          <span class="nav-chevron"><span class="nav-chevron-circle"><svg class="chevron-icon open" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span></span>
+        </button>
+        <div class="nav-subs" data-parent="operations">
+          <button class="sub-item" data-sub="evstats"><span class="sub-label">Event Statistics</span></button>
+          <button class="sub-item" data-sub="livesys"><span class="sub-label">Live Systems</span></button>
+          <button class="sub-item" data-sub="histch"><span class="sub-label">History Charts</span></button>
+          <button class="sub-item" data-sub="alarms"><span class="sub-label">Alarms</span></button>
+          <button class="sub-item" data-sub="water"><span class="sub-label">Water</span></button>
         </div>
 
-        <div class="admin-tabs" id="adminTabs">
-          <button class="admin-tab active" data-tab="nav-buttons">
-            Nav Buttons
-          </button>
-          <button class="admin-tab" data-tab="info-cards">Info Cards</button>
-          <button class="admin-tab" data-tab="side-panel">Side Panel</button>
-          <button class="admin-tab" data-tab="widgets">Widgets</button>
-          <button class="admin-tab" data-tab="fin-config">FIN Config</button>
-          <button class="admin-tab" data-tab="export">Export / Import</button>
+        <button class="nav-item" data-module="energy">
+          <span class="nav-indicator"></span>
+          <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          <span class="nav-label">Energy</span>
+          <span class="nav-chevron"><span class="nav-chevron-circle"><svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span></span>
+        </button>
+        <div class="nav-subs hidden" data-parent="energy">
+          <button class="sub-item" data-sub="waste"><span class="sub-label">Waste Prevention</span><span class="sub-dot warn" title="AED 14.2K / mo"></span></button>
+          <button class="sub-item" data-sub="bench"><span class="sub-label">Portfolio Benchmarking</span></button>
+          <button class="sub-item" data-sub="lbm"><span class="sub-label">Location Based Metering</span></button>
+          <button class="sub-item" data-sub="anom"><span class="sub-label">Flow and Trend Anomaly</span><span class="sub-dot warn" title="2 anomalies"></span></button>
+          <button class="sub-item" data-sub="budget"><span class="sub-label">Budget Overrun</span></button>
+          <button class="sub-item" data-sub="cons"><span class="sub-label">Consumption</span></button>
+          <button class="sub-item" data-sub="fcst"><span class="sub-label">Forecasting</span></button>
         </div>
 
-        <!-- Tab: Nav Buttons -->
-        <div class="admin-section active" data-section="nav-buttons">
-          <h3>Header Navigation Buttons</h3>
-          <p
-            style="color: var(--text-sub); font-size: 12px; margin-bottom: 12px"
-          >
-            Drag to reorder. Click remove to delete. Add new buttons below.
-          </p>
-          <div class="nav-item-list" id="adminNavList"></div>
-          <div class="admin-actions" style="margin-top: 15px">
-            <button
-              class="admin-btn admin-btn-primary"
-              onclick="DashboardAdmin.addNavButton()"
-            >
-              <i class="bx bx-plus"></i> Add Button
-            </button>
-          </div>
+        <button class="nav-item" data-module="esg">
+          <span class="nav-indicator"></span>
+          <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path></svg>
+          <span class="nav-label">ESG</span>
+          <span class="nav-chevron"><span class="nav-chevron-circle"><svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span></span>
+        </button>
+        <div class="nav-subs hidden" data-parent="esg">
+          <button class="sub-item" data-sub="tva"><span class="sub-label">Target vs Actual</span></button>
+          <button class="sub-item" data-sub="nz"><span class="sub-label">Net Zero</span></button>
+          <button class="sub-item" data-sub="ubm"><span class="sub-label">Utility Bill Management</span></button>
+          <button class="sub-item" data-sub="rep"><span class="sub-label">Reporting</span></button>
         </div>
 
-        <!-- Tab: Info Cards -->
-        <div class="admin-section" data-section="info-cards">
-          <h3>Header Info Cards</h3>
-          <p
-            style="color: var(--text-sub); font-size: 12px; margin-bottom: 12px"
-          >
-            Configure the status cards displayed on left and right sides of the
-            header.
-          </p>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
-            <div>
-              <h3
-                style="
-                  font-size: 13px;
-                  margin-bottom: 10px;
-                  color: var(--primary-bright);
-                "
-              >
-                Left Side
-              </h3>
-              <div class="nav-item-list" id="adminLeftCards"></div>
-            </div>
-            <div>
-              <h3
-                style="
-                  font-size: 13px;
-                  margin-bottom: 10px;
-                  color: var(--primary-bright);
-                "
-              >
-                Right Side
-              </h3>
-              <div class="nav-item-list" id="adminRightCards"></div>
-            </div>
-          </div>
-          <div class="admin-actions" style="margin-top: 15px">
-            <button
-              class="admin-btn admin-btn-primary"
-              onclick="DashboardAdmin.addInfoCard('left')"
-            >
-              <i class="bx bx-plus"></i> Add Left Card
-            </button>
-            <button
-              class="admin-btn admin-btn-primary"
-              onclick="DashboardAdmin.addInfoCard('right')"
-            >
-              <i class="bx bx-plus"></i> Add Right Card
-            </button>
-          </div>
+        <button class="nav-item" data-module="assets">
+          <span class="nav-indicator"></span>
+          <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"></path><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5M12 22V12"></path></svg>
+          <span class="nav-label">Assets</span>
+          <span class="nav-chevron"><span class="nav-chevron-circle"><svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span></span>
+        </button>
+        <div class="nav-subs hidden" data-parent="assets">
+          <button class="sub-item" data-sub="reg"><span class="sub-label">Registry</span></button>
+          <button class="sub-item" data-sub="wo"><span class="sub-label">Work Orders</span></button>
+          <button class="sub-item" data-sub="ana"><span class="sub-label">Analytics</span></button>
+          <button class="sub-item" data-sub="rfid"><span class="sub-label">RFID</span></button>
         </div>
 
-        <!-- Tab: Side Panel -->
-        <div class="admin-section" data-section="side-panel">
-          <h3>Side Panel Buttons</h3>
-          <div class="nav-item-list" id="adminSideList"></div>
-          <div class="admin-actions" style="margin-top: 15px">
-            <button
-              class="admin-btn admin-btn-primary"
-              onclick="DashboardAdmin.addSideButton()"
-            >
-              <i class="bx bx-plus"></i> Add Button
-            </button>
-          </div>
+        <button class="nav-item" data-module="spaces">
+          <span class="nav-indicator"></span>
+          <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"></path><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"></path><path d="M12 3v6"></path></svg>
+          <span class="nav-label">Spaces</span>
+          <span class="nav-chevron"><span class="nav-chevron-circle"><svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span></span>
+        </button>
+        <div class="nav-subs hidden" data-parent="spaces">
+          <button class="sub-item" data-sub="rds"><span class="sub-label">Room Data Sheets</span></button>
+          <button class="sub-item" data-sub="heat"><span class="sub-label">Heat Map</span></button>
+          <button class="sub-item" data-sub="zone"><span class="sub-label">Zone Status</span></button>
+          <button class="sub-item" data-sub="tc"><span class="sub-label">Thermal Comfort</span></button>
+          <button class="sub-item" data-sub="ieq"><span class="sub-label">IEQ</span></button>
         </div>
 
-        <!-- Tab: Widgets -->
-        <div class="admin-section" data-section="widgets">
-          <h3>Available Dashboard Widgets</h3>
-          <div class="widget-grid" id="adminWidgetGrid"></div>
+        <button class="nav-item" data-module="maintenance">
+          <span class="nav-indicator"></span>
+          <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"></path></svg>
+          <span class="nav-label">Maintenance</span>
+          <span class="nav-chevron"><span class="nav-chevron-circle"><svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span></span>
+        </button>
+        <div class="nav-subs hidden" data-parent="maintenance">
+          <button class="sub-item" data-sub="pj"><span class="sub-label">Preventive Jobs</span></button>
+          <button class="sub-item" data-sub="sch"><span class="sub-label">Schedules</span></button>
+          <button class="sub-item" data-sub="stat"><span class="sub-label">Status</span></button>
         </div>
 
-        <!-- Tab: FIN Config -->
-        <div class="admin-section" data-section="fin-config">
-          <h3>FIN Framework Connection</h3>
-          <div class="fin-status" id="finStatus">
-            <div class="fin-status-dot" id="finStatusDot"></div>
-            <span class="fin-status-text" id="finStatusText">Disconnected</span>
-          </div>
-          <div class="fin-config-group">
-            <label>FIN Base URL</label>
-            <input
-              type="text"
-              id="finBaseUrl"
-              placeholder="https://localhost"
-            />
-          </div>
-          <div class="fin-config-group">
-            <label>Project Name</label>
-            <input type="text" id="finProject" placeholder="adnocWarsan" />
-          </div>
-          <div class="fin-config-group">
-            <label>Polling Interval (ms)</label>
-            <input
-              type="number"
-              id="finInterval"
-              value="5000"
-              min="1000"
-              step="1000"
-            />
-          </div>
-          <div class="admin-actions">
-            <button
-              class="admin-btn admin-btn-primary"
-              onclick="DashboardAdmin.testFinConnection()"
-            >
-              <i class="bx bx-check"></i> Test Connection
-            </button>
-            <button
-              class="admin-btn admin-btn-secondary"
-              onclick="DashboardAdmin.saveFinConfig()"
-            >
-              <i class="bx bx-save"></i> Save
-            </button>
-          </div>
+        <button class="nav-item" data-module="security">
+          <span class="nav-indicator"></span>
+          <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>
+          <span class="nav-label">Security</span>
+          <span class="nav-chevron"><span class="nav-chevron-circle"><svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span></span>
+        </button>
+        <div class="nav-subs hidden" data-parent="security">
+          <button class="sub-item" data-sub="cctv"><span class="sub-label">CCTV</span></button>
+          <button class="sub-item" data-sub="ac"><span class="sub-label">Access Control</span></button>
+          <button class="sub-item" data-sub="ls"><span class="sub-label">Life Safety</span></button>
         </div>
 
-        <!-- Tab: Export/Import -->
-        <div class="admin-section" data-section="export">
-          <h3>Export / Import Configuration</h3>
-          <p
-            style="color: var(--text-sub); font-size: 12px; margin-bottom: 12px"
-          >
-            Save your entire dashboard config as JSON or load a previously saved
-            config.
-          </p>
-          <textarea class="config-area" id="configArea" readonly></textarea>
-          <div class="admin-actions">
-            <button
-              class="admin-btn admin-btn-primary"
-              onclick="DashboardAdmin.exportConfig()"
-            >
-              <i class="bx bx-download"></i> Export
-            </button>
-            <button
-              class="admin-btn admin-btn-secondary"
-              onclick="DashboardAdmin.importConfig()"
-            >
-              <i class="bx bx-upload"></i> Import
-            </button>
-            <button
-              class="admin-btn admin-btn-danger"
-              onclick="DashboardAdmin.resetConfig()"
-            >
-              <i class="bx bx-reset"></i> Reset to Default
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+        <div class="nav-spacer"></div>
 
-    <button class="admin-toggle" id="adminToggle" title="Dashboard Settings">
-      <i class="bx bx-cog"></i>
-    </button>
+        <button class="nav-item" title="Settings">
+          <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          <span class="nav-label">Settings</span>
+        </button>
 
-    <script>
-      //  DEFAULT CONFIGURATION
-      const _injected = window.INJECTED_PROJECT_CONFIG || {};
-      const DEFAULT_CONFIG = {
-        fin: {
-          baseUrl: (_injected.fin && _injected.fin.baseUrl) || "https://localhost",
-          project: (_injected.fin && _injected.fin.project) || "EllisdonDemo",
-          interval: (_injected.fin && _injected.fin.interval) || 5000,
-          directMode: (_injected.fin && _injected.fin.directMode) || false,
-          livePoints: (_injected.fin && _injected.fin.livePoints) || undefined,
-          endpoints: (_injected.fin && _injected.fin.endpoints) || undefined,
-        },
-        weather: {
-          lat: (_injected.weather && _injected.weather.lat) || 24.469,
-          lon: (_injected.weather && _injected.weather.lon) || 54.358,
-          apiKey: (_injected.weather && _injected.weather.apiKey) || "88214bff7aa566e9f6ff1ba5db38f65f",
-        },
-        navButtons: _injected.navButtons || [
-          {
-            id: "floor-nav",
-            icon: "bx bx-show",
-            tooltip: "Navigate Floors",
-            action: "toggle-panel",
-            panel: "floorIsolation",
-          },
-          {
-            id: "layers",
-            icon: "bx bx-layer",
-            tooltip: "Layers",
-            action: "toggle-panel",
-            panel: "treeViewer",
-          },
-          {
-            id: "tree-viewer",
-            icon: "bx bx-cube",
-            tooltip: "Tree Viewer",
-            action: "toggle-panel",
-            panel: "treeViewer",
-          },
-          {
-            id: "ruler",
-            icon: "bx bx-ruler",
-            tooltip: "Measure",
-            action: "toggle-panel",
-            panel: "rulerPanel",
-          },
-          {
-            id: "pointer",
-            icon: "bx bx-pointer",
-            tooltip: "Select",
-            action: "emit",
-            event: "obj-select",
-          },
-          {
-            id: "reset",
-            icon: "bx bx-refresh",
-            tooltip: "Reset View",
-            action: "emit",
-            event: "reset-viewer",
-          },
-          {
-            id: "slice",
-            icon: "bx bx-cut",
-            tooltip: "Slice",
-            action: "emit",
-            event: "slice-model",
-          },
-          {
-            id: "brush",
-            icon: "bx bx-paint",
-            tooltip: "Visual Settings",
-            action: "toggle-panel",
-            panel: "visualSettings",
-          },
-          {
-            id: "settings",
-            icon: "bx bx-cog",
-            tooltip: "Settings",
-            action: "toggle-panel",
-            panel: "settingsPanel",
-          },
-          {
-            id: "help",
-            icon: "bx bx-help-circle",
-            tooltip: "Help",
-            action: "emit",
-            event: "help",
-          },
-        ],
-        leftCards: _injected.leftCards || [
-          {
-            id: "date",
-            label: "Date",
-            icon: "bx bx-calendar",
-            accent: "date",
-            source: "clock",
-            format: "date",
-          },
-          {
-            id: "time",
-            label: "Time",
-            icon: "bx bx-time",
-            accent: "time",
-            source: "clock",
-            format: "time",
-          },
-          {
-            id: "temp",
-            label: "Temp",
-            icon: "bx bx-sun",
-            accent: "temp",
-            source: "weather",
-            field: "temp",
-          },
-        ],
-        rightCards: _injected.rightCards || [
-          {
-            id: "humid",
-            label: "Humidity",
-            icon: "bx bx-droplet",
-            accent: "humid",
-            source: "weather",
-            field: "humidity",
-          },
-          {
-            id: "aqi",
-            label: "Air Quality",
-            icon: "bx bx-leaf",
-            accent: "air",
-            source: "weather",
-            field: "aqi",
-          },
-          {
-            id: "sky",
-            label: "Weather",
-            icon: "bx bx-cloud",
-            accent: "sky",
-            source: "weather",
-            field: "description",
-          },
-        ],
-        sideButtons: _injected.sideButtons || [
-          {
-            id: "overview",
-            icon: "bx bx-bar-chart-alt-2",
-            label: "Overview",
-            action: "show-dashboard",
-            dashboard: "overview",
-          },
-          {
-            id: "asset-reg",
-            icon: "bx bx-book",
-            label: "Asset Register",
-            action: "show-dashboard",
-            dashboard: "assetRegister",
-          },
-          {
-            id: "power-kpi",
-            icon: "bx bx-bolt-circle",
-            label: "Power KPI",
-            action: "show-dashboard",
-            dashboard: "powerAnalysis",
-          },
-          {
-            id: "hvac-kpi",
-            icon: "bx bx-wind",
-            label: "HVAC KPI",
-            action: "show-dashboard",
-            dashboard: "hvacStats",
-          },
-          {
-            id: "water-kpi",
-            icon: "bx bx-water",
-            label: "Water KPI",
-            action: "show-dashboard",
-            dashboard: "waterKPI",
-          },
-          {
-            id: "maintenance",
-            icon: "bx bx-calendar-check",
-            label: "Maintenance",
-            action: "show-dashboard",
-            dashboard: "maintenance",
-          },
-        ],
-        subPanels: _injected.subPanels || {
-          treeViewer: { label: "Model Layers", type: "model-toggle" },
-          floorIsolation: { label: "Floor Isolation", type: "floor-toggle" },
-          rulerPanel: { label: "Measurement", type: "ruler" },
-          visualSettings: { label: "Visual Settings", type: "sliders" },
-          settingsPanel: { label: "Sky Mode", type: "sky-mode" },
-        },
-        widgets: _injected.widgets || [
-          {
-            id: "hvac",
-            name: "HVAC Statistics",
-            icon: "bx bx-wind",
-            enabled: true,
-            category: "Systems",
-          },
-          {
-            id: "power",
-            name: "Power Analysis",
-            icon: "bx bx-bolt-circle",
-            enabled: true,
-            category: "Systems",
-          },
-          {
-            id: "energy",
-            name: "Energy Dashboard",
-            icon: "bx bx-bar-chart-alt-2",
-            enabled: true,
-            category: "Systems",
-          },
-          {
-            id: "water",
-            name: "Water KPI",
-            icon: "bx bx-water",
-            enabled: true,
-            category: "Systems",
-          },
-          {
-            id: "cctv",
-            name: "CCTV Controller",
-            icon: "bx bx-camera",
-            enabled: false,
-            category: "Security",
-          },
-          {
-            id: "heatmap",
-            name: "Crowd Heatmap",
-            icon: "bx bx-map",
-            enabled: false,
-            category: "Analytics",
-          },
-          {
-            id: "ai-assistant",
-            name: "AI Assistant",
-            icon: "bx bx-bot",
-            enabled: false,
-            category: "Tools",
-          },
-          {
-            id: "equipment",
-            name: "Equipment Analytics",
-            icon: "bx bx-chip",
-            enabled: true,
-            category: "Systems",
-          },
-          {
-            id: "codeblue",
-            name: "Code Blue Dashboard",
-            icon: "bx bx-plus-medical",
-            enabled: false,
-            category: "Emergency",
-          },
-        ],
-        models: _injected.modelsConfig || [
-          { id: "ARCH", label: "A", name: "Architecture", active: true },
-          { id: "MECH", label: "M", name: "Mechanical", active: false },
-          { id: "STRUCT", label: "ST", name: "Structure", active: true },
-        ],
-        floors: _injected.floorsConfig || [
-          { id: "RF", label: "RF", name: "Roof Floor" },
-          { id: "1F", label: "1F", name: "First Floor" },
-          { id: "GF", label: "GF", name: "Ground Floor" },
-          { id: "BF", label: "BF", name: "Basement Floor" },
-        ],
-      };
+        <button class="nav-item" title="Help">
+          <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>
+          <span class="nav-label">Help</span>
+        </button>
 
-      //  DASHBOARD ENGINE
-      const Dashboard = {
-        config: null,
-        liveData: {
-          weather: null,
-          airQuality: null,
-          points: [],
-          equipment: [],
-        },
-        activePanel: null,
-        activeDashboard: null,
-        finInterval: null,
+        <button class="nav-item" id="collapseBtn" title="Collapse" aria-label="Toggle navigation width">
+          <svg class="collapse-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5"></path><path d="m18 17-5-5 5-5"></path></svg>
+          <span class="nav-label">Collapse</span>
+        </button>
+      </aside>
 
-        init() {
-          const initWithConfig = () => {
-            this.config = this.loadConfig();
-            this.render();
-            this.startClock();
-            this.startWeather();
-            this.startFinPolling();
-            this.initResizeObserver();
-            this._finishInit();
-          };
-
-          // If no React-injected config, try loading api-config.json (standalone FIN viewer mode)
-          if (!window.INJECTED_PROJECT_CONFIG) {
-            fetch('api-config.json?t=' + Date.now(), { cache: 'no-store' })
-              .then(r => r.ok ? r.json() : null)
-              .then(cfg => {
-                if (cfg) {
-                  window.INJECTED_PROJECT_CONFIG = {
-                    fin: {
-                      baseUrl: cfg.fin_server_url || 'https://localhost',
-                      project: cfg.project_name || '',
-                      interval: cfg.polling_interval || 5000,
-                      directMode: cfg.direct_mode || false,
-                      livePoints: cfg.live_point_ids || undefined,
-                      endpoints: cfg.power_endpoints || undefined,
-                    },
-                    weather: cfg.weather || undefined,
-                    navButtons: cfg.navButtons || undefined,
-                    leftCards: cfg.leftCards || undefined,
-                    rightCards: cfg.rightCards || undefined,
-                    sideButtons: cfg.sideButtons || undefined,
-                  };
-                  console.log('[Dashboard] Loaded api-config.json for standalone mode');
-                }
-                initWithConfig();
-              })
-              .catch(() => initWithConfig());
-          } else {
-            initWithConfig();
-          }
-        },
-
-        _finishInit() {
-
-          window.addEventListener("dashboard-event", async (e) => {
-            const dashboardId = e.detail.data;
-            if (
-              e.detail.event === "show-dashboard" &&
-              dashboardId === "overview"
-            ) {
-              const container = document.getElementById("dashboardsContainer");
-              if (!document.getElementById("overviewDashboard")) {
-                try {
-                  const res = await fetch("static/html/overview.html?t=" + Date.now());
-                  const html = await res.text();
-                  container.innerHTML = html;
-                  if (window.OverviewDashboard) {
-                    window.OverviewDashboard.initialized = false;
-                    window.OverviewDashboard.init();
-                  }
-                } catch (err) {
-                  console.error("Failed to load overview dashboard", err);
-                }
-              } else {
-                const dash = document.getElementById("overviewDashboard");
-                dash.style.visibility = "visible";
-                dash.style.opacity = "1";
-                if (window.OverviewDashboard) {
-                  setTimeout(() => window.OverviewDashboard.redrawCharts(), 50);
-                }
-              }
-            } else if (
-              e.detail.event === "close-dashboard" &&
-              dashboardId === "overview"
-            ) {
-              const dash = document.getElementById("overviewDashboard");
-              if (dash) {
-                dash.style.visibility = "hidden";
-                dash.style.opacity = "0";
-                dash.style.pointerEvents = "none";
-              }
-            }
-          });
-        },
-
-        initResizeObserver() {
-        },
-
-        loadConfig() {
-          let config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-          try {
-            const saved = localStorage.getItem("dt-dashboard-config");
-            if (saved) {
-              const parsed = JSON.parse(saved);
-              config = { ...config, ...parsed };
-              
-              // Ensure injected settings from the React App (if present) always override local storage
-              if (_injected.fin) config.fin = { ...config.fin, ..._injected.fin };
-              if (_injected.navButtons) config.navButtons = _injected.navButtons;
-              if (_injected.leftCards) config.leftCards = _injected.leftCards;
-              if (_injected.rightCards) config.rightCards = _injected.rightCards;
-              if (_injected.sideButtons) config.sideButtons = _injected.sideButtons;
-            }
-          } catch (e) {}
-          return config;
-        },
-
-        saveConfig() {
-          localStorage.setItem(
-            "dt-dashboard-config",
-            JSON.stringify(this.config),
-          );
-        },
-
-        // ─── RENDERING ───
-        render() {
-          this.renderInfoCards("leftInfoCards", this.config.leftCards);
-          this.renderInfoCards("rightInfoCards", this.config.rightCards, true);
-          this.renderNavButtons();
-          this.renderSidePanel();
-          this.renderSubPanels();
-        },
-
-        renderInfoCards(containerId, cards, isRight = false) {
-          const el = document.getElementById(containerId);
-          el.innerHTML = "";
-          cards.forEach((card, i) => {
-            const rightClass = isRight ? ` right-${i + 1}` : "";
-            const div = document.createElement("div");
-            div.className = `dt-info-card${rightClass}`;
-            div.id = `card-${card.id}`;
-            div.innerHTML = `
-          <div class="info-icon-box ${card.accent}">
-            <i class="${card.icon}"></i>
-          </div>
-          <div class="info-text">
-            <h4>${card.label}</h4>
-            <p id="val-${card.id}">--</p>
-          </div>
-        `;
-            el.appendChild(div);
-          });
-        },
-
-        renderNavButtons() {
-          const pill = document.getElementById("controlPill");
-          pill.innerHTML = "";
-          this.config.navButtons.forEach((btn) => {
-            const el = document.createElement("button");
-            el.className = "nav-btn";
-            el.id = `nav-${btn.id}`;
-            el.setAttribute("data-tooltip", btn.tooltip);
-            el.innerHTML = `<i class="${btn.icon}"></i>`;
-            el.addEventListener("click", () => this.handleNavClick(btn));
-            pill.appendChild(el);
-          });
-        },
-
-        renderSidePanel() {
-          const panel = document.getElementById("sidePanel");
-          panel.innerHTML = "";
-          this.config.sideButtons.forEach((btn) => {
-            const el = document.createElement("a");
-            el.className = "side-btn";
-            el.id = `side-${btn.id}`;
-            el.href = "#";
-            el.title = btn.label || "";
-            el.innerHTML = `<i class="${btn.icon}"></i><span title="${btn.label || ""}">${btn.label}</span>`;
-            el.addEventListener("click", (e) => {
-              e.preventDefault();
-              this.handleSideClick(btn, el);
-            });
-            panel.appendChild(el);
-          });
-        },
-
-        renderSubPanels() {
-          const container = document.getElementById("subPanelsContainer");
-          container.innerHTML = "";
-
-          // Tree Viewer / Model Layers
-          if (this.config.subPanels.treeViewer) {
-            const panel = this.createSubPanel("treeViewer");
-            const allBtn = document.createElement("button");
-            allBtn.className = "sub-panel-btn active";
-            allBtn.textContent = "ALL";
-            allBtn.onclick = () => this.toggleAllModels(allBtn);
-            panel.appendChild(allBtn);
-            this.config.models.forEach((m) => {
-              const btn = document.createElement("button");
-              btn.className = `sub-panel-btn ${m.active ? "active" : ""}`;
-              btn.textContent = m.label;
-              btn.title = m.name;
-              btn.onclick = () => this.toggleModel(m.id, btn);
-              panel.appendChild(btn);
-            });
-            container.appendChild(panel);
-          }
-
-          // Floor Isolation
-          if (this.config.subPanels.floorIsolation) {
-            const panel = this.createSubPanel("floorIsolation");
-            const allBtn = document.createElement("button");
-            allBtn.className = "sub-panel-btn active";
-            allBtn.textContent = "ALL";
-            allBtn.onclick = () => this.selectFloor("ALL", allBtn, panel);
-            panel.appendChild(allBtn);
-            this.config.floors.forEach((f) => {
-              const btn = document.createElement("button");
-              btn.className = "sub-panel-btn";
-              btn.textContent = f.label;
-              btn.title = f.name;
-              btn.onclick = () => this.selectFloor(f.id, btn, panel);
-              panel.appendChild(btn);
-            });
-            container.appendChild(panel);
-          }
-
-          // Settings / Sky Mode
-          if (this.config.subPanels.settingsPanel) {
-            const panel = this.createSubPanel("settingsPanel");
-            ["Day", "Dusk", "Night"].forEach((mode, i) => {
-              const btn = document.createElement("button");
-              btn.className = `sub-panel-btn ${i === 0 ? "active" : ""}`;
-              const icons = ["☀️", "🌅", "🌙"];
-              btn.textContent = `${icons[i]} ${mode}`;
-              btn.onclick = () => {
-                panel
-                  .querySelectorAll(".sub-panel-btn")
-                  .forEach((b) => b.classList.remove("active"));
-                btn.classList.add("active");
-                this.emit("sky-mode", mode);
-              };
-              panel.appendChild(btn);
-            });
-            container.appendChild(panel);
-          }
-        },
-
-        createSubPanel(id) {
-          const panel = document.createElement("div");
-          panel.className = "sub-panel";
-          panel.id = `panel-${id}`;
-          // Removed inline style to allow CSS to control positioning natively
-          return panel;
-        },
-
-        // ─── EVENT HANDLERS ───
-        handleNavClick(btn) {
-          const navEl = document.getElementById(`nav-${btn.id}`);
-
-          if (btn.action === "toggle-panel" && btn.panel) {
-            const panelEl = document.getElementById(`panel-${btn.panel}`);
-            if (!panelEl) return;
-
-            if (this.activePanel === btn.panel) {
-              panelEl.classList.remove("active");
-              navEl.classList.remove("active");
-              this.activePanel = null;
-            } else {
-              // Close any open panel
-              document
-                .querySelectorAll(".sub-panel.active")
-                .forEach((p) => p.classList.remove("active"));
-              document
-                .querySelectorAll(".nav-btn.active")
-                .forEach((b) => b.classList.remove("active"));
-              panelEl.classList.add("active");
-              navEl.classList.add("active");
-              this.activePanel = btn.panel;
-            }
-          } else if (btn.action === "emit") {
-            this.emit(btn.event);
-          }
-        },
-
-        handleSideClick(btn, el) {
-          document
-            .querySelectorAll(".side-btn.active")
-            .forEach((b) => b.classList.remove("active"));
-          if (this.activeDashboard === btn.id) {
-            this.activeDashboard = null;
-            this.emit("close-dashboard", btn.dashboard);
-          } else {
-            el.classList.add("active");
-            this.activeDashboard = btn.id;
-            this.emit("show-dashboard", btn.dashboard);
-          }
-        },
-
-        toggleModel(modelId, btn) {
-          const model = this.config.models.find((m) => m.id === modelId);
-          if (model) {
-            model.active = !model.active;
-            btn.classList.toggle("active", model.active);
-            this.emit("toggle-model", { id: modelId, active: model.active });
-          }
-        },
-
-        toggleAllModels(allBtn) {
-          const allActive = this.config.models.every((m) => m.active);
-          this.config.models.forEach((m) => (m.active = !allActive));
-          allBtn.classList.toggle("active", !allActive);
-          const panel = allBtn.parentElement;
-          panel
-            .querySelectorAll(".sub-panel-btn:not(:first-child)")
-            .forEach((b) => {
-              b.classList.toggle("active", !allActive);
-            });
-          this.emit("toggle-all-models", !allActive);
-        },
-
-        selectFloor(floorId, btn, panel) {
-          panel
-            .querySelectorAll(".sub-panel-btn")
-            .forEach((b) => b.classList.remove("active"));
-          btn.classList.add("active");
-          this.emit("select-floor", floorId);
-        },
-
-        emit(event, data = null) {
-          console.log(`[Dashboard] Event: ${event}`, data);
-          window.dispatchEvent(
-            new CustomEvent("dashboard-event", { detail: { event, data } }),
-          );
-          if (window.parent !== window) {
-            window.parent.postMessage(
-              { type: "dashboard-event", detail: { event, data } },
-              "*",
-            );
-          }
-        },
-
-        // ─── CLOCK ───
-        startClock() {
-          const update = () => {
-            const now = new Date();
-            const dateEl = document.getElementById("val-date");
-            const timeEl = document.getElementById("val-time");
-            if (dateEl) dateEl.textContent = now.toISOString().split("T")[0];
-            if (timeEl) {
-              timeEl.textContent = now.toLocaleString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: true,
-              });
-            }
-          };
-          update();
-          setInterval(update, 1000);
-        },
-
-        // ─── WEATHER ───
-        async startWeather() {
-          const fetchWeather = async () => {
-            try {
-              const { lat, lon, apiKey } = this.config.weather;
-              const [weatherRes, aqiRes] = await Promise.all([
-                fetch(
-                  `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`,
-                ),
-                fetch(
-                  `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`,
-                ),
-              ]);
-              if (weatherRes.ok) {
-                const data = await weatherRes.json();
-                this.liveData.weather = data;
-                this.updateWeatherCards(data);
-              }
-              if (aqiRes.ok) {
-                this.liveData.airQuality = await aqiRes.json();
-                this.updateAQICard();
-              }
-            } catch (e) {
-              console.warn("[Dashboard] Weather fetch error:", e);
-            }
-          };
-          fetchWeather();
-          setInterval(fetchWeather, 300000); // 5 min
-        },
-
-        updateWeatherCards(data) {
-          const tempEl = document.getElementById("val-temp");
-          const skyEl = document.getElementById("val-sky");
-          const humidEl = document.getElementById("val-humid");
-          if (tempEl && data.main)
-            tempEl.textContent = `${Math.round(data.main.temp)}°C`;
-          if (skyEl && data.weather?.[0]) {
-            const desc = data.weather[0].description;
-            skyEl.textContent = desc.charAt(0).toUpperCase() + desc.slice(1);
-          }
-          if (humidEl && data.main)
-            humidEl.textContent = `${data.main.humidity}%`;
-        },
-
-        updateAQICard() {
-          const el = document.getElementById("val-aqi");
-          if (!el || !this.liveData.airQuality?.list?.[0]) return;
-          const aqi = this.liveData.airQuality.list[0].main.aqi;
-          const labels = ["", "Good", "Fair", "Moderate", "Poor", "Very Poor"];
-          el.textContent = labels[aqi] || `AQI ${aqi}`;
-        },
-
-        // ─── FIN POLLING ───
-        startFinPolling() {
-          if (this.finInterval) clearInterval(this.finInterval);
-          const fetchFin = async () => {
-            try {
-              const isFinHosted = window.location.href.includes('finMobile') || this.config.fin?.directMode;
-              if (isFinHosted) {
-                // --- DIRECT API MODE (NO BACKEND) ---
-                console.log("[Dashboard] Direct FIN Mode Enabled: Fetching batch data directly from FIN...");
-                const baseUrl = this.config.fin.baseUrl?.replace(/\/$/, '') || "https://localhost";
-                const project = this.config.fin.project || "marsaAlArab";
-                const livePoints = this.config.fin.livePoints || {};
-                const endpoints = this.config.fin.endpoints || {};
-                
-                const powerData = { timestamp: new Date().toISOString(), power_history: {} };
-                
-                const decodeHaystackStr = (str) => String(str).replace(/u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
-                
-                const getHaystackVal = (v) => {
-                    if (v === null || v === undefined) return v;
-                    if (typeof v === 'object') {
-                        if (v._kind === 'number') return v.val;
-                        if (v._kind === 'ref') return decodeHaystackStr(v.val || '');
-                        if (v._kind === 'str') return decodeHaystackStr(v.val || '');
-                    }
-                    if (typeof v === 'string') return decodeHaystackStr(v);
-                    return v;
-                };
-
-                const fetchOptions = { headers: { "Content-Type": "application/json", "Accept": "application/json" } };
-                
-                // Fetch Points and Equipment in Parallel
-                console.log(`[Dashboard] Fetching from FIN API: ${baseUrl}/api/${project}/read?filter=point`);
-                const [pointsRes, equipRes] = await Promise.all([
-                    fetch(`${baseUrl}/api/${project}/read?filter=point`, fetchOptions).catch(e => {
-                        console.error("[Dashboard] Fetch failed for points:", e);
-                        return null;
-                    }),
-                    fetch(`${baseUrl}/api/${project}/read?filter=equip`, fetchOptions).catch(e => {
-                        console.error("[Dashboard] Fetch failed for equipment:", e);
-                        return null;
-                    }),
-                ]);
-
-                console.log(`[Dashboard] API Response Status - Points: ${pointsRes?.status}, Equip: ${equipRes?.status}`);
-
-                let pointsRows = [];
-                if (pointsRes?.ok) {
-                    const data = await pointsRes.json();
-                    pointsRows = data.rows || [];
-                    console.log(`[Dashboard] Successfully fetched ${pointsRows.length} points from FIN`);
-                } else {
-                    console.error("[Dashboard] Points API error response:", await pointsRes?.text());
-                }
-
-                let equipRows = [];
-                if (equipRes?.ok) {
-                    const data = await equipRes.json();
-                    equipRows = data.rows || [];
-                    console.log(`[Dashboard] Successfully fetched ${equipRows.length} equipment from FIN`);
-                } else {
-                    console.error("[Dashboard] Equip API error response:", await equipRes?.text());
-                }
-
-                // Map points to power data
-                Object.entries(livePoints).forEach(([key, ptStr]) => {
-                    if (!ptStr) return;
-                    const ptId = ptStr.replace(/{project}/g, project).replace(/^@/, '').replace(/^.?:/, '');
-                    const matchedRow = pointsRows.find(r => getHaystackVal(r.id) === ptId || getHaystackVal(r.id) === ptId.replace(/^@/, ''));
-                    if (matchedRow) {
-                        powerData[key] = getHaystackVal(matchedRow.curVal) || 0;
-                    }
-                });
-                
-                // Calculate averages
-                let tempSum = 0, tempCount = 0, humSum = 0, humCount = 0, co2Sum = 0, co2Count = 0;
-                pointsRows.forEach(row => {
-                    const navName = (getHaystackVal(row.navName) || getHaystackVal(row.dis) || "").toLowerCase();
-                    const val = getHaystackVal(row.curVal);
-                    if (typeof val === 'number') {
-                        if (navName.includes('temp')) { tempSum += val; tempCount++; }
-                        if (navName.includes('hum')) { humSum += val; humCount++; }
-                        if (navName.includes('co2')) { co2Sum += val; co2Count++; }
-                    }
-                });
-                powerData.avg_temp = tempCount ? (tempSum / tempCount) : 0;
-                powerData.avg_hum = humCount ? (humSum / humCount) : 0;
-                powerData.avg_co2 = co2Count ? (co2Sum / co2Count) : 0;
-                
-                const parseHistory = (text) => {
-                  if (!text) return [];
-                  const lines = text.split('\n');
-                  let dataStart = -1;
-                  for (let i = 0; i < lines.length; i++) {
-                    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(lines[i])) { dataStart = i; break; }
-                  }
-                  const rows = [];
-                  if (dataStart !== -1) {
-                    for (let i = dataStart; i < lines.length; i++) {
-                      const line = lines[i].trim();
-                      if (!line || !line.includes(',')) continue;
-                      const parts = line.split(',', 2);
-                      const tsPart = parts[0].replace(' Dubai', '').trim();
-                      const valStr = parts[1].trim();
-                      try {
-                        const val = parseFloat(valStr.replace(/[^0-9.-]/g, ''));
-                        const dt = new Date(tsPart.split('.')[0]);
-                        if (!isNaN(val) && !isNaN(dt.getTime())) rows.push({ date: dt, value: val });
-                      } catch(e) {}
-                    }
-                  }
-                  return rows;
-                };
-
-                const MONTHS_ORDER = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
-                const AM_PM_LOOKUP = ['12 am', '1 am', '2 am', '3 am', '4 am', '5 am', '6 am', '7 am', '8 am', '9 am', '10 am', '11 am', '12 pm', '1 pm', '2 pm', '3 pm', '4 pm', '5 pm', '6 pm', '7 pm', '8 pm', '9 pm', '10 pm', '11 pm'];
-
-                const aggregateHistory = (data) => {
-                  if (!data || data.length === 0) return {};
-                  data.sort((a,b) => a.date - b.date);
-                  const aggMap = {};
-                  for (const item of data) {
-                    const y = item.date.getFullYear(), m = item.date.getMonth(), d = item.date.getDate(), h = item.date.getHours();
-                    const key = `${y}-${m}-${d}-${h}`;
-                    if (!aggMap[key]) aggMap[key] = { sum: 0, count: 0, y, m, d, h };
-                    aggMap[key].sum += item.value;
-                    aggMap[key].count += 1;
-                  }
-                  const nested = {};
-                  for (const key in aggMap) {
-                    const agg = aggMap[key];
-                    const yStr = String(agg.y), mName = MONTHS_ORDER[agg.m], dKey = `${mName} ${agg.d}`, hName = AM_PM_LOOKUP[agg.h];
-                    if (!nested[yStr]) nested[yStr] = {};
-                    if (!nested[yStr][mName]) nested[yStr][mName] = {};
-                    if (!nested[yStr][mName][dKey]) {
-                      nested[yStr][mName][dKey] = {};
-                      for (const hr of AM_PM_LOOKUP) nested[yStr][mName][dKey][hr] = null;
-                    }
-                    nested[yStr][mName][dKey][hName] = (agg.sum / agg.count).toFixed(2);
-                  }
-                  return nested;
-                };
-
-                // Fetch History
-                const histPromises = Object.entries(endpoints).map(async ([key, expr]) => {
-                  if (!expr) return;
-                  const finalExpr = expr.replace(/{project}/g, project);
-                  try {
-                    const res = await fetch(finalExpr.startsWith('/') ? `${baseUrl}${finalExpr}` : `${baseUrl}/${finalExpr}`);
-                    if (res.ok) powerData.power_history[key] = aggregateHistory(parseHistory(await res.text()));
-                  } catch(e) {}
-                });
-                
-                await Promise.all(histPromises);
-                
-                this.liveData.power = powerData;
-                this.liveData.equipment = equipRows.map(r => ({
-                    id: getHaystackVal(r.id),
-                    navName: getHaystackVal(r.navName) || getHaystackVal(r.dis) || "Unknown",
-                    points: [] // Link points if needed
-                }));
-                this.liveData.points = pointsRows.map(r => ({
-                    id: getHaystackVal(r.id),
-                    navName: getHaystackVal(r.navName) || getHaystackVal(r.dis) || "Unknown",
-                    curVal: getHaystackVal(r.curVal)
-                }));
-                
-                DashboardAdmin.updateFinStatus(true);
-                this.emit("fin-data-updated", this.liveData);
-
-              } else {
-                // --- BACKEND MODE ---
-                const backendUrl = "http://127.0.0.1:8000";
-                
-                const [powerRes, equipRes] = await Promise.all([
-                  fetch(`${backendUrl}/api/fin/power-live`).catch(() => null),
-                  fetch(`${backendUrl}/api/fin/equip-live`).catch(() => null),
-                ]);
-                
-                if (powerRes?.ok) {
-                  const powerData = await powerRes.json();
-                  this.liveData.power = powerData;
-                }
-                
-                if (equipRes?.ok) {
-                  const equipData = await equipRes.json();
-                  this.liveData.equipment = equipData.equipment || [];
-                  let allPoints = [];
-                  this.liveData.equipment.forEach(eq => {
-                    if (eq.points) allPoints.push(...eq.points);
-                  });
-                  this.liveData.points = allPoints;
-                }
-                
-                DashboardAdmin.updateFinStatus(true);
-                this.emit("fin-data-updated", this.liveData);
-              }
-            } catch (e) {
-              console.error("FIN Polling Error:", e);
-              DashboardAdmin.updateFinStatus(false);
-            }
-          };
-          fetchFin();
-          this.finInterval = setInterval(fetchFin, this.config.fin.interval);
-        },
-
-        // FIN Login Submission
-        async submitFinLogin() {
-          const btn = document.querySelector('#finLoginOverlay .admin-btn-primary');
-          const errorEl = document.getElementById('finLoginError');
-          const username = document.getElementById('finUsername').value;
-          const password = document.getElementById('finPassword').value;
+      <!-- Main Content Area -->
+      <main class="app-main" style="flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; overflow: hidden;">
+        <div class="app-view-container" style="flex: 1; display: flex; flex-direction: row; align-items: stretch; min-height: 0; min-width: 0; position: relative;">
           
-          if(!username || !password) {
-            errorEl.textContent = "Please enter username and key.";
-            errorEl.style.display = "block";
-            return;
-          }
-          
-          btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Connecting...";
-          btn.disabled = true;
-          errorEl.style.display = "none";
-          
-          try {
-            const res = await fetch("http://127.0.0.1:8000/api/fin/login", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ username, password })
-            });
+          <div class="vp-wrapper" style="flex: 1; min-width: 0; position: relative; overflow: hidden; pointer-events: none;">
+            <div class="vp-bg"></div>
+            <div class="vp-tint"></div>
+            <div class="vp-grad"></div>
             
-            const data = await res.json();
-            if(res.ok) {
-              document.getElementById('finLoginOverlay').classList.remove('active');
-              this.startFinPolling();
-            } else {
-              errorEl.textContent = data.detail || "Authentication failed.";
-              errorEl.style.display = "block";
-            }
-          } catch(e) {
-            errorEl.textContent = "Failed to reach backend server (ensure it is running on port 8000).";
-            errorEl.style.display = "block";
-          }
-          
-          btn.innerHTML = "Connect Server";
-          btn.disabled = false;
-        },
-      };
+            <div class="vp-layer" style="position: absolute; inset: 0; pointer-events: none;">
+            <div class="hs-pin" style="left: 52%; top: 52%;" data-target="dialog-ahu">
+              <button class="hs-btn warn" aria-label="AHU-L12-03 details" aria-expanded="false">
+                <span class="hs-dot"></span>
+              </button>
+              <div class="hs-tooltip">
+                <span class="hs-title">AHU-L12-03</span>
+                <span class="hs-status warn">▲ +1.8 °C vs SP</span>
+              </div>
+            </div>
 
-      //  ADMIN PANEL
-      const DashboardAdmin = {
-        isOpen: false,
+            <div class="hs-pin" style="left: 47%; top: 74%;" data-target="dialog-ch2">
+              <button class="hs-btn crit" aria-label="Chiller CH-2 details" aria-expanded="false">
+                <span class="hs-dot"></span>
+              </button>
+              <div class="hs-tooltip">
+                <span class="hs-title">CH-2</span>
+                <span class="hs-status crit">▲ approach rising</span>
+              </div>
+            </div>
 
-        init() {
-          const toggleBtn = document.getElementById("adminToggle");
-          if (toggleBtn) {
-            toggleBtn.addEventListener("click", () => this.toggle());
-          }
+            <div class="hs-pin" style="left: 68%; top: 60%;" data-target="dialog-pm">
+              <button class="hs-btn info" aria-label="Substation PM-06 details" aria-expanded="false">
+                <span class="hs-dot"></span>
+              </button>
+              <div class="hs-tooltip">
+                <span class="hs-title">PM-06</span>
+                <span class="hs-status info">87.44 kW live</span>
+              </div>
+            </div>
 
-          // Tab switching
-          document.querySelectorAll(".admin-tab").forEach((tab) => {
-            tab.addEventListener("click", () => {
-              document
-                .querySelectorAll(".admin-tab")
-                .forEach((t) => t.classList.remove("active"));
-              document
-                .querySelectorAll(".admin-section")
-                .forEach((s) => s.classList.remove("active"));
-              tab.classList.add("active");
-              const section = document.querySelector(`[data-section="${tab.dataset.tab}"]`);
-              if (section) section.classList.add("active");
-              this.refreshActiveTab(tab.dataset.tab);
-            });
-          });
+            <!-- Hotspot Dialogs -->
+            <div class="hs-dialog" id="dialog-ahu" style="left: calc(52% + 38px); top: 52%; transform: translateY(-30%);" aria-label="AHU-L12-03" hidden>
+              <div class="hs-dialog-header">
+                <span class="badge badge-warn">WARNING</span>
+                <span class="hs-dialog-title">AHU-L12-03</span>
+                <button class="hs-close" aria-label="Close">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+                </button>
+              </div>
+              <div class="hs-dialog-body">
+                <div class="hs-row"><span class="hs-label">Supply air</span><span class="hs-val val-warn">▲ +1.8 °C vs SP</span></div>
+                <div class="hs-row"><span class="hs-label">Fan speed</span><span class="hs-val val-norm">78%</span></div>
+                <div class="hs-row"><span class="hs-label">Filter ΔP</span><span class="hs-val val-norm">Elevated</span></div>
+                <div class="hs-impact"><span class="hs-label">Est. impact</span><span class="hs-val">AED 3,100 / mo</span></div>
+              </div>
+              <div class="hs-dialog-footer">
+                <button class="btn btn-sec">Create WO</button>
+                <button class="btn btn-pri">View Trend</button>
+              </div>
+            </div>
 
-          // Load FIN config into inputs if they exist
-          const finBaseInput = document.getElementById("finBaseUrl");
-          if (finBaseInput) finBaseInput.value = Dashboard.config.fin.baseUrl;
-          const finProjectInput = document.getElementById("finProject");
-          if (finProjectInput) finProjectInput.value = Dashboard.config.fin.project;
-          const finIntervalInput = document.getElementById("finInterval");
-          if (finIntervalInput) finIntervalInput.value = Dashboard.config.fin.interval;
+            <div class="hs-dialog" id="dialog-ch2" style="left: calc(47% + 38px); top: 74%; transform: translateY(-70%);" aria-label="Chiller CH-2" hidden>
+              <div class="hs-dialog-header">
+                <span class="badge badge-crit">CRITICAL</span>
+                <span class="hs-dialog-title">Chiller CH-2</span>
+                <button class="hs-close" aria-label="Close">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+                </button>
+              </div>
+              <div class="hs-dialog-body">
+                <div class="hs-row"><span class="hs-label">Condenser approach</span><span class="hs-val val-crit">▲ +2.1 K · 11 days</span></div>
+                <div class="hs-row"><span class="hs-label">COP</span><span class="hs-val val-norm">4.1 (▼ 9%)</span></div>
+                <div class="hs-row"><span class="hs-label">Likely cause</span><span class="hs-val val-norm">Tube fouling</span></div>
+                <div class="hs-impact"><span class="hs-label">Est. impact</span><span class="hs-val">AED 9,400 / mo</span></div>
+              </div>
+              <div class="hs-dialog-footer">
+                <button class="btn btn-sec">Create WO</button>
+                <button class="btn btn-pri">View Trend</button>
+              </div>
+            </div>
 
-          this.refreshActiveTab("nav-buttons");
-        },
+            <div class="hs-dialog" id="dialog-pm" style="left: calc(68% - 296px); top: 60%; transform: translateY(-50%);" aria-label="Substation PM-06" hidden>
+              <div class="hs-dialog-header">
+                <span class="badge badge-info">LIVE</span>
+                <span class="hs-dialog-title">Substation PM-06</span>
+                <button class="hs-close" aria-label="Close">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+                </button>
+              </div>
+              <div class="hs-dialog-body">
+                <div class="hs-row"><span class="hs-label">Current load</span><span class="hs-val val-norm">87.44 kW</span></div>
+                <div class="hs-row"><span class="hs-label">Meters online</span><span class="hs-val val-pos">214 / 214</span></div>
+                <div class="hs-row"><span class="hs-label">Consumed today</span><span class="hs-val val-norm">1,022 kWh</span></div>
+              </div>
+              <div class="hs-dialog-footer">
+                <button class="btn btn-sec">Open meter</button>
+                <button class="btn btn-pri">View Trend</button>
+              </div>
+            </div>
 
-        toggle() {
-          this.isOpen = !this.isOpen;
-          document
-            .getElementById("adminOverlay")
-            .classList.toggle("active", this.isOpen);
-          document
-            .getElementById("adminToggle")
-            .classList.toggle("active", this.isOpen);
-          if (this.isOpen) this.refreshActiveTab("nav-buttons");
-        },
+            <!-- Viewport UI Overlays -->
+            <div class="vp-caption" style="letter-spacing: 1px; font-weight: 500;">MARSA AL ARAB &middot; LIVE MODEL &middot; ALL FLOORS</div>
+            <div class="vp-histbanner" style="display: none;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 6v6l4 2"></path>
+              </svg>
+              <span>Viewing history: <span id="histBannerTime" style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">Tue 15:05</span></span>
+              <span aria-hidden="true">·</span>
+              <button id="histBannerBack" style="background: transparent; border: none; color: var(--warnTx); text-decoration: underline; font-size: 11.5px; font-weight: 600; cursor: pointer; padding: 0;">Back to live</button>
+            </div>
 
-        close() {
-          this.isOpen = false;
-          document.getElementById("adminOverlay").classList.remove("active");
-          document.getElementById("adminToggle").classList.remove("active");
-        },
+            <!-- Overview Panel -->
+            <div class="vp-ovp">
+              <div class="vp-ovp-glass"></div>
+              <div class="vp-ovp-tint"></div>
+              
+              <button class="ovtab" id="ovpTabBtn" aria-label="Expand overview panel">
+                <span class="ovtab-text">OPERATIONS OVERVIEW</span>
+              </button>
 
-        refreshActiveTab(tabName) {
-          if (tabName === "nav-buttons") this.renderNavList();
-          if (tabName === "info-cards") this.renderCardLists();
-          if (tabName === "side-panel") this.renderSideList();
-          if (tabName === "widgets") this.renderWidgetGrid();
-          if (tabName === "export") this.renderExport();
-        },
+              <div class="vp-ovp-content">
+                <div class="vp-ovp-header">
+                  <span class="ovp-title">OPERATIONS OVERVIEW</span>
+                  <svg class="histclock" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--warnTx)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+                  <button class="ovp-close-btn" aria-label="Collapse overview panel" title="Collapse">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5"></path><path d="m18 17-5-5 5-5"></path></svg>
+                  </button>
+                </div>
+                <div class="vp-ovp-scroll" id="vpOvpScroll">
+                  <!-- Dynamic Content injected via dashboard-ui.js -->
+                </div>
+              </div>
+            </div>
 
-        // ─── Nav Button Admin ───
-        renderNavList() {
-          const list = document.getElementById("adminNavList");
-          list.innerHTML = "";
-          Dashboard.config.navButtons.forEach((btn, i) => {
-            const row = document.createElement("div");
-            row.className = "nav-item-row";
-            row.innerHTML = `
-          <span class="drag-handle"><i class='bx bx-grid-vertical'></i></span>
-          <i class="${btn.icon}"></i>
-          <span>${btn.tooltip}</span>
-          <span class="remove-btn" onclick="DashboardAdmin.removeNavButton(${i})"><i class='bx bx-trash'></i></span>
-        `;
-            list.appendChild(row);
-          });
-        },
+            <!-- Floating Toolbar -->
+            <div class="vp-toolbar">
+              <button class="tool-btn" aria-label="Select tool">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="m3 3 7 19 2-8 8-2z"></path></svg>
+              </button>
+              <button class="tool-btn" aria-label="Slice section">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 14h18" stroke-dasharray="3 3"></path></svg>
+              </button>
+              <button class="tool-btn" aria-label="Walkthrough">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+              </button>
+            </div>
 
-        addNavButton() {
-          const tooltip = prompt('Button tooltip (e.g. "CCTV"):');
-          if (!tooltip) return;
-          const icon = prompt(
-            'Boxicon class (e.g. "bx bx-camera"):',
-            "bx bx-star",
-          );
-          if (!icon) return;
-          Dashboard.config.navButtons.push({
-            id: tooltip.toLowerCase().replace(/\s+/g, "-"),
-            icon,
-            tooltip,
-            action: "emit",
-            event: tooltip.toLowerCase().replace(/\s+/g, "-"),
-          });
-          Dashboard.saveConfig();
-          Dashboard.renderNavButtons();
-          this.renderNavList();
-        },
+            <!-- Bottom Scrubbar -->
+            <div class="vp-scrubbar">
+              <div class="scrub-controls">
+                <div class="scrub-toggle">
+                  <button id="scrubLiveBtn" class="scrub-toggle-btn active"><span class="live-dot"></span>Live</button>
+                  <button id="scrubHistBtn" class="scrub-toggle-btn">History</button>
+                </div>
+                <button id="scrubPrevBtn" class="scrub-step-btn" aria-label="Previous event" title="Previous event">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"></path></svg>
+                </button>
+                <button id="scrubNextBtn" class="scrub-step-btn" aria-label="Next event" title="Next event" disabled>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="transform: scaleX(-1)"><path d="m15 18-6-6 6-6"></path></svg>
+                </button>
+              </div>
 
-        removeNavButton(index) {
-          Dashboard.config.navButtons.splice(index, 1);
-          Dashboard.saveConfig();
-          Dashboard.renderNavButtons();
-          this.renderNavList();
-        },
+              <!-- Interactive Timeline — SVG chart + overlay elements -->
+              <div class="scrub-timeline" id="scrubTimeline" role="slider" aria-label="History timeline, 48 hours" aria-valuemin="0" aria-valuemax="48" aria-valuenow="0" tabindex="0">
+                <!-- Chart SVG: viewBox 480×34, preserveAspectRatio=none so it stretches -->
+                <svg id="scrubSvg" viewBox="0 0 480 34" preserveAspectRatio="none"
+                  style="position:absolute;left:0;top:2px;width:100%;height:32px;pointer-events:none;" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="tlGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="var(--acc)" stop-opacity="0.35"/>
+                      <stop offset="100%" stop-color="var(--acc)" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path id="scrubArea" fill="url(#tlGrad)"></path>
+                  <path id="scrubLine" fill="none" stroke="var(--acc)" stroke-width="1.5" vector-effect="non-scaling-stroke"></path>
+                </svg>
 
-        // ─── Info Card Admin ───
-        renderCardLists() {
-          this.renderCardList(
-            "adminLeftCards",
-            Dashboard.config.leftCards,
-            "left",
-          );
-          this.renderCardList(
-            "adminRightCards",
-            Dashboard.config.rightCards,
-            "right",
-          );
-        },
+                <!-- Event dots — rendered by JS as absolutely positioned buttons -->
+                <div id="scrubEventsEl" style="position:absolute;inset:0;pointer-events:none;"></div>
 
-        renderCardList(containerId, cards, side) {
-          const list = document.getElementById(containerId);
-          list.innerHTML = "";
-          cards.forEach((card, i) => {
-            const row = document.createElement("div");
-            row.className = "nav-item-row";
-            row.innerHTML = `
-          <i class="${card.icon}"></i>
-          <span>${card.label}</span>
-          <span class="remove-btn" onclick="DashboardAdmin.removeInfoCard('${side}', ${i})"><i class='bx bx-trash'></i></span>
-        `;
-            list.appendChild(row);
-          });
-        },
+                <!-- Time ticks — rendered by JS -->
+                <div id="scrubTicksEl" style="position:absolute;bottom:0;left:0;right:0;height:20px;pointer-events:none;"></div>
 
-        addInfoCard(side) {
-          const label = prompt('Card label (e.g. "Wind Speed"):');
-          if (!label) return;
-          const icon = prompt("Boxicon class:", "bx bx-wind");
-          const card = {
-            id: label.toLowerCase().replace(/\s+/g, "-"),
-            label,
-            icon,
-            accent: "time",
-            source: "custom",
-            field: label.toLowerCase(),
-          };
-          if (side === "left") Dashboard.config.leftCards.push(card);
-          else Dashboard.config.rightCards.push(card);
-          Dashboard.saveConfig();
-          Dashboard.render();
-          this.renderCardLists();
-        },
+                <!-- Ghost hover line -->
+                <div id="scrubGhost" aria-hidden="true"
+                  style="display:none;position:absolute;top:2px;bottom:20px;width:1px;background:var(--t3);opacity:.5;pointer-events:none;z-index:2;"></div>
+                <div id="scrubGhostLabel" aria-hidden="true"
+                  style="display:none;position:absolute;top:-2px;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3);pointer-events:none;white-space:nowrap;z-index:2;"></div>
 
-        removeInfoCard(side, index) {
-          if (side === "left") Dashboard.config.leftCards.splice(index, 1);
-          else Dashboard.config.rightCards.splice(index, 1);
-          Dashboard.saveConfig();
-          Dashboard.render();
-          this.renderCardLists();
-        },
+                <!-- Cursor line + label (history mode) -->
+                <div id="scrubCursorLine" aria-hidden="true"
+                  style="display:none;position:absolute;top:2px;bottom:20px;width:1px;background:var(--t1);opacity:.65;pointer-events:none;z-index:4;"></div>
+                <div id="scrubCursorLabel" aria-hidden="true"
+                  style="display:none;position:absolute;top:-2px;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:var(--t1);pointer-events:none;white-space:nowrap;z-index:4;"></div>
+              </div>
 
-        // ─── Side Panel Admin ───
-        renderSideList() {
-          const list = document.getElementById("adminSideList");
-          list.innerHTML = "";
-          Dashboard.config.sideButtons.forEach((btn, i) => {
-            const row = document.createElement("div");
-            row.className = "nav-item-row";
-            row.innerHTML = `
-          <span class="drag-handle"><i class='bx bx-grid-vertical'></i></span>
-          <i class="${btn.icon}"></i>
-          <span>${btn.label}</span>
-          <span class="remove-btn" onclick="DashboardAdmin.removeSideButton(${i})"><i class='bx bx-trash'></i></span>
-        `;
-            list.appendChild(row);
-          });
-        },
+              <div id="scrubStatus" class="scrub-status">
+                <span id="scrubStatusMode" style="font-family: var(--fH), sans-serif; font-weight: 600; color: var(--t1);">LIVE</span>
+                <span style="color: var(--t3);">&middot;</span>
+                <span id="scrubStatusTime" style="color: var(--t1); font-weight: 500;">12:56</span>
+              </div>
+            </div>
 
-        addSideButton() {
-          const label = prompt('Button label (e.g. "CCTV"):');
-          if (!label) return;
-          const icon = prompt("Boxicon class:", "bx bx-camera");
-          Dashboard.config.sideButtons.push({
-            id: label.toLowerCase().replace(/\s+/g, "-"),
-            icon,
-            label,
-            action: "show-dashboard",
-            dashboard: label.toLowerCase().replace(/\s+/g, ""),
-          });
-          Dashboard.saveConfig();
-          Dashboard.renderSidePanel();
-          this.renderSideList();
-        },
+          </div> <!-- End of vp-layer -->
+        </div> <!-- End of vp-wrapper -->
+          <section id="rightPanel" class="right-panel" style="flex: none; width: 378px; background: var(--s1); border-inline-start: 1px solid var(--bd1); display: flex; flex-direction: column; min-height: 0; z-index: 20; position: relative;">
+            <!-- Tab shown when collapsed -->
+            <button class="rptab" id="rpOpenTab" aria-label="Expand right panel">
+              <span class="rptab-text" id="rpTabText">OPERATIONS</span>
+            </button>
+            
+            <div class="rp-inner" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+              <div class="rp-header" style="flex: none; display: flex; align-items: flex-start; gap: 9px; padding: 13px 14px 9px;">
+                <button class="rp-back" style="flex: none; background: var(--s2); border: 1px solid var(--bd2); border-radius: 4px; color: var(--t2); padding: 4px; margin-top: 2px; cursor: pointer; display: none; align-items: center; justify-content: center;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+                </button>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <div class="rp-title" style="font-family: var(--fH), sans-serif; font-size: 13px; font-weight: 600; color: var(--t1);">Operations</div>
+                    <svg class="histclock" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--warnTx)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+                  </div>
+                  <div class="rp-subtitle" style="font-size: 11px; color: var(--t3); margin-block-start: 2px; display: none;">Module highlights</div>
+                </div>
+                <!-- Collapse button -->
+                <button id="rpCollapseBtn" title="Collapse panel" style="flex:none;width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--bd1);border-radius:4px;color:var(--t2);cursor:pointer;margin-top:1px;transition:background 0.15s,color 0.15s" onmouseover="this.style.background='var(--s3)';this.style.color='var(--t1)'" onmouseout="this.style.background='transparent';this.style.color='var(--t2)'">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 17 5-5-5-5"></path><path d="m6 17 5-5-5-5"></path></svg>
+                </button>
+              </div>
+              <div id="rpContent" style="flex: 1; overflow-y: auto; padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px;">
+                <!-- Populated dynamically by dashboard-ui.js renderRightPanel() -->
+              </div>
+            </div>
+          </section>
+        </div> <!-- End of app-view-container -->
 
-        removeSideButton(index) {
-          Dashboard.config.sideButtons.splice(index, 1);
-          Dashboard.saveConfig();
-          Dashboard.renderSidePanel();
-          this.renderSideList();
-        },
+      </main>
+    </div> <!-- End of app-body -->
 
-        // ─── Widget Admin ───
-        renderWidgetGrid() {
-          const grid = document.getElementById("adminWidgetGrid");
-          grid.innerHTML = "";
-          Dashboard.config.widgets.forEach((w, i) => {
-            const card = document.createElement("div");
-            card.className = `widget-card ${w.enabled ? "enabled" : ""}`;
-            card.innerHTML = `
-          <i class="${w.icon}"></i>
-          <div class="widget-info">
-            <h4>${w.name}</h4>
-            <p>${w.category}</p>
-          </div>
-          <button class="widget-toggle ${w.enabled ? "on" : ""}" onclick="DashboardAdmin.toggleWidget(${i}, this, event)"></button>
-        `;
-            grid.appendChild(card);
-          });
-        },
+    <!-- Floating EKO Chat Window (now spans over everything including right panel) -->
+    <div class="eko-chat-modal" id="ekoChatModal" style="display: none; position: absolute; right: 24px; bottom: 84px; width: 440px; height: 480px; background: var(--s1); border: 1px solid var(--bd1); border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); z-index: 100; flex-direction: column; overflow: hidden; backdrop-filter: blur(16px);">
+      <!-- Header -->
+      <div style="flex: none; display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--bd1); background: var(--s2);">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--acc)" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path></svg>
+          <span style="font-family: var(--fH), sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.5px; color: var(--t1);">ASK EKO</span>
+          <span style="padding: 2px 8px; border-radius: 10px; background: var(--s3); font-size: 11px; color: var(--t3);" id="ekoChatScope">Operations &middot; Marsa Al Arab</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="ekoClearChat" style="background: none; border: none; font-size: 11px; color: var(--t3); cursor: pointer; padding: 2px 4px;">Clear</button>
+          <button id="ekoCloseChat" style="background: none; border: none; font-size: 16px; color: var(--t3); cursor: pointer; padding: 2px 4px; line-height: 1;">&times;</button>
+        </div>
+      </div>
 
-        toggleWidget(index, toggleEl, e) {
-          e.stopPropagation();
-          Dashboard.config.widgets[index].enabled =
-            !Dashboard.config.widgets[index].enabled;
-          toggleEl.classList.toggle("on");
-          toggleEl.closest(".widget-card").classList.toggle("enabled");
-          Dashboard.saveConfig();
-        },
+      <!-- Message History List -->
+      <div id="ekoChatMessages" style="flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px;">
+        <!-- Messages dynamically appended by JS -->
+      </div>
 
-        // ─── FIN Config ───
-        saveFinConfig() {
-          Dashboard.config.fin.baseUrl =
-            document.getElementById("finBaseUrl").value;
-          Dashboard.config.fin.project =
-            document.getElementById("finProject").value;
-          Dashboard.config.fin.interval =
-            parseInt(document.getElementById("finInterval").value) || 5000;
-          Dashboard.saveConfig();
-          Dashboard.startFinPolling();
-          alert("FIN configuration saved!");
-        },
+      <!-- Footer -->
+      <div style="flex: none; padding: 8px 14px; border-top: 1px solid var(--bd1); background: var(--s2); font-size: 11px; color: var(--t3); display: flex; align-items: center; justify-content: space-between;">
+        <span>Streams from live site data</span>
+        <span>Esc closes</span>
+      </div>
+    </div>
 
-        async testFinConnection() {
-          const baseUrl = document.getElementById("finBaseUrl").value;
-          const project = document.getElementById("finProject").value;
-          try {
-            const res = await fetch(
-              `${baseUrl}/api/${project}/read?filter=point&limit=1`,
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                  Accept: "application/json",
-                },
-              },
-            );
-            this.updateFinStatus(res.ok);
-            alert(
-              res.ok
-                ? "✅ Connection successful!"
-                : `❌ Connection failed: ${res.status}`,
-            );
-          } catch (e) {
-            this.updateFinStatus(false);
-            alert(`❌ Connection failed: ${e.message}`);
-          }
-        },
+    <!-- Ask EKO Bottom Bar -->
+    <footer class="ask-eko-bar" style="flex: none; display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--s1); border-block-start: 1px solid var(--bd1); z-index: 30;">
+      <form class="askbox" style="flex: 1; display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--s2); pointer-events: auto; border-radius: 6px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--acc)" aria-hidden="true" style="flex: none"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path></svg>
+        <input type="text" aria-label="Ask EKO" placeholder="Ask EKO: &quot;why is the west tower above baseline?&quot;" style="flex: 1; background: transparent; border: none; outline: none; color: var(--t1); font-family: var(--fB), sans-serif; font-size: 13px;" />
+      </form>
+      <button style="flex: none; padding: 8px 13px; border-radius: 4px; background: transparent; border: 1px solid var(--bd2); color: var(--t2); font-size: 12px; font-weight: 500; cursor: pointer;">What happened yesterday afternoon?</button>
+      <button style="flex: none; padding: 8px 13px; border-radius: 4px; background: transparent; border: 1px solid var(--bd2); color: var(--t2); font-size: 12px; font-weight: 500; cursor: pointer;">Explain today's spike</button>
+      <button style="flex: none; padding: 8px 13px; border-radius: 4px; background: transparent; border: 1px solid var(--bd2); color: var(--t2); font-size: 12px; font-weight: 500; cursor: pointer;">Open FDD faults</button>
+      <button style="flex: none; padding: 8px 13px; border-radius: 6px; background: var(--btnP); border: 1px solid transparent; color: var(--btnPfg); font-size: 12px; font-weight: 500; cursor: pointer;">Generate owner report</button>
+    </footer>
 
-        updateFinStatus(connected) {
-          const dot = document.getElementById("finStatusDot");
-          const text = document.getElementById("finStatusText");
-          if (dot) dot.classList.toggle("connected", connected);
-          if (text)
-            text.textContent = connected ? "Connected to FIN" : "Disconnected";
-        },
-
-        // ─── Export / Import ───
-        renderExport() {
-          document.getElementById("configArea").value = JSON.stringify(
-            Dashboard.config,
-            null,
-            2,
-          );
-        },
-
-        exportConfig() {
-          const json = JSON.stringify(Dashboard.config, null, 2);
-          const blob = new Blob([json], { type: "application/json" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `dashboard-config-${new Date().toISOString().split("T")[0]}.json`;
-          a.click();
-          URL.revokeObjectURL(url);
-        },
-
-        importConfig() {
-          const input = document.createElement("input");
-          input.type = "file";
-          input.accept = ".json";
-          input.onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-              try {
-                Dashboard.config = JSON.parse(ev.target.result);
-                Dashboard.saveConfig();
-                Dashboard.render();
-                this.renderExport();
-                alert("✅ Configuration imported successfully!");
-              } catch (err) {
-                alert("❌ Invalid JSON file");
-              }
-            };
-            reader.readAsText(file);
-          };
-          input.click();
-        },
-
-        resetConfig() {
-          if (
-            !confirm("Reset all settings to defaults? This cannot be undone.")
-          )
-            return;
-          localStorage.removeItem("dt-dashboard-config");
-          Dashboard.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-          Dashboard.render();
-          document.getElementById("finBaseUrl").value =
-            Dashboard.config.fin.baseUrl;
-          document.getElementById("finProject").value =
-            Dashboard.config.fin.project;
-          document.getElementById("finInterval").value =
-            Dashboard.config.fin.interval;
-          this.renderExport();
-          alert("✅ Configuration reset to defaults!");
-        },
-
-        // ─── Quit ───
-        closeQuit() {
-          document.getElementById("quitConfirm").classList.remove("show");
-        },
-        confirmQuit() {
-          Dashboard.emit("quit");
-          this.closeQuit();
-        },
-      };
-
-      // ═══════════════════════════════════════════════════════════════
-      //  BOOT
-      // ═══════════════════════════════════════════════════════════════
-      window.Dashboard = Dashboard;
-      window.DashboardAdmin = DashboardAdmin;
-      window.DEFAULT_CONFIG = DEFAULT_CONFIG;
-
-      document.addEventListener("DOMContentLoaded", () => {
-        Dashboard.init();
-        DashboardAdmin.init();
-      });
-    </script>
-    <script src="./static/js/overview.js"></script>
-  </body>
+  </div>
+  <script src="/static/js/dashboard.js?v=1" defer></script>
+</body>
 </html>

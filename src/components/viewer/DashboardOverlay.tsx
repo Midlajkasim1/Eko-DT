@@ -19,7 +19,7 @@ export function DashboardOverlay({ visible }: DashboardOverlayProps) {
     }
     window.addEventListener('dashboard-event', handler)
 
-    fetch('templates/index.html')
+    fetch('templates/index.html?v=' + Date.now())
       .then(res => res.text())
       .then(html => {
         if (!mounted || !containerRef.current) return
@@ -48,7 +48,7 @@ export function DashboardOverlay({ visible }: DashboardOverlayProps) {
         const bodyContent = doc.body.innerHTML
         const tempDiv = document.createElement('div')
         tempDiv.innerHTML = bodyContent
-        Array.from(tempDiv.querySelectorAll('script')).forEach(s => s.remove())
+        Array.from(tempDiv.querySelectorAll('script:not([data-dc-script])')).forEach(s => s.remove())
         containerRef.current.innerHTML = tempDiv.innerHTML
 
         // Inject project API settings BEFORE running template scripts
@@ -127,6 +127,8 @@ export function DashboardOverlay({ visible }: DashboardOverlayProps) {
       <div 
         ref={containerRef} 
         className="dashboard-native-container" 
+        data-theme="dark"
+        data-nav="max"
         style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
       />
     </div>

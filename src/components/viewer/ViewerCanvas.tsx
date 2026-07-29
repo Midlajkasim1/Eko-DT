@@ -27,7 +27,7 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
   const statsContainerRef = useRef<HTMLDivElement>(null)
   const [statsVisible, setStatsVisible] = useState(false)
   const [pickerActive, setPickerActive] = useState(false)
-  const [dashboardVisible, setDashboardVisible] = useState(isFinProject)
+  const [dashboardVisible, setDashboardVisible] = useState(isFinProject || !adminMode)
   const [pickedCoord, setPickedCoord] = useState<[number, number, number] | null>(null)
   const materialPickerActive = useAppStore(s => s.materialPickerActive)
   const setMaterialPickerActive = useAppStore(s => s.setMaterialPickerActive)
@@ -35,10 +35,10 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
   const setSelectedMaterialElement = useAppStore(s => s.setSelectedMaterialElement)
 
   useEffect(() => {
-    if (isFinProject) {
+    if (isFinProject || !adminMode) {
       setDashboardVisible(true)
     }
-  }, [isFinProject])
+  }, [isFinProject, adminMode])
 
   const { engineRef, isReady, error } = useFragmentsEngine(containerRef)
   const { loadModel, isLoading } = useModelLoader(engineRef)
