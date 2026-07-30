@@ -16,6 +16,7 @@ interface ViewerToolbarProps {
 }
 
 import { useState, useEffect } from 'react'
+import { useAppStore } from '@/store/useAppStore'
 
 export function ViewerToolbar({ engineRef, onToggleStats, statsVisible, pickerActive, onTogglePicker, dashboardVisible, onToggleDashboard, materialPickerActive, onToggleMaterialPicker }: ViewerToolbarProps) {
   const engine = engineRef.current
@@ -82,28 +83,28 @@ export function ViewerToolbar({ engineRef, onToggleStats, statsVisible, pickerAc
     }
   }
 
-  const [isFullscreen, setIsFullscreen] = useState(false)
+  const isFullscreen = useAppStore(s => s.isFullscreen)
+  const setIsFullscreen = useAppStore(s => s.setIsFullscreen)
+  const setIsToolbarVisible = useAppStore(s => s.setIsToolbarVisible)
 
+  // Listen to the window event dispatched by DraggableFullscreenWidget
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
-    }
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
-  }, [])
+    const handleExit = () => setIsFullscreen(false)
+    window.addEventListener('toggle-fullscreen-exit', handleExit)
+    return () => window.removeEventListener('toggle-fullscreen-exit', handleExit)
+  }, [setIsFullscreen])
 
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      const container = document.querySelector('.viewer-canvas-wrapper')
-      if (container) container.requestFullscreen().catch(e => console.warn(e))
-    } else {
-      if (document.exitFullscreen) document.exitFullscreen()
+    const newFullscreen = !isFullscreen;
+    setIsFullscreen(newFullscreen);
+    if (newFullscreen) {
+      setIsToolbarVisible(false);
     }
   }
 
   const tools = [
     {
-      title: isFullscreen ? 'Exit Fullscreen' : 'Fullscreen',
+      title: isFullscreen ? 'Exit Focus Mode' : 'Focus Mode',
       action: toggleFullscreen,
       active: isFullscreen,
       icon: isFullscreen ? (

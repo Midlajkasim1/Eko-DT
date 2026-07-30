@@ -44,6 +44,7 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
       setNewProjectName('')
       setIsFinProject(false)
       setShowNewForm(false)
+      useAppStore.getState().reset()
       setStep('idle') // Switch to upload zone
     }
   }
@@ -71,6 +72,8 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
     const { folderHandle } = useProjectStore.getState()
     if (!folderHandle) return
 
+    useAppStore.getState().reset()
+
     const projectModels = await loadModelsFromProject(folderHandle, meta)
     for (const pm of projectModels) {
       addModel({
@@ -93,33 +96,10 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
       setLightingParams(meta.renderSettings)
     }
 
-    // Reset UI panels when loading a new project
-    useAppStore.getState().setMaterialPickerActive(false)
-    useAppStore.getState().setSelectedMaterialElement(null)
     useModelStore.getState().setActiveModelId(null)
 
     // Set viewing step first so RenderPanel and others mount if needed
     setStep('viewing')
-
-    // Restore camera position if present (give it a small delay to ensure engine is fully ready)
-    if (meta.camera && engineRef?.current) {
-      setTimeout(() => {
-        const engine = engineRef.current
-        if (engine && meta.camera) {
-          try {
-            if (engine.world.camera.controls) {
-              engine.world.camera.controls.setLookAt(
-                meta.camera.position[0], meta.camera.position[1], meta.camera.position[2],
-                meta.camera.target[0], meta.camera.target[1], meta.camera.target[2],
-                false
-              )
-            }
-          } catch (e) {
-            console.warn('Failed to restore camera position:', e)
-          }
-        }
-      }, 500)
-    }
   }
 
   const handleDeleteRecent = async (projectId: string) => {
@@ -142,6 +122,8 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
       </div>
     )
   }
+
+  const sortedProjects = [...recentProjects].sort((a, b) => (b.meta.updatedAt || 0) - (a.meta.updatedAt || 0));
 
   return (
     <div className="project-list-page">
@@ -215,7 +197,7 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
         </div>
       ) : (
         <div className="project-grid">
-          {recentProjects.map(({ meta, handle }) => (
+          {sortedProjects.map(({ meta, handle }) => (
             <ProjectCard
               key={meta.projectId}
               project={meta}

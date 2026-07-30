@@ -13,6 +13,7 @@ import { ModelPositionPanel } from '@/components/viewer/ModelPositionPanel'
 import { RenderPanel } from '@/components/viewer/RenderPanel'
 import { DashboardOverlay } from '@/components/viewer/DashboardOverlay'
 import { MaterialPanel } from '@/components/viewer/MaterialPanel'
+import { FocusModeWidget } from '@/components/viewer/FocusModeWidget'
 import type { FragmentsEngine } from '@/lib/fragmentsEngine'
 
 interface ViewerCanvasProps {
@@ -33,6 +34,8 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
   const setMaterialPickerActive = useAppStore(s => s.setMaterialPickerActive)
   const selectedMaterialElement = useAppStore(s => s.selectedMaterialElement)
   const setSelectedMaterialElement = useAppStore(s => s.setSelectedMaterialElement)
+  const isFullscreen = useAppStore(s => s.isFullscreen)
+  const isToolbarVisible = useAppStore(s => s.isToolbarVisible)
 
   useEffect(() => {
     if (isFinProject || !adminMode) {
@@ -83,8 +86,23 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
   const aoIntensity = useAppStore(s => s.aoIntensity)
 
   useEffect(() => {
-    if (isReady && onEngineReady) onEngineReady(engineRef)
-  }, [isReady])
+    if (isReady && onEngineReady) {
+      onEngineReady(engineRef)
+      // Restore camera if we have it
+      const camera = useProjectStore.getState().currentProject?.camera
+      if (camera && engineRef.current?.world?.camera?.controls) {
+        try {
+          engineRef.current.world.camera.controls.setLookAt(
+            camera.position[0], camera.position[1], camera.position[2],
+            camera.target[0], camera.target[1], camera.target[2],
+            false
+          )
+        } catch (e) {
+          console.warn('Failed to restore camera in ViewerCanvas:', e)
+        }
+      }
+    }
+  }, [isReady, onEngineReady])
 
   useEffect(() => {
     if (isReady && engineRef.current) {
@@ -515,6 +533,7 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
 
   return (
     <div className="viewer-canvas-wrapper">
+      <FocusModeWidget />
       {/* Three.js mount */}
       <div
         ref={containerRef}
@@ -531,7 +550,7 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
       )}
 
       {/* Toolbar */}
-      {step === 'viewing' && adminMode && (
+      {step === 'viewing' && adminMode && isToolbarVisible && (
         <ViewerToolbar
           engineRef={engineRef}
           onToggleStats={() => setStatsVisible(v => !v)}
@@ -552,7 +571,7 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
       )}
 
       {/* Right side panels */}
-      {step === 'viewing' && adminMode && (
+      {step === 'viewing' && adminMode && (!isFullscreen || isToolbarVisible) && (
         <div className="right-panels-container" key={useProjectStore.getState().currentProject?.projectId || 'empty'}>
           <RenderPanel />
           <ModelPositionPanel 

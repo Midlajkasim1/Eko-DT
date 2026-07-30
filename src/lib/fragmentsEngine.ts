@@ -432,11 +432,10 @@ export async function initFragmentsEngine(
 
   if (world.camera.controls) {
     world.camera.controls.maxDistance = Infinity
-    world.camera.controls.minDistance = 0.1
+    world.camera.controls.minDistance = 2
     world.camera.controls.dollySpeed = 2
     world.camera.controls.truckSpeed = 2
     world.camera.controls.infinityDolly = true
-    world.camera.controls.dollyToCursor = true
   }
 
   world.camera.controls.setLookAt(50, 30, 50, 0, 0, 0)

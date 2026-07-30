@@ -14,6 +14,7 @@ export default function App() {
   const engineRef = useRef<FragmentsEngine | null>(null)
   const setStep = useAppStore(s => s.setStep)
   const addModel = useModelStore(s => s.addModel)
+  const isFullscreen = useAppStore(s => s.isFullscreen)
 
   const currentProject = useProjectStore(s => s.currentProject)
   const addModelEntry = useProjectStore(s => s.addModelEntry)
@@ -82,9 +83,9 @@ export default function App() {
 
   return (
     <div className="app-layout">
-      <Header />
+      {!isFullscreen && <Header />}
       <div className="app-body">
-        <Sidebar onFiles={handleFiles} engineRef={engineRef} />
+        {!isFullscreen && <Sidebar onFiles={handleFiles} engineRef={engineRef} />}
         <main className="app-main">
           <ViewerCanvas onEngineReady={handleEngineReady} adminMode={true} />
         </main>

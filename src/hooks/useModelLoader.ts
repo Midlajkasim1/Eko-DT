@@ -103,6 +103,7 @@ export function useModelLoader(engineRef: React.MutableRefObject<FragmentsEngine
 
         engine.world.scene.three.add(model.object)
         await engine.fragments.update(true)
+        useModelStore.getState().markModelLoadedInEngine(modelId)
 
         // IFC spaces
         try {

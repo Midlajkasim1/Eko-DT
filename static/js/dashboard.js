@@ -7,6 +7,183 @@
   const $ = (s, ctx = document) => ctx.querySelector(s);
   const $$ = (s, ctx = document) => [...ctx.querySelectorAll(s)];
 
+
+  const arDict = {
+    'OPERATIONS OVERVIEW': 'نظرة عامة على التشغيل',
+    'OPEN ALARMS': 'التنبيهات المفتوحة',
+    '1 critical &middot; 2 warning': '1 حرج &middot; 2 تحذير',
+    'SYSTEMS LIVE': 'الأنظمة المباشرة',
+    'all integrations healthy': 'جميع التكاملات سليمة',
+    'LIVE': 'مباشر',
+    'COMFORT COMPLIANCE': 'الالتزام بالراحة',
+    'within target band': 'ضمن النطاق المستهدف',
+    'Event Statistics': 'إحصاءات الأحداث',
+    '1,204 events / 7 d': '1,204 حدث / 7 أيام',
+    'Live Systems': 'الأنظمة المباشرة',
+    '6/6 live': '6/6 مباشر',
+    'History Charts': 'الرسوم التاريخية',
+    '48 h retained': 'سجل 48 ساعة',
+    'Alarms': 'التنبيهات',
+    '3 open': '3 مفتوحة',
+    'Water': 'المياه',
+    '142 m³ today': '142 م³ اليوم',
+
+    'ENERGY OVERVIEW': 'نظرة عامة على الطاقة',
+    'CONSUMED TODAY': 'الاستهلاك اليوم',
+    'forecast EOD 1,698 kWh': 'التوقع بنهاية اليوم 1,698 كيلوواط ساعة',
+    'CURRENT LOAD': 'الحمل الحالي',
+    '<span style="color:var(--warnTx)">▲ 22% above 71.8 kW baseline</span>': '<span style="color:var(--warnTx)">▲ 22% أعلى من الأساس 71.8</span>',
+    'ENERGY COST TODAY': 'تكلفة الطاقة اليوم',
+    '${t("at blended DEWA tariff")}': 'حسب تعرفة ديوا المدمجة',
+    'SAME DAY LAST MONTH': 'نفس اليوم الشهر الماضي',
+    '<span style="color:var(--posTx)">▼ 49.6% month-on-month</span>': '<span style="color:var(--posTx)">▼ 49.6% مقارنة بالشهر الماضي</span>',
+    'Waste Prevention': 'منع الهدر',
+    'AED 14.2K / mo': '14.2 ألف درهم/شهر',
+    'Portfolio Benchmarking': 'مقارنة المحفظة',
+    'Rank 2 of 4': 'المرتبة 2 من 4',
+    'Location Based Metering': 'القياس حسب الموقع',
+    '12 meters live': '12 عداد مباشر',
+    'Flow and Trend Anomaly': 'شذوذ التدفق والاتجاه',
+    '2 this week': '2 هذا الأسبوع',
+    'Budget Overrun': 'تجاوز الميزانية',
+    '+3.2% MTD': '+3.2% منذ بداية الشهر',
+    'Consumption': 'الاستهلاك',
+    '19.1 MWh today': '19.1 ميجاوات/اليوم',
+    'Forecasting': 'التنبؤ',
+    '41.8 MWh month end': '41.8 ميجاوات/نهاية الشهر',
+
+    'ESG OVERVIEW': 'نظرة عامة على الاستدامة',
+    'CO2 TODAY': 'ثاني أكسيد الكربون اليوم',
+    '<span style="color:var(--posTx)">▼ 5.0% vs baseline</span>': '<span style="color:var(--posTx)">▼ 5.0% مقارنة بالأساس</span>',
+    'ENERGY VS TARGET': 'الطاقة مقابل الهدف',
+    'month to date': 'منذ بداية الشهر',
+    'FRAMEWORKS ON TRACK': 'الأطر قيد التنفيذ',
+    '<span style="color:var(--warnTx)">GRESB submission overdue</span>': '<span style="color:var(--warnTx)">تأخر تقديم GRESB</span>',
+    'Target vs Actual': 'الهدف مقابل الفعلي',
+    '▼ 4.1% vs target MTD': '▼ 4.1% مقابل الهدف',
+    'Net Zero': 'الحياد الكربوني',
+    '2040 trajectory on track': 'مسار 2040 قيد التنفيذ',
+    'Utility Bill Management': 'إدارة فواتير الخدمات',
+    'AED 182K this month': '182 ألف درهم هذا الشهر',
+    'Reporting': 'التقارير',
+    '2 reports due': 'تقريران مستحقان',
+
+    'ASSETS OVERVIEW': 'نظرة عامة على الأصول',
+    'ASSETS REGISTERED': 'الأصول المسجلة',
+    'synced from Hexagon EAM': 'مزامنة من Hexagon EAM',
+    'OPEN WORK ORDERS': 'أوامر العمل المفتوحة',
+    'synced with Maximo': 'مزامنة مع Maximo',
+    'ASSETS IN ALARM': 'الأصول في حالة إنذار',
+    '1 critical: CH-2': '1 حرج: CH-2',
+    'Registry': 'السجل',
+    '1,240 assets': '1,240 أصل',
+    'Work Orders': 'أوامر العمل',
+    '380 synced': '380 متزامنة',
+    'Analytics': 'التحليلات',
+    '12 trends watched': 'مراقبة 12 اتجاه',
+    'RFID': 'تتبع RFID',
+    '96% tagged': '96% موسومة',
+
+    'SPACES OVERVIEW': 'نظرة عامة على المساحات',
+    'ZONES OCCUPIED': 'المناطق المشغولة',
+    'peak 14:00–16:00': 'الذروة 14:00–16:00',
+    'IEQ INDEX': 'مؤشر جودة البيئة',
+    'good &middot; CO₂ within limits': 'جيد &middot; ثاني أكسيد الكربون ضمن الحدود',
+    'Room Data Sheets': 'بيانات الغرف',
+    '412 sheets': '412 ورقة',
+    'Heat Map': 'الخريطة الحرارية',
+    '2 hot zones': 'منطقتان حارتان',
+    'Zone Status': 'حالة المنطقة',
+    '64 / 66 normal': '64 / 66 طبيعي',
+    'Thermal Comfort': 'الراحة الحرارية',
+    '97.2% in band': '97.2% ضمن النطاق',
+    'IEQ': 'جودة البيئة (IEQ)',
+    'index 88 &middot; good': 'المؤشر 88 &middot; جيد',
+
+    'MAINTENANCE OVERVIEW': 'نظرة عامة على الصيانة',
+    'PREVENTIVE JOBS DUE': 'أعمال الصيانة المستحقة',
+    'this week': 'هذا الأسبوع',
+    'OVERDUE': 'متأخرة',
+    'oldest 6 days': 'أقدمها 6 أيام',
+    'ON-TIME COMPLETION': 'الإنجاز في الوقت',
+    'Preventive Jobs': 'الأعمال الوقائية',
+    '14 due this week': '14 مستحقة هذا الأسبوع',
+    'Schedules': 'الجداول الزمنية',
+    '38 active': '38 نشطة',
+    'Status': 'الحالة',
+    '92% on time MTD': '92% في الوقت الموعد',
+
+    'SECURITY OVERVIEW': 'نظرة عامة على الأمن',
+    'CAMERAS LIVE': 'الكاميرات المباشرة',
+    'read-only via VMS': 'للقراءة فقط عبر VMS',
+    'DOORS ONLINE': 'الأبواب المتصلة',
+    'read-only via access control': 'للقراءة فقط عبر التحكم',
+    'LIFE SAFETY': 'سلامة الأرواح',
+    'Normal': 'طبيعي',
+    'monitored, never controlled': 'مراقبة فقط، بدون تحكم',
+    'CCTV': 'كاميرات المراقبة',
+    '96 cameras live': '96 كاميرا مباشرة',
+    'Access Control': 'التحكم بالوصول',
+    '212 doors online': '212 باب متصل',
+    'Life Safety': 'سلامة الأرواح',
+    'Normal &middot; monitored': 'طبيعي &middot; مراقب',
+    
+    'AT A GLANCE': 'لمحة سريعة',
+    'Operations &middot; Marsa Al Arab': 'التشغيل &middot; مرسى العرب',
+
+    // Right panel subtitle strings
+    '7-day trend and top opportunities': 'اتجاه 7 أيام وأبرز الفرص',
+    'Avoidable consumption &middot; FDD + schedule analysis': 'الاستهلاك القابل للتجنب &middot; تحليل FDD والجداول',
+    'Sub-view': 'عرض فرعي',
+    'Module highlights': 'أبرز وحدات النظام',
+
+    // Right panel stub text
+    'shows the built pattern.': 'يعرض النمط المطوّر.',
+    'Detail view in design': 'عرض التفاصيل قيد التصميم',
+    'Module highlights in design': 'أبرز الوحدات قيد التصميم',
+    'see': 'راجع',
+    'for the built pattern.': 'للنمط المطوّر.',
+
+    // Energy chart labels
+    'Actual': 'الفعلي',
+    'Baseline': 'الأساسي',
+    'Excess': 'الزائد',
+    'Consumption, 7 days': 'الاستهلاك، 7 أيام',
+    'Baseline vs Actual': 'الأساسي مقابل الفعلي',
+    'kWh / day': 'كيلوواط ساعة / يوم',
+    'Hourly average load by day &middot; last 7 days': 'متوسط الحمل بالساعة يومياً &middot; آخر 7 أيام',
+    'Mon': 'الاثنين',
+    'Tue': 'الثلاثاء',
+    'Wed': 'الأربعاء',
+    'Thu': 'الخميس',
+    'Fri': 'الجمعة',
+    'Sat': 'السبت',
+    'Sun': 'الأحد',
+    'Off-hours Load Heatmap': 'خريطة الحمل خارج ساعات العمل',
+
+    // Opportunities section
+    'OPPORTUNITIES': 'الفرص',
+    'WARNING': 'تحذير',
+    'Create work order': 'إنشاء أمر عمل',
+    'Trend': 'الاتجاه',
+    'Night setback not applied, L11 west': 'تخفيض الليل غير مطبّق، الطابق 11 غرب',
+    'AED 6.1K / mo': '6.1 ألف درهم/شهر',
+    'Zone temperatures hold occupied setpoints overnight. Applying the night setback schedule would remove most of the off-hours load plateau visible in the heatmap.': 'تحافظ درجات حرارة المناطق على نقاط الضبط المأهولة طوال الليل. سيؤدي تطبيق جدول التخفيض الليلي إلى إزالة معظم الحمل خارج ساعات العمل.',
+    'Simultaneous heat and cool, L11': 'تسخين وتبريد متزامن، الطابق 11',
+    'AED 4.9K / mo': '4.9 ألف درهم/شهر',
+    'AHU heating coil valve and VAV reheat coils operate against active cooling coil. Synchronizing temperature loop schedules will eliminate dual-energy waste.': 'تعمل صمامات ملف التسخين في وحدة المعالجة الهوائية وملفات إعادة التسخين ضد ملف التبريد النشط. ستقضي مزامنة جداول حلقة درجة الحرارة على هدر الطاقة المزدوج.',
+    'Car park lighting on daylight hours': 'إضاءة مواقف السيارات خلال ساعات النهار',
+    'AED 3.2K / mo': '3.2 ألف درهم/شهر',
+    'Lighting circuits in P1\u20132 run continuously. A daylight interlock or schedule would cut roughly half of the circuit consumption.': 'تعمل دوائر الإضاءة في P1-P2 باستمرار. سيؤدي استخدام قفل ضوء النهار أو جدول زمني إلى خفض نحو نصف استهلاك الدوائر.'
+  };
+
+  function t(str) {
+    if (document.documentElement.lang === "ar") {
+      return arDict[str] || str;
+    }
+    return str;
+  }
+
   const modDefs = {
     operations: {
       ovEn: 'OPERATIONS OVERVIEW',
@@ -28,7 +205,7 @@
       kpis: [
         { label: 'CONSUMED TODAY', v: '1,022', unit: 'kWh', cap: 'forecast EOD 1,698 kWh' },
         { label: 'CURRENT LOAD', v: '87.44', unit: 'kW', cap: '<span style="color:var(--warnTx)">▲ 22% above 71.8 kW baseline</span>' },
-        { label: 'ENERGY COST TODAY', v: 'AED 3,940', cap: 'at blended DEWA tariff' },
+        { label: 'ENERGY COST TODAY', v: 'AED 3,940', cap: '${t("at blended DEWA tariff")}' },
         { label: 'SAME DAY LAST MONTH', v: '2,029.63', unit: 'kWh', cap: '<span style="color:var(--posTx)">▼ 49.6% month-on-month</span>' }
       ],
       l2: [
@@ -126,27 +303,27 @@
     if (!scrollContainer) return;
     
     const titleEl = vpOvp.querySelector('.ovp-title');
-    if (titleEl) titleEl.textContent = data.ovEn;
+    if (titleEl) titleEl.textContent = t(data.ovEn);
 
     const ovtabText = vpOvp.querySelector('.ovtab-text');
-    if (ovtabText) ovtabText.textContent = data.ovEn;
+    if (ovtabText) ovtabText.textContent = t(data.ovEn);
 
     let kpiHtml = '';
     
     if (modId === 'energy') {
       kpiHtml = `
         <div>
-          <div class="kpi-label">CONSUMED TODAY</div>
+          <div class="kpi-label">${t("CONSUMED TODAY")}</div>
           <div class="kpi-value-row">
             <span class="kpi-val">1,022</span>
             <span class="kpi-unit">kWh</span>
           </div>
           <div class="kpi-sub">
-            forecast EOD <span class="font-mono">1,698 kWh</span>
+            ${t("forecast EOD 1,698 kWh")}
           </div>
         </div>
         <div>
-          <div class="kpi-label">CURRENT LOAD</div>
+          <div class="kpi-label">${t("CURRENT LOAD")}</div>
           <div class="kpi-value-row">
             <span class="kpi-val-lg">87.44</span>
             <span class="kpi-unit">kW</span>
@@ -156,39 +333,39 @@
             <path d="M0,48 L0,32 C20,38 40,24 60,30 C80,36 100,20 120,25 C140,30 160,15 180,20 C200,25 220,10 240,15 L240,48 Z" fill="var(--acc8)" stroke="none"></path>
             <path d="M0,32 C20,38 40,24 60,30 C80,36 100,20 120,25 C140,30 160,15 180,20 C200,25 220,10 240,15" fill="none" stroke="var(--acc)" stroke-width="1.5"></path>
           </svg>
-          <span style="display:inline-block;padding:3px 8px;border-radius:4px;background:var(--warnT);border:1px solid var(--warnB);color:var(--warnTx);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;line-height:1.5">▲ 22% above 71.8 kW baseline</span>
+          ${t("<span style=\"color:var(--warnTx)\">▲ 22% above 71.8 kW baseline</span>")}
         </div>
         <div>
-          <div class="kpi-label">ENERGY COST TODAY</div>
+          <div class="kpi-label">${t("ENERGY COST TODAY")}</div>
           <div class="kpi-value-row">
             <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--t2);">AED</span>
             <span class="kpi-val">3,940</span>
           </div>
-          <div class="kpi-sub">at blended DEWA tariff</div>
+          <div class="kpi-sub">${t("at blended DEWA tariff")}</div>
         </div>
         <div>
-          <div class="kpi-label">SAME DAY LAST MONTH</div>
+          <div class="kpi-label">${t("SAME DAY LAST MONTH")}</div>
           <div class="kpi-value-row">
             <span class="kpi-val">2,029.63</span>
             <span class="kpi-unit">kWh</span>
           </div>
-          <span style="display:inline-block;margin-block-start:5px;padding:3px 8px;border-radius:4px;background:var(--posT);border:1px solid var(--posB);color:var(--posTx);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;line-height:1.5">▼ 49.6% month-on-month</span>
+          ${t("<span style=\"color:var(--posTx)\">▼ 49.6% month-on-month</span>")}
         </div>
       `;
     } else {
       data.kpis.forEach((kpi) => {
-        let capHtml = `<div class="kpi-sub">${kpi.cap}</div>`;
+        let capHtml = `<div class="kpi-sub">${t(kpi.cap)}</div>`;
         if (kpi.crit) {
-          capHtml = `<span style="display:inline-block;margin-block-start:5px;padding:3px 8px;border-radius:4px;background:var(--warnT);border:1px solid var(--warnB);color:var(--warnTx);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;line-height:1.5">▲ ${kpi.cap}</span>`;
+          capHtml = `<span style="display:inline-block;margin-block-start:5px;padding:3px 8px;border-radius:4px;background:var(--warnT);border:1px solid var(--warnB);color:var(--warnTx);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;line-height:1.5">▲ ${t(kpi.cap)}</span>`;
         } else if (kpi.cap.includes('<span')) {
-          capHtml = `<div class="kpi-sub">${kpi.cap}</div>`;
+          capHtml = `<div class="kpi-sub">${t(kpi.cap)}</div>`;
         }
 
         const valColor = kpi.crit ? 'color: var(--critTx);' : '';
 
         kpiHtml += `
           <div>
-            <div class="kpi-label">${kpi.label}</div>
+            <div class="kpi-label">${t(kpi.label)}</div>
             <div class="kpi-value-row" style="${valColor}">
               <span class="kpi-val">${kpi.v}</span>
               ${kpi.unit ? `<span class="kpi-unit">${kpi.unit}</span>` : ''}
@@ -201,7 +378,7 @@
 
     let glanceHtml = `
       <div class="glance-section">
-        <div class="glance-header">AT A GLANCE</div>
+        <div class="glance-header">${t('AT A GLANCE')}</div>
         <div class="glance-list">
     `;
     data.l2.forEach(item => {
@@ -209,8 +386,8 @@
       const activeClass = isActive ? 'active' : '';
       glanceHtml += `
           <button class="glance-item ${activeClass}">
-            <span class="glance-name">${item.name}</span>
-            <span class="glance-val font-mono">${item.val}</span>
+            <span class="glance-name">${t(item.name)}</span>
+            <span class="glance-val font-mono">${t(item.val)}</span>
             <svg class="glance-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
           </button>
       `;
@@ -249,13 +426,13 @@
 
     if (rpSub) {
       if (showEnergyHome) {
-        rpSub.textContent = '7-day trend and top opportunities'; rpSub.style.display = '';
+        rpSub.textContent = t('7-day trend and top opportunities'); rpSub.style.display = '';
       } else if (showWaste) {
-        rpSub.textContent = 'Avoidable consumption · FDD + schedule analysis'; rpSub.style.display = '';
+        rpSub.textContent = t('Avoidable consumption &middot; FDD + schedule analysis'); rpSub.style.display = '';
       } else if (showStub) {
-        rpSub.textContent = 'Sub-view'; rpSub.style.display = '';
+        rpSub.textContent = t('Sub-view'); rpSub.style.display = '';
       } else {
-        rpSub.textContent = 'Module highlights'; rpSub.style.display = 'none';
+        rpSub.textContent = t('Module highlights'); rpSub.style.display = 'none';
       }
     }
     if (rpBack) rpBack.style.display = hasSub ? 'flex' : 'none';
@@ -267,8 +444,8 @@
       html = `
         <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:13px">
           <div style="display:flex;align-items:baseline;gap:8px;margin-block-end:10px">
-            <span style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1)">Consumption, 7 days</span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t3)">kWh / day</span>
+            <span style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1)">${t('Consumption, 7 days')}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t3)">${t('kWh / day')}</span>
           </div>
           <svg viewBox="0 0 330 122" style="width:100%;height:auto;display:block" role="img" aria-label="7-day consumption trend">
             <line x1="30" y1="8" x2="318" y2="8" stroke="var(--bd1)" stroke-dasharray="2 3"/>
@@ -276,29 +453,29 @@
             <line x1="30" y1="100" x2="318" y2="100" stroke="var(--bd1)"/>
             <g font-family="'JetBrains Mono',monospace" font-size="8" fill="var(--t3)">
               <text x="24" y="103" text-anchor="end">0</text><text x="24" y="57" text-anchor="end">1.5k</text><text x="24" y="12" text-anchor="end">3k</text>
-              <text x="30" y="114" text-anchor="middle">Mon</text><text x="78" y="114" text-anchor="middle">Tue</text>
-              <text x="126" y="114" text-anchor="middle">Wed</text><text x="174" y="114" text-anchor="middle">Thu</text>
-              <text x="222" y="114" text-anchor="middle">Fri</text><text x="270" y="114" text-anchor="middle">Sat</text>
-              <text x="318" y="114" text-anchor="middle">Sun</text>
+              <text x="30" y="114" text-anchor="middle">${t('Mon')}</text><text x="78" y="114" text-anchor="middle">${t('Tue')}</text>
+              <text x="126" y="114" text-anchor="middle">${t('Wed')}</text><text x="174" y="114" text-anchor="middle">${t('Thu')}</text>
+              <text x="222" y="114" text-anchor="middle">${t('Fri')}</text><text x="270" y="114" text-anchor="middle">${t('Sat')}</text>
+              <text x="318" y="114" text-anchor="middle">${t('Sun')}</text>
             </g>
             <polyline points="30,20.9 78,20 126,19 174,20.6 222,16.9 270,27 318,27.9" fill="none" stroke="var(--bd2)" stroke-width="1" stroke-dasharray="4 3"/>
             <polyline points="30,23 78,16.3 126,17.4 174,22.1 222,10.9 270,27.9 318,19.7" fill="none" stroke="var(--acc)" stroke-width="1.5"/>
             <g fill="var(--acc)"><circle cx="30" cy="23" r="2"/><circle cx="78" cy="16.3" r="2"/><circle cx="126" cy="17.4" r="2"/><circle cx="174" cy="22.1" r="2"/><circle cx="222" cy="10.9" r="2"/><circle cx="270" cy="27.9" r="2"/><circle cx="318" cy="19.7" r="2"/></g>
           </svg>
           <div style="display:flex;gap:12px;margin-block-start:8px">
-            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:14px;height:2px;background:var(--acc)"></span>Actual</span>
-            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:14px;height:0;border-block-start:2px dashed var(--bd2)"></span>Baseline</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:14px;height:2px;background:var(--acc)"></span>${t('Actual')}</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:14px;height:0;border-block-start:2px dashed var(--bd2)"></span>${t('Baseline')}</span>
           </div>
         </div>
-        <div style="font-family:var(--fH),sans-serif;font-size:10px;font-weight:600;letter-spacing:0.8px;color:var(--t2);margin-block-start:2px">OPPORTUNITIES</div>
+        <div style="font-family:var(--fH),sans-serif;font-size:10px;font-weight:600;letter-spacing:0.8px;color:var(--t2);margin-block-start:2px">${t('OPPORTUNITIES')}</div>
         ${oppRowsHtml()}
       `;
     } else if (showWaste) {
       html = `
         <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:13px">
           <div style="display:flex;align-items:baseline;gap:8px;margin-block-end:10px">
-            <span style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1)">Baseline vs Actual</span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t3)">kWh / day</span>
+            <span style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1)">${t('Baseline vs Actual')}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t3)">${t('kWh / day')}</span>
           </div>
           <svg viewBox="0 0 330 122" style="width:100%;height:auto;display:block" role="img" aria-label="Baseline vs actual daily consumption">
             <line x1="30" y1="8" x2="318" y2="8" stroke="var(--bd1)" stroke-dasharray="2 3"/>
@@ -306,34 +483,34 @@
             <line x1="30" y1="100" x2="318" y2="100" stroke="var(--bd1)"/>
             <g font-family="'JetBrains Mono',monospace" font-size="8" fill="var(--t3)">
               <text x="24" y="103" text-anchor="end">0</text><text x="24" y="57" text-anchor="end">1.5k</text><text x="24" y="12" text-anchor="end">3k</text>
-              <text x="46" y="114" text-anchor="middle">Mon</text><text x="87" y="114" text-anchor="middle">Tue</text>
-              <text x="128" y="114" text-anchor="middle">Wed</text><text x="169" y="114" text-anchor="middle">Thu</text>
-              <text x="210" y="114" text-anchor="middle">Fri</text><text x="251" y="114" text-anchor="middle">Sat</text>
-              <text x="292" y="114" text-anchor="middle">Sun</text>
+              <text x="46" y="114" text-anchor="middle">${t('Mon')}</text><text x="87" y="114" text-anchor="middle">${t('Tue')}</text>
+              <text x="128" y="114" text-anchor="middle">${t('Wed')}</text><text x="169" y="114" text-anchor="middle">${t('Thu')}</text>
+              <text x="210" y="114" text-anchor="middle">${t('Fri')}</text><text x="251" y="114" text-anchor="middle">${t('Sat')}</text>
+              <text x="292" y="114" text-anchor="middle">${t('Sun')}</text>
             </g>
             <g fill="var(--bd2)"><rect x="34" y="20.9" width="12" height="79.1"/><rect x="75" y="20" width="12" height="80"/><rect x="116" y="19" width="12" height="81"/><rect x="157" y="20.6" width="12" height="79.4"/><rect x="198" y="16.9" width="12" height="83.1"/><rect x="239" y="27" width="12" height="73"/><rect x="280" y="27.9" width="12" height="72.1"/></g>
             <g fill="var(--btnP)"><rect x="48" y="23" width="12" height="77"/><rect x="89" y="16.3" width="12" height="83.7"/><rect x="130" y="17.4" width="12" height="82.6"/><rect x="171" y="22.1" width="12" height="77.9"/><rect x="212" y="10.9" width="12" height="89.1"/><rect x="253" y="27.9" width="12" height="72.1"/><rect x="294" y="19.7" width="12" height="80.3"/></g>
             <g fill="var(--warn)"><rect x="89" y="16.3" width="12" height="3.7"/><rect x="130" y="17.4" width="12" height="1.6"/><rect x="212" y="10.9" width="12" height="6"/><rect x="294" y="19.7" width="12" height="8.2"/></g>
           </svg>
           <div style="display:flex;gap:12px;margin-block-start:8px">
-            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--bd2)"></span>Baseline</span>
-            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--btnP)"></span>Actual</span>
-            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--warn)"></span>Excess</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--bd2)"></span>${t('Baseline')}</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--btnP)"></span>${t('Actual')}</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--warn)"></span>${t('Excess')}</span>
           </div>
         </div>
         <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:13px">
-          <div style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1);margin-block-end:10px">Off-hours Load Heatmap</div>
+          <div style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1);margin-block-end:10px">${t('Off-hours Load Heatmap')}</div>
           ${heatmapHtml()}
-          <div style="font-size:10.5px;color:var(--t3);margin-block-start:8px">Hourly average load by day · last 7 days</div>
+          <div style="font-size:10.5px;color:var(--t3);margin-block-start:8px">${t('Hourly average load by day &middot; last 7 days')}</div>
         </div>
-        <div style="font-family:var(--fH),sans-serif;font-size:10px;font-weight:600;letter-spacing:0.8px;color:var(--t2);margin-block-start:2px">OPPORTUNITIES</div>
+        <div style="font-family:var(--fH),sans-serif;font-size:10px;font-weight:600;letter-spacing:0.8px;color:var(--t2);margin-block-start:2px">${t('OPPORTUNITIES')}</div>
         ${oppRowsHtml()}
       `;
     } else if (showStub) {
-      html = `<div style="padding:26px 14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;line-height:1.5;color:var(--t3)">Detail view in design — see ${modLabel ? modLabel + ' › ' : ''}${subLabel} for the built pattern.</div>`;
+      html = `<div style="padding:26px 14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;line-height:1.5;color:var(--t3)">${t('Detail view in design')} — ${t('see')} ${modLabel ? modLabel + ' › ' : ''}${subLabel} ${t('for the built pattern.')}</div>`;
     } else {
       // Non-energy module home — stub
-      html = `<div style="padding:26px 14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;line-height:1.5;color:var(--t3)">Module highlights in design — ${modLabel} shows the built pattern.</div>`;
+      html = `<div style="padding:26px 14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;line-height:1.5;color:var(--t3)">${t('Module highlights in design')} — ${modLabel} ${t('shows the built pattern.')}</div>`;
     }
 
     rpContent.innerHTML = html;
@@ -356,7 +533,7 @@
       {
         title: 'Car park lighting on daylight hours',
         aed: 'AED 3.2K / mo',
-        desc: 'Lighting circuits in P1–P2 run continuously. A daylight interlock or schedule would cut roughly half of the circuit consumption.'
+        desc: 'Lighting circuits in P1\u20132 run continuously. A daylight interlock or schedule would cut roughly half of the circuit consumption.'
       }
     ];
 
@@ -365,10 +542,10 @@
       const chevronTransform = isOpen ? 'rotate(90deg)' : 'none';
       const bodyHtml = isOpen ? `
         <div class="opp-body">
-          <p style="margin:0;font-size:12px;line-height:1.5;color:var(--t2)">${o.desc}</p>
+          <p style="margin:0;font-size:12px;line-height:1.5;color:var(--t2)">${t(o.desc)}</p>
           <div style="display:flex;gap:8px">
-            <button style="flex:1;padding:7px 10px;border-radius:6px;background:transparent;border:1px solid var(--bd2);color:var(--t1);font-size:12px;font-weight:500;cursor:pointer" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">Create work order</button>
-            <button style="flex:none;padding:7px 16px;border-radius:6px;background:var(--btnP);border:1px solid transparent;color:var(--btnPfg);font-size:12px;font-weight:500;cursor:pointer" onmouseover="this.style.filter='brightness(.94)'" onmouseout="this.style.filter='none'">Trend</button>
+            <button style="flex:1;padding:7px 10px;border-radius:6px;background:transparent;border:1px solid var(--bd2);color:var(--t1);font-size:12px;font-weight:500;cursor:pointer" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">${t('Create work order')}</button>
+            <button style="flex:none;padding:7px 16px;border-radius:6px;background:var(--btnP);border:1px solid transparent;color:var(--btnPfg);font-size:12px;font-weight:500;cursor:pointer" onmouseover="this.style.filter='brightness(.94)'" onmouseout="this.style.filter='none'">${t('Trend')}</button>
           </div>
         </div>
       ` : '';
@@ -376,9 +553,9 @@
       return `
         <article style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;overflow:hidden">
           <button class="opp-btn" data-opp-index="${i}" style="display:flex;align-items:center;gap:8px;width:100%;padding:11px 13px;background:transparent;border:none;cursor:pointer;text-align:start" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">
-            <span style="flex:none;padding:2px 7px;border-radius:4px;background:var(--warnT);border:1px solid var(--warnB);color:var(--warnTx);font-family:var(--fH),sans-serif;font-size:9.5px;font-weight:600;letter-spacing:1px">WARNING</span>
-            <span style="flex:1;min-width:0;font-family:var(--fH),sans-serif;font-size:12px;font-weight:500;color:var(--t1)">${o.title}</span>
-            <span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600;color:var(--t1)">${o.aed}</span>
+            <span style="flex:none;padding:2px 7px;border-radius:4px;background:var(--warnT);border:1px solid var(--warnB);color:var(--warnTx);font-family:var(--fH),sans-serif;font-size:9.5px;font-weight:600;letter-spacing:1px">${t('WARNING')}</span>
+            <span style="flex:1;min-width:0;font-family:var(--fH),sans-serif;font-size:12px;font-weight:500;color:var(--t1)">${t(o.title)}</span>
+            <span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600;color:var(--t1)">${t(o.aed)}</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:var(--t3);transform:${chevronTransform};transition:transform 0.2s ease"><path d="m9 18 6-6-6-6"/></svg>
           </button>
           ${bodyHtml}
@@ -388,7 +565,7 @@
   }
 
   function heatmapHtml() {
-    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const days = [t('Mon'),t('Tue'),t('Wed'),t('Thu'),t('Fri'),t('Sat'),t('Sun')];
     const intensity = [
       [0.3,0.3,0.3,0.3,0.6,0.7,0.8,0.8,0.6,0.5,0.5,0.6,0.6,0.5,0.5,0.5,0.6,0.7,0.7,0.6,0.5,0.4,0.3,0.3],
       [0.3,0.3,0.3,0.3,0.6,0.7,0.8,0.8,0.6,0.5,0.5,0.6,0.6,0.5,0.5,0.5,0.6,0.9,0.8,0.6,0.5,0.4,0.3,0.3],
@@ -417,7 +594,7 @@
   setInterval(tickClock, 1000);
 
   /* ── Theme Toggle ── */
-  const html = document.documentElement;
+  const html = document.querySelector('.app-shell') || document.documentElement;
   const themeBtn = $('#themeToggle');
   if (themeBtn) {
     themeBtn.addEventListener('click', () => {
@@ -620,6 +797,15 @@
       const lang = btn.dataset.lang;
       html.lang = lang;
       html.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      
+      if (typeof window.updateTranslations === 'function') {
+        window.updateTranslations(lang);
+      }
+      
+      renderModuleOverview(currentModule, currentSubId);
+      renderRightPanel(currentModule, currentSubId);
+      if (typeof updateTimelineLang === 'function') updateTimelineLang();
+
     });
   });
 
@@ -755,6 +941,17 @@
   let liveTickId= null;
   let dragActive= false;
 
+    function updateTimelineLang() {
+      if (typeof renderTicks === 'function') renderTicks();
+      if (isLive) {
+        if (scrubStatusMode) scrubStatusMode.textContent = t('LIVE');
+      } else {
+        const lbl = ageToLabel(cursorAge);
+        if (scrubStatusTime) scrubStatusTime.textContent = lbl;
+        if (histBannerTime) histBannerTime.textContent = lbl;
+      }
+    }
+
   // ── Render SVG paths ─────────────────────────────────────────────────────
   function renderSvg() {
     const tl = buildSvgPath();
@@ -774,7 +971,7 @@
       const frac = i / 8;                  // 0=left, 1=right
       const xPct = (frac * 100).toFixed(2) + '%';
       const ds   = dT.toDateString();
-      const dayL = ds !== prevDs ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dT.getDay()] : '';
+      const dayL = ds !== prevDs ? t(['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dT.getDay()]) : '';
       prevDs = ds;
       const hh = String(dT.getHours()).padStart(2,'0');
       const mm = String(dT.getMinutes()).padStart(2,'0');
@@ -831,7 +1028,7 @@
   // ── Time helpers ─────────────────────────────────────────────────────────
   function ageToLabel(ageH) {
     const d   = new Date(Date.now() - ageH * 3600000);
-    const day = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+    const day = t(['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]);
     const hh  = String(d.getHours()).padStart(2,'0');
     const mm  = String(d.getMinutes()).padStart(2,'0');
     return `${day} ${hh}:${mm}`;
@@ -891,7 +1088,7 @@
       const now = new Date();
       const hh = String(now.getHours()).padStart(2,'0');
       const mm = String(now.getMinutes()).padStart(2,'0');
-      if (scrubStatusMode) scrubStatusMode.textContent = 'LIVE';
+      if (scrubStatusMode) scrubStatusMode.textContent = t('LIVE');
       if (scrubStatusTime) scrubStatusTime.textContent = `${hh}:${mm}`;
     }
     tick();
@@ -942,7 +1139,7 @@
       const f   = fractionFromEvent(e);
       const xPct = (f * 100).toFixed(2) + '%';
       const age  = (1 - f) * TOTAL_HOURS;
-      const lbl  = age < 0.3 ? 'LIVE' : ageToLabel(age);
+      const lbl  = age < 0.3 ? t('LIVE') : ageToLabel(age);
       if (scrubGhost)      { scrubGhost.style.display = 'block';      scrubGhost.style.left      = xPct; }
       if (scrubGhostLabel) { scrubGhostLabel.style.display = 'block'; scrubGhostLabel.style.left = xPct; scrubGhostLabel.textContent = lbl; }
     });
@@ -1138,7 +1335,7 @@
 
     // User Bubble
     const userMsgHtml = `
-      <div style="align-self: flex-end; background: var(--s3); border: 1px solid var(--bd2); color: var(--t1); padding: 8px 14px; border-radius: 16px 16px 4px 16px; font-size: 12.5px; max-width: 85%; line-height: 1.4;">
+      <div dir="auto" style="align-self: flex-end; background: var(--s3); border: 1px solid var(--bd2); color: var(--t1); padding: 8px 14px; border-radius: 16px 16px 4px 16px; font-size: 12.5px; max-width: 85%; line-height: 1.4;">
         ${userText}
       </div>
     `;
@@ -1154,6 +1351,7 @@
     `;
     
     const textBubble = document.createElement('div');
+    textBubble.setAttribute('dir', 'auto');
     textBubble.style.cssText = "font-size: 12.5px; line-height: 1.6; color: var(--t1); background: var(--s2); border: 1px solid var(--bd1); padding: 10px 14px; border-radius: 4px 16px 16px 16px;";
     
     aiWrapper.innerHTML = iconHtml;

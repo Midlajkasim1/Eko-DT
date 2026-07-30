@@ -42,6 +42,8 @@ interface AppState {
   materialPickerActive: boolean
   selectedMaterialElement: { modelId: string, id: number, category?: string } | null
   copiedMaterial: any | null
+  isFullscreen: boolean
+  isToolbarVisible: boolean
 
   setStep: (step: AppStep) => void
   setProgress: (progress: number, label?: string) => void
@@ -51,6 +53,8 @@ interface AppState {
   setMaterialPickerActive: (active: boolean) => void
   setSelectedMaterialElement: (element: { modelId: string, id: number, category?: string } | null) => void
   setCopiedMaterial: (material: any) => void
+  setIsFullscreen: (full: boolean) => void
+  setIsToolbarVisible: (visible: boolean) => void
   reset: () => void
 }
 
@@ -66,7 +70,7 @@ export const useAppStore = create<AppState>((set) => ({
   timeOfDay: 14.5,
   bloomStrength: 0.15,
   bloomThreshold: 1.5,
-  bloomEnabled: true,
+  bloomEnabled: false,
   fogDensity: 0.00015,
   cloudDensity: 0.5,
   cloudShadowsEnabled: true,
@@ -95,6 +99,8 @@ export const useAppStore = create<AppState>((set) => ({
   materialPickerActive: false,
   selectedMaterialElement: null,
   copiedMaterial: null,
+  isFullscreen: false,
+  isToolbarVisible: true,
 
   setStep: (step) => set({ step, error: null }),
   setProgress: (progress, label = '') => set({ conversionProgress: progress, conversionStepLabel: label }),
@@ -104,6 +110,8 @@ export const useAppStore = create<AppState>((set) => ({
   setMaterialPickerActive: (materialPickerActive) => set({ materialPickerActive, selectedMaterialElement: null }),
   setSelectedMaterialElement: (selectedMaterialElement) => set({ selectedMaterialElement }),
   setCopiedMaterial: (copiedMaterial) => set({ copiedMaterial }),
+  setIsFullscreen: (isFullscreen) => set({ isFullscreen }),
+  setIsToolbarVisible: (isToolbarVisible) => set({ isToolbarVisible }),
   reset: () =>
     set({
       step: 'idle',
@@ -111,8 +119,42 @@ export const useAppStore = create<AppState>((set) => ({
       conversionStepLabel: '',
       error: null,
       realisticMode: false,
+      exposure: 0.85,
+      lightIntensity: 1.2,
+      ambientIntensity: 0.3,
+      timeOfDay: 14.5,
+      bloomStrength: 0.15,
+      bloomThreshold: 1.5,
+      bloomEnabled: false,
+      fogDensity: 0.00015,
+      cloudDensity: 0.5,
+      cloudShadowsEnabled: true,
+      cloudSpeed: 1.0,
+      dofEnabled: false,
+      dofFocus: 2000.0,
+      dofAperture: 0.0001,
+      dofMaxBlur: 0.01,
+      visualSaturation: 1.0,
+      visualTemperature: 6500.0,
+      visualContrast: 1.0,
+      visualVignette: 0.4,
+      godRaysEnabled: false,
+      godRayStrength: 0.8,
+      chromaticAberration: 0.0,
+      autoFocus: false,
+      ambientOcclusion: false,
+      outlineEdges: false,
+      pbrMaterials: true,
+      iblEnabled: true,
+      syncIblWithSun: true,
+      envIntensity: 1.0,
+      envRotation: 0,
+      aoRadius: 50.0,
+      aoIntensity: 5.0,
       materialPickerActive: false,
       selectedMaterialElement: null,
       copiedMaterial: null,
+      isFullscreen: false,
+      isToolbarVisible: true,
     }),
 }))

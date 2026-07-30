@@ -51,7 +51,7 @@ export function Header() {
             </>
           ) : (
             <>
-              <h1 className="header-title">IFC Fragment Viewer</h1>
+              <h1 className="header-title">IFC Fragments Viewer</h1>
               <p className="header-subtitle">Convert · View · Download</p>
             </>
           )}
