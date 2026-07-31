@@ -410,9 +410,12 @@
 
 /* ── Main content area ── */
 .app-main { flex: 1; min-width: 0; position: relative; background: transparent; }
-/* Right panel and AI bar need pointer-events so they're clickable over 3D canvas */
+
 .right-panel, section.right-panel { pointer-events: auto !important; }
 .ask-eko-bar, footer.ask-eko-bar { pointer-events: auto !important; }
+.pal-overlay, .pal { pointer-events: auto !important; }
+.reports-panel { pointer-events: auto !important; }
+.settings-view { pointer-events: auto !important; }
 .main-placeholder {
   display: grid; place-items: center; height: 100%;
   font-size: 14px; color: var(--t3); font-family: var(--fM), monospace;
