@@ -116,7 +116,9 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
     })
   }
 
-  if (isLoading) {
+  // With no projects to wait for there is nothing to ghost — showing the skeleton
+  // would just flash grey buttons before the empty state.
+  if (isLoading && knownProjectCount > 0) {
     return <ProjectListSkeleton cardCount={knownProjectCount} />
   }
 

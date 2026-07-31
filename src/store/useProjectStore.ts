@@ -22,7 +22,9 @@ interface RecentProject {
 }
 
 const PROJECT_COUNT_KEY = 'eko:recent-project-count'
-const FALLBACK_PROJECT_COUNT = 4
+/** Never counted before (fresh install / cleared storage) — assume none rather than
+ *  inventing placeholder cards that flash before the "No recent projects" empty state. */
+const FALLBACK_PROJECT_COUNT = 0
 
 function readKnownProjectCount(): number {
   try {
