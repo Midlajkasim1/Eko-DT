@@ -841,7 +841,12 @@ body.rp-resizing { cursor: col-resize; user-select: none; }
   position: fixed; top: 14%; left: 50%; transform: translateX(-50%);
   width: 640px; max-width: calc(100vw - 48px);
   background: var(--s2); border: 1px solid var(--bd2); border-radius: 10px;
-  box-shadow: var(--shadow); z-index: 120; overflow: hidden; animation: drop 0.2s ease-out;
+  box-shadow: var(--shadow); z-index: 120; overflow: hidden;
+  animation: palDrop 0.2s ease-out;
+}
+@keyframes palDrop {
+  from { opacity: 0; transform: translate(-50%, -10px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
 }
 .pal[hidden] { display: none; }
 .pal-head {
