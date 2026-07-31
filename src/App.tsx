@@ -2,6 +2,7 @@ import { useRef, useCallback } from 'react'
 import { Header } from '@/components/layout/Header'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { ViewerCanvas } from '@/components/viewer/ViewerCanvas'
+import { ProjectListPage } from '@/components/project/ProjectListPage'
 import { useIfcConverter } from '@/hooks/useIfcConverter'
 import { useAppStore } from '@/store/useAppStore'
 import { useModelStore } from '@/store/useModelStore'
@@ -13,6 +14,7 @@ import type { LoadedModel } from '@/types'
 export default function App() {
   const engineRef = useRef<FragmentsEngine | null>(null)
   const setStep = useAppStore(s => s.setStep)
+  const step = useAppStore(s => s.step)
   const addModel = useModelStore(s => s.addModel)
   const isFullscreen = useAppStore(s => s.isFullscreen)
 
@@ -85,8 +87,13 @@ export default function App() {
     <div className="app-layout">
       {!isFullscreen && <Header />}
       <div className="app-body">
-        {!isFullscreen && <Sidebar onFiles={handleFiles} engineRef={engineRef} />}
+        {!isFullscreen && step !== 'projects' && <Sidebar onFiles={handleFiles} engineRef={engineRef} />}
         <main className="app-main">
+          {step === 'projects' && (
+            <div className="projects-page">
+              <ProjectListPage engineRef={engineRef} />
+            </div>
+          )}
           <ViewerCanvas onEngineReady={handleEngineReady} adminMode={true} />
         </main>
       </div>

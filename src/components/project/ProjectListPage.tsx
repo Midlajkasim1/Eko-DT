@@ -3,6 +3,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { useAppStore } from '@/store/useAppStore'
 import { useModelStore } from '@/store/useModelStore'
 import { loadModelsFromProject } from '@/lib/projectDb'
+import { ProjectListSkeleton } from '@/components/project/ProjectListSkeleton'
 import type { ProjectMeta } from '@/types'
 import type { FragmentsEngine } from '@/lib/fragmentsEngine'
 import * as THREE from 'three'
@@ -15,6 +16,7 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
   const {
     recentProjects,
     isLoading,
+    knownProjectCount,
     loadRecentProjects,
     createProject,
     openProject,
@@ -74,9 +76,6 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
 
     useAppStore.getState().reset()
 
-    // reset() lands on 'idle', which renders the upload zone. Switch to the
-    // viewer up front so a project that already has models never flashes
-    // "Upload IFC" while its files are being read off disk.
     setStep('viewing')
 
     // Restore settings before the models stream in
@@ -118,12 +117,7 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
   }
 
   if (isLoading) {
-    return (
-      <div className="project-list-loading">
-        <div className="conversion-spinner" />
-        <p>Loading recent projects...</p>
-      </div>
-    )
+    return <ProjectListSkeleton cardCount={knownProjectCount} />
   }
 
   const sortedProjects = [...recentProjects].sort((a, b) => (b.meta.updatedAt || 0) - (a.meta.updatedAt || 0));
@@ -135,21 +129,20 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
           <h2 className="project-list-title">Projects</h2>
           <p className="project-list-subtitle">Open or create an IFC project</p>
         </div>
-      </div>
-
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-        <button className="project-new-btn" onClick={() => setShowNewForm(true)} style={{ flex: 1, justifyContent: 'center' }}>
-          <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
-            <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd"/>
-          </svg>
-          Create New Folder
-        </button>
-        <button className="project-new-btn" onClick={handleOpenExistingFolder} style={{ flex: 1, justifyContent: 'center', background: 'var(--bg-raised)', color: 'var(--text-primary)' }}>
-          <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
-            <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
-          </svg>
-          Open Folder
-        </button>
+        <div className="project-list-actions">
+          <button className="project-new-btn" onClick={() => setShowNewForm(true)}>
+            <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
+              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd"/>
+            </svg>
+            Create New Folder
+          </button>
+          <button className="project-new-btn secondary" onClick={handleOpenExistingFolder}>
+            <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
+              <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
+            </svg>
+            Open Folder
+          </button>
+        </div>
       </div>
 
       {showNewForm && (

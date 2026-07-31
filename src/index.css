@@ -765,6 +765,31 @@ Wait, if iframe has pointer-events: auto, it works. Let's fix this in iframe bod
 }
 
 /* ─── Project List Page ──────────────────────────────────────────────────────── */
+/* ─── Projects Page (fills the main area) ────────────────────────────────────── */
+.projects-page {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  overflow-y: auto;
+  background: var(--bg);
+  padding: 28px 36px 48px;
+}
+.projects-page .project-list-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  min-height: auto;
+  gap: 20px;
+}
+.projects-page .project-new-form {
+  max-width: 440px;
+}
+
+.project-list-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .project-list-page {
   display: flex;
   flex-direction: column;
@@ -824,6 +849,16 @@ Wait, if iframe has pointer-events: auto, it works. Let's fix this in iframe bod
 .project-new-btn:hover {
   background: var(--accent-dark);
   box-shadow: 0 2px 8px var(--accent-glow);
+}
+.project-new-btn.secondary {
+  background: var(--bg-raised);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+.project-new-btn.secondary:hover {
+  background: var(--bg-surface);
+  border-color: var(--accent);
+  box-shadow: none;
 }
 
 /* ─── New Project Form ───────────────────────────────────────────────────────── */
@@ -914,9 +949,9 @@ Wait, if iframe has pointer-events: auto, it works. Let's fix this in iframe bod
 
 /* ─── Project Card Grid ──────────────────────────────────────────────────────── */
 .project-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
 }
 
 .project-card {
@@ -939,7 +974,7 @@ Wait, if iframe has pointer-events: auto, it works. Let's fix this in iframe bod
 
 /* ─── Project Card Thumbnail ─────────────────────────────────────────────────── */
 .project-card-thumb {
-  height: 100px;
+  height: 150px;
   background: var(--bg-raised);
   overflow: hidden;
   cursor: pointer;
@@ -968,6 +1003,55 @@ Wait, if iframe has pointer-events: auto, it works. Let's fix this in iframe bod
   justify-content: center;
   background: rgba(255,255,255,0.7);
   backdrop-filter: blur(4px);
+}
+
+/* ─── Ghost Loading (skeleton cards) ─────────────────────────────────────────── */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: #dfe3e9;
+}
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  100% { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer::after { animation: none; }
+}
+
+.project-card.skeleton {
+  pointer-events: none;
+  box-shadow: 0 2px 10px rgba(26, 29, 35, 0.08);
+}
+
+/* Skeleton variants (see components/ui/Skeleton.tsx) */
+.skeleton-block {
+  border-radius: var(--radius-sm);
+}
+.skeleton-line {
+  height: 11px;
+  border-radius: 4px;
+}
+.skeleton-button {
+  width: 150px;
+  height: 33px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 4px rgba(26, 29, 35, 0.1);
+}
+.skeleton-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+}
+.skeleton-circle {
+  border-radius: 50%;
 }
 
 /* ─── Project Card Body ──────────────────────────────────────────────────────── */

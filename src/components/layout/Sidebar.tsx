@@ -6,7 +6,6 @@ import { UploadZone } from '@/components/upload/UploadZone'
 import { ConversionProgress } from '@/components/upload/ConversionProgress'
 import { ModelInfoPanel } from '@/components/model/ModelInfoPanel'
 import { DownloadButton } from '@/components/download/DownloadButton'
-import { ProjectListPage } from '@/components/project/ProjectListPage'
 import { FinLoginPanel } from '@/components/fin/FinLoginPanel'
 import { ProjectSettingsModal } from '@/components/project/ProjectSettingsModal'
 import type { FragmentsEngine } from '@/lib/fragmentsEngine'
@@ -167,10 +166,6 @@ export function Sidebar({ onFiles, engineRef }: SidebarProps) {
   return (
     <aside className="sidebar">
       <div className="sidebar-inner">
-
-        {(step === 'projects') && (
-          <ProjectListPage engineRef={engineRef} />
-        )}
 
         {(step === 'idle') && (
           <UploadZone onFiles={onFiles} />

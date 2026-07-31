@@ -21,12 +21,32 @@ interface RecentProject {
   handle: FileSystemDirectoryHandle
 }
 
+const PROJECT_COUNT_KEY = 'eko:recent-project-count'
+const FALLBACK_PROJECT_COUNT = 4
+
+function readKnownProjectCount(): number {
+  try {
+    const n = parseInt(localStorage.getItem(PROJECT_COUNT_KEY) ?? '', 10)
+    return Number.isFinite(n) && n >= 0 ? Math.min(n, 24) : FALLBACK_PROJECT_COUNT
+  } catch {
+    return FALLBACK_PROJECT_COUNT
+  }
+}
+
+function writeKnownProjectCount(n: number) {
+  try {
+    localStorage.setItem(PROJECT_COUNT_KEY, String(n))
+  } catch { /* private mode / quota — the fallback covers it */ }
+}
+
 interface ProjectState {
   currentProject: ProjectMeta | null
   folderHandle: FileSystemDirectoryHandle | null
   recentProjects: RecentProject[]
   isDirty: boolean
   isLoading: boolean
+  /** How many projects we expect — drives the loading skeleton's card count */
+  knownProjectCount: number
 
   // Actions
   loadRecentProjects: () => Promise<void>
@@ -56,6 +76,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   recentProjects: [],
   isDirty: false,
   isLoading: false,
+  knownProjectCount: readKnownProjectCount(),
 
   loadRecentProjects: async () => {
     set({ isLoading: true })
@@ -86,8 +107,9 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         await removeCachedHandle(projectId)
       }
     }
-    valid.sort((a, b) => b.meta.updatedAt - b.meta.updatedAt)
-    set({ recentProjects: valid, isLoading: false })
+    valid.sort((a, b) => b.meta.updatedAt - a.meta.updatedAt)
+    writeKnownProjectCount(valid.length)
+    set({ recentProjects: valid, isLoading: false, knownProjectCount: valid.length })
   },
 
   createProject: async (name: string, isFinProject?: boolean) => {
@@ -96,12 +118,14 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     const { meta, handle } = result
 
     // Refresh recent list
-    const recent = get().recentProjects
+    const recent = [{ meta, handle }, ...get().recentProjects]
+    writeKnownProjectCount(recent.length)
     set({
       currentProject: meta,
       folderHandle: handle,
       isDirty: false,
-      recentProjects: [{ meta, handle }, ...recent],
+      recentProjects: recent,
+      knownProjectCount: recent.length,
     })
     return meta
   },
@@ -111,12 +135,17 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     if (!result) return null
     const { meta, handle } = result
 
-    const recent = get().recentProjects.filter(r => r.meta.projectId !== meta.projectId)
+    const recent = [
+      { meta, handle },
+      ...get().recentProjects.filter(r => r.meta.projectId !== meta.projectId),
+    ]
+    writeKnownProjectCount(recent.length)
     set({
       currentProject: meta,
       folderHandle: handle,
       isDirty: false,
-      recentProjects: [{ meta, handle }, ...recent],
+      recentProjects: recent,
+      knownProjectCount: recent.length,
     })
     return meta
   },
@@ -170,7 +199,8 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   deleteRecentProject: async (projectId: string) => {
     await removeCachedHandle(projectId)
     const recent = get().recentProjects.filter(r => r.meta.projectId !== projectId)
-    set({ recentProjects: recent })
+    writeKnownProjectCount(recent.length)
+    set({ recentProjects: recent, knownProjectCount: recent.length })
   },
 
   exportAsZip: async () => {
