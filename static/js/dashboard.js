@@ -1262,6 +1262,182 @@
     }
   });
 
+  /* ── Right Panel Resize (drag inner edge, LTR + RTL) ── */
+  const rpResizer = $('#rpResizer');
+  const RP_NORMAL_W = 378;
+
+  function setRightPanelWidth(w) {
+    rightPanel.style.width = w + 'px';
+    rightPanel.style.setProperty('--rp-w', w + 'px');
+  }
+
+  if (rpResizer && rightPanel) {
+    let dragStartX = 0, dragStartW = 0, dragRtl = false;
+
+    const onResizeMove = (e) => {
+      const delta = e.clientX - dragStartX;
+      const maxW = Math.max(RP_NORMAL_W, Math.floor(window.innerWidth / 2));
+      // In RTL the panel sits on the left, so dragging right grows it; in LTR the opposite
+      const w = Math.min(maxW, Math.max(RP_NORMAL_W, Math.round(dragRtl ? dragStartW + delta : dragStartW - delta)));
+      setRightPanelWidth(w);
+    };
+
+    const onResizeEnd = (e) => {
+      rightPanel.classList.remove('resizing');
+      document.body.classList.remove('rp-resizing');
+      rpResizer.removeEventListener('pointermove', onResizeMove);
+      rpResizer.removeEventListener('pointerup', onResizeEnd);
+      rpResizer.removeEventListener('pointercancel', onResizeEnd);
+      if (rpResizer.hasPointerCapture && rpResizer.hasPointerCapture(e.pointerId)) {
+        rpResizer.releasePointerCapture(e.pointerId);
+      }
+    };
+
+    rpResizer.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      if (rightPanel.classList.contains('collapsed')) return;
+      e.preventDefault();
+      dragRtl = getComputedStyle(html).direction === 'rtl';
+      dragStartX = e.clientX;
+      dragStartW = rightPanel.getBoundingClientRect().width;
+      rightPanel.classList.add('resizing');
+      document.body.classList.add('rp-resizing');
+      rpResizer.setPointerCapture(e.pointerId);
+      rpResizer.addEventListener('pointermove', onResizeMove);
+      rpResizer.addEventListener('pointerup', onResizeEnd);
+      rpResizer.addEventListener('pointercancel', onResizeEnd);
+    });
+
+    // Double-click the edge to snap back to the normal width
+    rpResizer.addEventListener('dblclick', () => setRightPanelWidth(RP_NORMAL_W));
+
+    // Keep the half-viewport cap when the window itself shrinks
+    window.addEventListener('resize', () => {
+      const maxW = Math.max(RP_NORMAL_W, Math.floor(window.innerWidth / 2));
+      if (rightPanel.getBoundingClientRect().width > maxW) setRightPanelWidth(maxW);
+    });
+  }
+
+  /* ── Viewer Toolbar (tools, floors flyout, caption) ── */
+  const toolBtns   = $$('.vp-toolbar .tool-btn');
+  const floorsBtn  = $('.vp-toolbar .tool-btn[data-tool="floors"]');
+  const floorsMenu = $('#vpFloorsMenu');
+  // reuses the existing `vpCaption` element reference declared above
+  const FLOORS = ['ALL', 'Roof', 'L12', 'L11', 'L10', 'L9', 'L8', 'L7', 'L6', 'L5', 'L4', 'L3', 'L2', 'L1', 'G', 'B1'];
+  const VP_CAPTION_TXT = {
+    en: { site: 'MARSA AL ARAB', model: 'LIVE MODEL', all: 'ALL FLOORS' },
+    ar: { site: 'مرسى العرب', model: 'نموذج مباشر', all: 'كل الطوابق' },
+  };
+  let currentTool = 'select';
+  let currentFloor = 'ALL';
+
+  if (toolBtns.length) {
+    const capLang = () => VP_CAPTION_TXT[html.lang === 'ar' ? 'ar' : 'en'];
+
+    function updateVpCaption() {
+      if (!vpCaption) return;
+      const c = capLang();
+      const floorLabel = currentFloor === 'ALL' ? c.all : currentFloor;
+      // Longest variant first; drop the site, then the model, when the viewer
+      // is too narrow (e.g. right panel dragged wide) to avoid covering the
+      // overview panel
+      const variants = [
+        c.site + ' &middot; ' + c.model + ' &middot; ' + floorLabel,
+        c.model + ' &middot; ' + floorLabel,
+        floorLabel,
+      ];
+      const wrap = vpCaption.closest('.vp-wrapper');
+      const ovp = $('.vp-ovp');
+      const ovpW = ovp ? (ovp.classList.contains('collapsed') ? 40 : ovp.getBoundingClientRect().width) : 0;
+      const avail = wrap ? wrap.clientWidth - ovpW - 66 - 16 : Infinity;
+      for (const v of variants) {
+        vpCaption.innerHTML = v;
+        if (vpCaption.offsetWidth <= avail) break;
+      }
+    }
+
+    // Re-fit the caption when the viewer resizes (panel drag, window resize)
+    // or the overview panel collapses/expands
+    const vpWrapEl = vpCaption && vpCaption.closest('.vp-wrapper');
+    if (vpWrapEl && window.ResizeObserver) {
+      new ResizeObserver(() => updateVpCaption()).observe(vpWrapEl);
+    }
+    const vpOvpEl = $('.vp-ovp');
+    if (vpOvpEl && window.MutationObserver) {
+      new MutationObserver(() => updateVpCaption())
+        .observe(vpOvpEl, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    function syncToolActive() {
+      toolBtns.forEach((b) => b.classList.toggle('active', b.dataset.tool === currentTool));
+    }
+
+    function closeFloorsMenu() {
+      if (!floorsMenu || floorsMenu.hidden) return;
+      floorsMenu.hidden = true;
+      if (floorsBtn) floorsBtn.setAttribute('aria-expanded', 'false');
+      syncToolActive();
+    }
+
+    function openFloorsMenu() {
+      if (!floorsMenu) return;
+      floorsMenu.innerHTML = '';
+      FLOORS.forEach((f) => {
+        const b = document.createElement('button');
+        b.className = 'floor-item' + (f === currentFloor ? ' active' : '');
+        b.setAttribute('role', 'menuitem');
+        b.textContent = f === 'ALL' ? capLang().all : f;
+        b.addEventListener('click', () => {
+          currentFloor = f;
+          closeFloorsMenu();
+          updateVpCaption();
+        });
+        floorsMenu.appendChild(b);
+      });
+      floorsMenu.hidden = false;
+      if (floorsBtn) floorsBtn.setAttribute('aria-expanded', 'true');
+      toolBtns.forEach((b) => b.classList.toggle('active', b === floorsBtn));
+    }
+
+    function activateTool(tool) {
+      if (tool === 'floors') {
+        if (floorsMenu && floorsMenu.hidden) openFloorsMenu();
+        else closeFloorsMenu();
+        return;
+      }
+      closeFloorsMenu();
+      if (tool === 'reset') {
+        currentFloor = 'ALL';
+        updateVpCaption();
+        tool = 'select';
+      }
+      currentTool = tool;
+      syncToolActive();
+    }
+
+    toolBtns.forEach((b) => b.addEventListener('click', () => activateTool(b.dataset.tool)));
+
+    document.addEventListener('click', (e) => {
+      if (floorsMenu && !floorsMenu.hidden &&
+          !e.target.closest('.vp-floors-menu, .tool-btn[data-tool="floors"]')) {
+        closeFloorsMenu();
+      }
+    });
+
+    // V / S / F / W / M / R shortcuts (advertised in the tooltips)
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === 'Escape') { closeFloorsMenu(); return; }
+      const map = { v: 'select', s: 'slice', f: 'floors', w: 'walk', m: 'measure', r: 'reset' };
+      const tool = map[e.key.toLowerCase()];
+      if (tool) activateTool(tool);
+    });
+
+    // The language toggle resets the caption via data-i18n; re-apply the selected floor after it
+    $$('.lang-btn').forEach((btn) => btn.addEventListener('click', updateVpCaption));
+  }
+
   $$('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
       const mod = btn.getAttribute('data-module');

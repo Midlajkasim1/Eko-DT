@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Digital Twin Dashboard</title>
   <link rel="stylesheet" href="/static/css/dashboard.css?v=1" />
+  <style>
+    /* dashboard.css scopes its reset to .app-shell, so the body's default 8px
+       margin would otherwise add a scrollbar around the 100vh shell */
+    html, body { margin: 0; }
+  </style>
 </head>
 <body>
   <div class="app-shell">
@@ -94,6 +99,13 @@
             abudhabi: 'Abu Dhabi',
             riyadh: 'Riyadh',
             vpcaption: 'MARSA AL ARAB &middot; LIVE MODEL &middot; ALL FLOORS',
+            toolSelect: 'Select · V',
+            toolSlice: 'Slice section · S',
+            toolFloors: 'Floors · F',
+            toolWalk: 'Walkthrough · W',
+            toolMeasure: 'Measure · M',
+            toolReset: 'Reset view · R',
+            allFloorsShort: 'ALL FLOORS',
             operations: 'Operations',
             eventstatistics: 'Event Statistics',
             livesystems: 'Live Systems',
@@ -208,7 +220,14 @@
             dubai: 'دبي',
             abudhabi: 'أبو ظبي',
             riyadh: 'الرياض',
-            vpcaption: 'مرسى العرب &middot; نموذج مباشر &middot; كل الطوابق'
+            vpcaption: 'مرسى العرب &middot; نموذج مباشر &middot; كل الطوابق',
+            toolSelect: 'تحديد · V',
+            toolSlice: 'مقطع · S',
+            toolFloors: 'الطوابق · F',
+            toolWalk: 'جولة · W',
+            toolMeasure: 'قياس · M',
+            toolReset: 'إعادة العرض · R',
+            allFloorsShort: 'كل الطوابق'
         }
       };
 
@@ -226,6 +245,10 @@
             if (el.tagName === 'INPUT') el.placeholder = dict[key];
             else el.innerHTML = dict[key];
           }
+        });
+        document.querySelectorAll('[data-i18n-tip]').forEach(el => {
+          const key = el.getAttribute('data-i18n-tip');
+          if (dict[key]) el.setAttribute('data-tip', dict[key]);
         });
       };
     </script>
@@ -483,16 +506,28 @@
 
             <!-- Floating Toolbar -->
             <div class="vp-toolbar">
-              <button class="tool-btn" aria-label="Select tool">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="m3 3 7 19 2-8 8-2z"></path></svg>
+              <button class="tool-btn tipL active" data-tool="select" data-tip="Select &middot; V" data-i18n-tip="toolSelect" aria-label="Select tool">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 7 19 2-8 8-2z"></path></svg>
               </button>
-              <button class="tool-btn" aria-label="Slice section">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 14h18" stroke-dasharray="3 3"></path></svg>
+              <button class="tool-btn tipL" data-tool="slice" data-tip="Slice section &middot; S" data-i18n-tip="toolSlice" aria-label="Slice section">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 14h18" stroke-dasharray="3 3"></path></svg>
               </button>
-              <button class="tool-btn" aria-label="Walkthrough">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+              <button class="tool-btn tipL" data-tool="floors" data-tip="Floors &middot; F" data-i18n-tip="toolFloors" aria-haspopup="menu" aria-expanded="false" aria-label="Floors">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 4.9-9 4.9-9-4.9Z"></path><path d="m3 11.9 9 4.9 9-4.9"></path><path d="m3 16.9 9 4.9 9-4.9"></path></svg>
+              </button>
+              <button class="tool-btn tipL" data-tool="walk" data-tip="Walkthrough &middot; W" data-i18n-tip="toolWalk" aria-label="Walkthrough">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+              </button>
+              <button class="tool-btn tipL" data-tool="measure" data-tip="Measure &middot; M" data-i18n-tip="toolMeasure" aria-label="Measure">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 8.7 15.3 2.7a1 1 0 0 0-1.4 0L2.7 13.9a1 1 0 0 0 0 1.4l6 6a1 1 0 0 0 1.4 0L21.3 10.1a1 1 0 0 0 0-1.4z"></path><path d="m7.5 10.5 2 2"></path><path d="m10.5 7.5 2 2"></path><path d="m13.5 4.5 2 2"></path></svg>
+              </button>
+              <button class="tool-btn tipL" data-tool="reset" data-tip="Reset view &middot; R" data-i18n-tip="toolReset" aria-label="Reset view">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
               </button>
             </div>
+
+            <!-- Floors flyout (opened by the Floors tool) -->
+            <div class="vp-floors-menu" id="vpFloorsMenu" role="menu" aria-label="Floors" hidden></div>
 
             <!-- Bottom Scrubbar -->
             <div class="vp-scrubbar">
@@ -553,6 +588,8 @@
           </div> <!-- End of vp-layer -->
         </div> <!-- End of vp-wrapper -->
           <section id="rightPanel" class="right-panel" style="flex: none; width: 378px; background: var(--s1); border-inline-start: 1px solid var(--bd1); display: flex; flex-direction: column; min-height: 0; z-index: 20; position: relative;">
+            <!-- Drag handle on the inner edge to resize the panel -->
+            <div class="rp-resizer" id="rpResizer" aria-hidden="true"></div>
             <!-- Tab shown when collapsed -->
             <button class="rptab" id="rpOpenTab" aria-label="Expand right panel">
               <span class="rptab-text" id="rpTabText">OPERATIONS</span>

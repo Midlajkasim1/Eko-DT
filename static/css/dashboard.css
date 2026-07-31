@@ -462,7 +462,7 @@
   position: absolute; top: 16px; inset-inline-end: 66px; padding: 5px 10px; border-radius: 6px;
   background: var(--tlbg); backdrop-filter: blur(10px); border: 1px solid var(--bd1);
   font-family: var(--fM), monospace; font-size: 10.5px; letter-spacing: 1px; color: var(--t2);
-  z-index: 11; transition: opacity 0.2s;
+  white-space: nowrap; z-index: 11; transition: opacity 0.2s;
 }
 .vp-caption.hidden { opacity: 0; pointer-events: none; }
 .vp-histbanner {
@@ -587,12 +587,45 @@
   position: absolute; inset-inline-end: 14px; top: 50%; transform: translateY(-50%);
   display: flex; flex-direction: column; gap: 2px; padding: 5px; border-radius: 10px;
   background: var(--ovbg); backdrop-filter: blur(20px); border: 1px solid var(--bd1); pointer-events: auto;
+  z-index: 12; /* above the overview panel glass (z 10) so it never hides behind it */
 }
 .tool-btn {
   width: 38px; height: 38px; display: grid; place-items: center;
   background: transparent; border: none; border-radius: 6px; color: var(--t2); cursor: pointer;
 }
 .tool-btn:hover { background: var(--s2); color: var(--t1); }
+.tool-btn.active { background: var(--accT); color: var(--acc); }
+
+/* Tool tooltips — open toward the viewer (mirrors with the toolbar in RTL) */
+.tipL { position: relative; }
+.tipL:hover::after, .tipL:focus-visible::after {
+  content: attr(data-tip);
+  position: absolute; inset-inline-end: calc(100% + 12px); top: 50%; transform: translateY(-50%);
+  background: var(--tlbg); backdrop-filter: blur(8px);
+  border: 1px solid var(--bd2); color: var(--t1);
+  padding: 5px 9px; border-radius: 6px;
+  font: 500 11px var(--fB), sans-serif;
+  white-space: nowrap; z-index: 60;
+}
+
+/* Floors flyout */
+.vp-floors-menu {
+  position: absolute; inset-inline-end: 66px; top: 50%; transform: translateY(-50%);
+  width: 120px; max-height: 320px; overflow-y: auto;
+  background: var(--tlbg); backdrop-filter: blur(14px);
+  border: 1px solid var(--bd2); border-radius: 8px; padding: 5px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  display: flex; flex-direction: column; gap: 1px; z-index: 40; pointer-events: auto;
+}
+.vp-floors-menu[hidden] { display: none; }
+.floor-item {
+  display: flex; align-items: center; width: 100%; padding: 6px 9px;
+  background: transparent; border: none; border-radius: 6px;
+  font-family: var(--fM), monospace; font-size: 12px; color: var(--t2);
+  cursor: pointer; text-align: start;
+}
+.floor-item:hover { background: var(--s2); color: var(--t1); }
+.floor-item.active { background: var(--accT); color: var(--acc); }
 
 /* Bottom Scrubbar */
 .vp-scrubbar {
@@ -644,13 +677,7 @@
 .vp-ovp.collapsed { transform: translateX(calc(-100% + 40px)); pointer-events: none; }
 .app-shell[dir="rtl"] .vp-ovp.collapsed { transform: translateX(calc(100% - 40px)); }
 
-/* RTL specific positioning for central and floating panels */
-.app-shell[dir="rtl"] .vp-toolbar {
-  inset-inline-end: auto;
-  left: auto;
-  right: 14px; /* Force toolbar to the right side of the wrapper in RTL so it doesn't overlap left panels */
-}
-
+/* RTL specific positioning for floating panels */
 .app-shell[dir="rtl"] .eko-chat-modal {
   inset-inline-end: auto;
   left: auto;
@@ -681,10 +708,11 @@
 
 /* Right Panel Collapse */
 .right-panel {
+  --rp-w: 378px; /* kept in sync with the inline width by the resize logic */
   transition: margin-inline-end 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .right-panel.collapsed {
-  margin-inline-end: -338px; /* 378px total width - 40px exposed tab = -338px */
+  margin-inline-end: calc(40px - var(--rp-w)); /* hide all but the 40px tab */
 }
 .right-panel.collapsed .rp-inner {
   opacity: 0; pointer-events: none; transition: opacity 0.2s;
@@ -710,6 +738,26 @@
   writing-mode: vertical-rl;
   font-family: var(--fH), sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 2px;
 }
+
+/* Right Panel Resize — drag handle on the inner edge (logical props flip it for RTL) */
+.rp-resizer {
+  position: absolute; top: 0; bottom: 0; inset-inline-start: -4px; width: 9px;
+  cursor: col-resize; z-index: 30; touch-action: none; background: transparent;
+}
+.rp-resizer::before {
+  content: ''; position: absolute; top: 50%; margin-top: -22px;
+  inset-inline-start: 2px; width: 4px; height: 44px; border-radius: 4px;
+  background: var(--t3); opacity: 0; transition: opacity 0.15s;
+}
+.rp-resizer::after {
+  content: ''; position: absolute; top: 0; bottom: 0; inset-inline-start: 3.5px; width: 2px;
+  background: var(--acc); opacity: 0; transition: opacity 0.15s;
+}
+.rp-resizer:hover::before, .right-panel.resizing .rp-resizer::before { opacity: 0.7; }
+.rp-resizer:hover::after,  .right-panel.resizing .rp-resizer::after  { opacity: 0.9; }
+.right-panel.collapsed .rp-resizer { display: none; }
+.right-panel.resizing { transition: none; }
+body.rp-resizing { cursor: col-resize; user-select: none; }
 
 
 .eko-chat-modal { pointer-events: auto !important; }
