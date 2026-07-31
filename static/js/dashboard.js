@@ -1438,6 +1438,211 @@
     $$('.lang-btn').forEach((btn) => btn.addEventListener('click', updateVpCaption));
   }
 
+  /* ── Search Palette (Ctrl+K) ── */
+  const palOverlay = $('#palOverlay');
+  const palDialog  = $('#palDialog');
+  const palInput   = $('#palInput');
+  const palBody    = $('#palBody');
+  const searchBtn  = $('#searchBtn');
+
+  /* ── Reports Library ── */
+  const reportsPanel = $('#reportsPanel');
+  const reportsBtn   = $('#reportsBtn');
+  const reportsClose = $('#reportsClose');
+
+  function closeReports() {
+    if (!reportsPanel || reportsPanel.hidden) return;
+    reportsPanel.hidden = true;
+    if (reportsBtn) reportsBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  function openReports() {
+    if (!reportsPanel) return;
+    reportsPanel.hidden = false;
+    if (reportsBtn) reportsBtn.setAttribute('aria-expanded', 'true');
+  }
+
+  if (palDialog && palInput && palBody) {
+    const PAL_IC = {
+      asset: 'M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z',
+      fault: 'm21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3ZM12 9v4M12 17h.01',
+      wo:    'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z',
+      doc:   'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v5h5',
+      page:  'M3 3h18v18H3zM3 9h18M9 21V9',
+      zap:   'M13 2 3 14h9l-1 8 10-12h-9l1-8',
+      clock: 'M12 6v6l4 2M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0',
+    };
+    let palSel = 0;
+    let palRows = [];
+    let palGroupStarts = [];
+
+    const palAr = () => html.lang === 'ar';
+    const escHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    function closePal() {
+      if (palOverlay) palOverlay.hidden = true;
+      palDialog.hidden = true;
+    }
+
+    function palNavTo(mod, sub) {
+      closePal();
+      $(`.nav-item[data-module="${mod}"]`)?.click();
+      if (sub) $(`.sub-item[data-sub="${sub}"]`)?.click();
+    }
+
+    // Same demo dataset as the EKO Frame reference: recents + quick actions
+    // when empty, entity groups while typing
+    function palData() {
+      const ar = palAr();
+      const q = palInput.value.trim().toLowerCase();
+      if (!q) {
+        return [
+          { hdr: ar ? 'الأخيرة' : 'RECENT', rows: [
+            { t: 'Chiller CH-2', ctx: ar ? 'أصل · محطة القبو' : 'Asset · Basement plant', ic: 'clock', act: () => palNavTo('assets') },
+            { t: 'Work order WO-2214', ctx: ar ? 'استبدال سير AHU-02 · مفتوح' : 'AHU-02 belt replacement · open', ic: 'clock', act: () => palNavTo('assets', 'wo') },
+            { t: ar ? 'منع الهدر' : 'Waste Prevention', ctx: ar ? 'الطاقة' : 'Energy', ic: 'clock', act: () => palNavTo('energy', 'waste') },
+          ]},
+          { hdr: ar ? 'إجراءات سريعة' : 'QUICK ACTIONS', rows: [
+            { t: ar ? 'إنشاء أمر عمل' : 'Create work order', ctx: '', ic: 'zap', act: () => palNavTo('assets', 'wo') },
+            { t: ar ? 'إنشاء تقرير المالك' : 'Generate owner report', ctx: '', ic: 'zap', act: () => { closePal(); $('.ask-eko-bar button[data-i18n="btnReport"]')?.click(); } },
+            { t: ar ? 'الانتقال إلى المحفظة' : 'Go to Portfolio', ctx: '', ic: 'zap', act: () => { closePal(); $('#propSwitcher')?.click(); } },
+          ]},
+        ];
+      }
+      const groups = [
+        { hdr: ar ? 'الأصول' : 'ASSETS', rows: [
+          { t: 'AHU-L12-03', ctx: ar ? 'وحدة مناولة هواء · الطابق 12 شمال' : 'Air handling unit · Level 12 north', ic: 'asset', act: () => palNavTo('assets') },
+          { t: 'AHU-02', ctx: ar ? 'وحدة مناولة هواء · محطة القبو' : 'Air handling unit · Basement plant', ic: 'asset', act: () => palNavTo('assets') },
+          { t: 'Chiller CH-2', ctx: ar ? 'أصل · محطة القبو' : 'Asset · Basement plant', ic: 'asset', act: () => palNavTo('assets') },
+        ]},
+        { hdr: ar ? 'الأعطال' : 'FAULTS', rows: [
+          { t: 'AHU-L12-03 setpoint deviation', ctx: ar ? 'تحذير · نشط' : 'warning · active', ic: 'fault', act: () => palNavTo('operations', 'alarms') },
+          { t: 'CH-2 condenser approach rising', ctx: ar ? 'حرج · نشط' : 'critical · active', ic: 'fault', act: () => palNavTo('operations', 'alarms') },
+        ]},
+        { hdr: ar ? 'أوامر العمل' : 'WORK ORDERS', rows: [
+          { t: 'WO-2214 · AHU-02 belt replacement', ctx: ar ? 'مفتوح' : 'open', ic: 'wo', act: () => palNavTo('assets', 'wo') },
+        ]},
+        { hdr: ar ? 'المستندات' : 'DOCUMENTS', rows: [
+          { t: 'AHU O&M Manual', ctx: ar ? 'PDF · الأنظمة الميكانيكية' : 'PDF · mechanical systems', ic: 'doc', act: () => palNavTo('assets', 'reg') },
+        ]},
+        { hdr: ar ? 'الصفحات' : 'PAGES', rows: [
+          { t: ar ? 'شذوذ التدفق والاتجاه' : 'Flow and Trend Anomaly', ctx: ar ? 'الطاقة' : 'Energy', ic: 'page', act: () => palNavTo('energy', 'anom') },
+          { t: ar ? 'منع الهدر' : 'Waste Prevention', ctx: ar ? 'الطاقة' : 'Energy', ic: 'page', act: () => palNavTo('energy', 'waste') },
+        ]},
+      ];
+      return groups
+        .map((g) => ({ ...g, rows: g.rows.filter((r) => (r.t + ' ' + r.ctx).toLowerCase().includes(q)) }))
+        .filter((g) => g.rows.length);
+    }
+
+    function syncPalSel() {
+      palRows.forEach((r, i) => r.classList.toggle('selected', i === palSel));
+      if (palRows[palSel]) palRows[palSel].scrollIntoView({ block: 'nearest' });
+    }
+
+    function renderPal() {
+      const q = palInput.value.trim().toLowerCase();
+      const groups = palData();
+      palRows = [];
+      palGroupStarts = [];
+      palBody.innerHTML = '';
+      if (!groups.length) {
+        palBody.innerHTML = `<div class="pal-empty">${palAr() ? 'لا نتائج' : 'No results'}</div>`;
+        return;
+      }
+      groups.forEach((g) => {
+        palGroupStarts.push(palRows.length);
+        const hdr = document.createElement('div');
+        hdr.className = 'pal-group-hdr';
+        hdr.textContent = g.hdr;
+        palBody.appendChild(hdr);
+        g.rows.forEach((r) => {
+          const m = q ? r.t.toLowerCase().indexOf(q) : -1;
+          const label = m >= 0
+            ? escHtml(r.t.slice(0, m)) + '<b>' + escHtml(r.t.slice(m, m + q.length)) + '</b>' + escHtml(r.t.slice(m + q.length))
+            : escHtml(r.t);
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'pal-row';
+          btn.innerHTML =
+            `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="${PAL_IC[r.ic]}"></path></svg>` +
+            `<span class="pal-row-label">${label}</span>` +
+            (r.ctx ? `<span class="pal-row-ctx">${escHtml(r.ctx)}</span>` : '');
+          btn.addEventListener('click', r.act);
+          palBody.appendChild(btn);
+          palRows.push(btn);
+        });
+      });
+      palSel = Math.max(0, Math.min(palSel, palRows.length - 1));
+      syncPalSel();
+    }
+
+    function openPal() {
+      closeReports();
+      if (palOverlay) palOverlay.hidden = false;
+      palDialog.hidden = false;
+      palInput.value = '';
+      palSel = 0;
+      renderPal();
+      setTimeout(() => palInput.focus(), 30);
+    }
+
+    if (searchBtn) searchBtn.addEventListener('click', openPal);
+    if (palOverlay) palOverlay.addEventListener('click', closePal);
+
+    palInput.addEventListener('input', () => { palSel = 0; renderPal(); });
+
+    palInput.addEventListener('keydown', (e) => {
+      const n = palRows.length;
+      if (!n) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        palSel = (palSel + 1) % n;
+        syncPalSel();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        palSel = (palSel - 1 + n) % n;
+        syncPalSel();
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        const next = palGroupStarts.find((x) => x > palSel);
+        palSel = next != null ? next : palGroupStarts[0] || 0;
+        syncPalSel();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (palRows[palSel]) palRows[palSel].click();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        if (palDialog.hidden) openPal();
+        else closePal();
+      } else if (e.key === 'Escape') {
+        closePal();
+        closeReports();
+      }
+    });
+
+    // Re-render open palette when the language switches
+    $$('.lang-btn').forEach((btn) => btn.addEventListener('click', () => {
+      if (!palDialog.hidden) renderPal();
+    }));
+  }
+
+  if (reportsBtn && reportsPanel) {
+    reportsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (reportsPanel.hidden) openReports();
+      else closeReports();
+    });
+    if (reportsClose) reportsClose.addEventListener('click', closeReports);
+    document.addEventListener('click', (e) => {
+      if (!reportsPanel.hidden && !e.target.closest('#reportsPanel, #reportsBtn')) closeReports();
+    });
+  }
+
   $$('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
       const mod = btn.getAttribute('data-module');
@@ -1587,6 +1792,102 @@
       const a = getEkoAnswer(q);
       appendEkoMessage(q, a);
       askInput.value = '';
+    });
+  }
+
+  /* ── Account Menu ── */
+  const userMenuBtn = $('#userMenu');
+  const accountMenu = $('#accountMenu');
+
+  function closeAccountMenu() {
+    if (!accountMenu || accountMenu.hidden) return;
+    accountMenu.hidden = true;
+    if (userMenuBtn) userMenuBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  if (userMenuBtn && accountMenu) {
+    userMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = accountMenu.hidden;
+      accountMenu.hidden = !open;
+      userMenuBtn.setAttribute('aria-expanded', String(open));
+      if (open) closeReports();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!accountMenu.hidden && !accountMenu.contains(e.target) && !userMenuBtn.contains(e.target)) {
+        closeAccountMenu();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeAccountMenu();
+    });
+
+    // Menu items are presentational for now — just dismiss the menu
+    $$('.account-item', accountMenu).forEach((item) => {
+      item.addEventListener('click', closeAccountMenu);
+    });
+  }
+
+  /* ── Settings View ── */
+  const settingsView   = $('#settingsView');
+  const settingsNavBtn = $('#settingsNavBtn');
+  const vpWrapperEl    = $('.vp-wrapper');
+  const crumbModuleEl  = $('#crumbModule');
+  // Remember which module the breadcrumb showed so we can restore it on exit
+  let crumbBeforeSettings = crumbModuleEl ? crumbModuleEl.getAttribute('data-i18n') : null;
+
+  function setSettingsSection(sec) {
+    $$('.settings-sec-btn').forEach((b) => b.classList.toggle('active', b.dataset.sec === sec));
+    $$('.settings-pane').forEach((p) => { p.hidden = p.dataset.pane !== sec; });
+  }
+
+  function openSettings() {
+    if (!settingsView) return;
+    crumbBeforeSettings = crumbModuleEl ? crumbModuleEl.getAttribute('data-i18n') : null;
+
+    settingsView.hidden = false;
+    if (vpWrapperEl) vpWrapperEl.style.display = 'none';
+    if (rightPanel) rightPanel.style.display = 'none';
+
+    $$('.nav-item.active').forEach((el) => el.classList.remove('active'));
+    $$('.sub-item.active').forEach((el) => el.classList.remove('active'));
+    if (settingsNavBtn) settingsNavBtn.classList.add('active');
+
+    if (crumbModuleEl) {
+      crumbModuleEl.setAttribute('data-i18n', 'settings');
+      if (typeof window.updateTranslations === 'function') {
+        window.updateTranslations(html.lang === 'ar' ? 'ar' : 'en');
+      }
+    }
+  }
+
+  function closeSettings() {
+    if (!settingsView || settingsView.hidden) return;
+    settingsView.hidden = true;
+    if (vpWrapperEl) vpWrapperEl.style.display = '';
+    if (rightPanel) rightPanel.style.display = '';
+    if (settingsNavBtn) settingsNavBtn.classList.remove('active');
+
+    if (crumbModuleEl && crumbBeforeSettings) {
+      crumbModuleEl.setAttribute('data-i18n', crumbBeforeSettings);
+      if (typeof window.updateTranslations === 'function') {
+        window.updateTranslations(html.lang === 'ar' ? 'ar' : 'en');
+      }
+    }
+  }
+
+  if (settingsView && settingsNavBtn) {
+    settingsNavBtn.addEventListener('click', openSettings);
+
+    $$('.settings-sec-btn').forEach((btn) => {
+      btn.addEventListener('click', () => setSettingsSection(btn.dataset.sec));
+    });
+
+    // Any module / sub-view click leaves Settings and restores the viewer
+    $$('.nav-item[data-module], .sub-item').forEach((btn) => {
+      btn.addEventListener('click', closeSettings);
     });
   }
 
