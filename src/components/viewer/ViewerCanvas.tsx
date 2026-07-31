@@ -84,25 +84,30 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
   const envRotation = useAppStore(s => s.envRotation)
   const aoRadius = useAppStore(s => s.aoRadius)
   const aoIntensity = useAppStore(s => s.aoIntensity)
+  // Subscribed (not getState) so project switches actually re-run the effects below
+  const currentProjectId = useProjectStore(s => s.currentProject?.projectId)
 
   useEffect(() => {
-    if (isReady && onEngineReady) {
-      onEngineReady(engineRef)
-      // Restore camera if we have it
-      const camera = useProjectStore.getState().currentProject?.camera
-      if (camera && engineRef.current?.world?.camera?.controls) {
-        try {
-          engineRef.current.world.camera.controls.setLookAt(
-            camera.position[0], camera.position[1], camera.position[2],
-            camera.target[0], camera.target[1], camera.target[2],
-            false
-          )
-        } catch (e) {
-          console.warn('Failed to restore camera in ViewerCanvas:', e)
-        }
-      }
-    }
+    if (isReady && onEngineReady) onEngineReady(engineRef)
   }, [isReady, onEngineReady])
+
+  // Restore the saved view every time a project is opened. The engine is created
+  // once and outlives project switches, so this cannot hang off engine-ready alone.
+  useEffect(() => {
+    if (!isReady || !currentProjectId) return
+    const camera = useProjectStore.getState().currentProject?.camera
+    const controls = engineRef.current?.world?.camera?.controls
+    if (!camera || !controls) return
+    try {
+      controls.setLookAt(
+        camera.position[0], camera.position[1], camera.position[2],
+        camera.target[0], camera.target[1], camera.target[2],
+        false
+      )
+    } catch (e) {
+      console.warn('Failed to restore camera in ViewerCanvas:', e)
+    }
+  }, [isReady, currentProjectId])
 
   useEffect(() => {
     if (isReady && engineRef.current) {
@@ -111,25 +116,47 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
   }, [realisticMode, exposure, lightIntensity, ambientIntensity, timeOfDay, bloomStrength, bloomThreshold, bloomEnabled, fogDensity, cloudDensity, cloudShadowsEnabled, cloudSpeed, dofEnabled, dofFocus, dofAperture, dofMaxBlur, visualSaturation, visualTemperature, visualContrast, visualVignette, godRaysEnabled, godRayStrength, chromaticAberration, autoFocus, ambientOcclusion, outlineEdges, pbrMaterials, iblEnabled, syncIblWithSun, envIntensity, envRotation, aoRadius, aoIntensity, isReady])
 
   const loadedIdsRef = useRef<Set<string>>(new Set())
+  const isLoadingRef = useRef(false)
 
   useEffect(() => {
     if (!isReady) return
-    const currentModels = useModelStore.getState().models
-    const hasCamera = !!useProjectStore.getState().currentProject?.camera
-    if (currentModels.length === 0) {
+    if (useModelStore.getState().models.length === 0) {
+      // The store was cleared (project closed). Drop the geometry from the scene
+      // too — otherwise it keeps rendering behind the project list and bleeds
+      // into whichever project is opened next.
+      const engine = engineRef.current
+      if (engine) {
+        for (const id of loadedIdsRef.current) {
+          const existing = engine.world.scene.three.children.find((c: any) => c.userData?.modelId === id)
+          if (existing) engine.world.scene.three.remove(existing)
+          engine.fragments.disposeModel(id).catch(() => {})
+        }
+      }
       loadedIdsRef.current.clear()
     }
+    // Models stream in one at a time, so this effect re-runs while an earlier
+    // pass is still going — keep engine loads strictly sequential
+    if (isLoadingRef.current) return
+    isLoadingRef.current = true
 
     const loadSequentially = async () => {
-      for (const model of currentModels) {
-        if (model.fragBytes && !loadedIdsRef.current.has(model.modelId)) {
-          loadedIdsRef.current.add(model.modelId)
-          await loadModel(model.fragBytes, model.modelId, model.type, {
-            position: model.position,
-            rotation: model.rotation,
-            scale: model.scale,
-          }, adminMode && !hasCamera) 
+      try {
+        for (;;) {
+          // Re-read the store each pass so models added mid-load are picked up
+          const next = useModelStore.getState().models.find(
+            m => m.fragBytes && !loadedIdsRef.current.has(m.modelId)
+          )
+          if (!next) break
+          loadedIdsRef.current.add(next.modelId)
+          const hasCamera = !!useProjectStore.getState().currentProject?.camera
+          await loadModel(next.fragBytes, next.modelId, next.type, {
+            position: next.position,
+            rotation: next.rotation,
+            scale: next.scale,
+          }, adminMode && !hasCamera)
         }
+      } finally {
+        isLoadingRef.current = false
       }
     }
 
@@ -137,10 +164,13 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
   }, [models, isReady])
 
   useEffect(() => {
-    // Reset picker panels when a new project loads or when we leave the viewer
     setPickerActive(false)
+    setPickedCoord(null)
+    setStatsVisible(false)
+    setDashboardVisible(isFinProject || !adminMode)
     useAppStore.getState().setMaterialPickerActive(false)
-  }, [useProjectStore.getState().currentProject?.projectId])
+    useAppStore.getState().setSelectedMaterialElement(null)
+  }, [currentProjectId, isFinProject, adminMode])
 
   useEffect(() => {
     if (!isReady || !statsContainerRef.current) return
@@ -539,6 +569,7 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
         ref={containerRef}
         className={`viewer-canvas-container${(pickerActive || materialPickerActive) ? ' picker-cursor' : ''}`}
         onClick={handleCanvasClick}
+        style={{ visibility: step === 'viewing' ? 'visible' : 'hidden' }}
       />
 
       {/* Stats overlay */}
@@ -572,7 +603,7 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
 
       {/* Right side panels */}
       {step === 'viewing' && adminMode && (!isFullscreen || isToolbarVisible) && (
-        <div className="right-panels-container" key={useProjectStore.getState().currentProject?.projectId || 'empty'}>
+        <div className="right-panels-container" key={currentProjectId || 'empty'}>
           <RenderPanel />
           <ModelPositionPanel 
             engineRef={engineRef} 

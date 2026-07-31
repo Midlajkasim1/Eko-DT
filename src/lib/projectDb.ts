@@ -231,7 +231,8 @@ export async function saveModelToProject(
 /** Load all model binaries listed in project.json */
 export async function loadModelsFromProject(
   handle: FileSystemDirectoryHandle,
-  meta: ProjectMeta
+  meta: ProjectMeta,
+  onModel?: (model: ProjectModel) => void
 ): Promise<ProjectModel[]> {
   const modelsDir = await handle.getDirectoryHandle('models', { create: true })
   const results: ProjectModel[] = []
@@ -241,7 +242,11 @@ export async function loadModelsFromProject(
     const fileName = `${entry.modelId}.${ext}`
     const bytes = await readBinary(modelsDir, fileName)
     if (bytes) {
-      results.push({ ...entry, fragBytes: bytes })
+      const model = { ...entry, fragBytes: bytes }
+      results.push(model)
+      // Hand each model over as soon as its bytes land so callers can show it
+      // immediately instead of waiting for the whole (potentially GB-sized) set
+      onModel?.(model)
     }
   }
 

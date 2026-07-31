@@ -132,7 +132,13 @@ export function Sidebar({ onFiles, engineRef }: SidebarProps) {
       autoFocus: state.autoFocus,
       ambientOcclusion: state.ambientOcclusion,
       outlineEdges: state.outlineEdges,
-      pbrMaterials: state.pbrMaterials
+      pbrMaterials: state.pbrMaterials,
+      iblEnabled: state.iblEnabled,
+      syncIblWithSun: state.syncIblWithSun,
+      envIntensity: state.envIntensity,
+      envRotation: state.envRotation,
+      aoRadius: state.aoRadius,
+      aoIntensity: state.aoIntensity
     }
 
     await saveViewAndSettings(

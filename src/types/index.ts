@@ -86,6 +86,12 @@ export interface ProjectRenderSettings {
   ambientOcclusion?: boolean
   outlineEdges?: boolean
   pbrMaterials?: boolean
+  iblEnabled?: boolean
+  syncIblWithSun?: boolean
+  envIntensity?: number
+  envRotation?: number
+  aoRadius?: number
+  aoIntensity?: number
 }
 
 export interface ProjectMeta {

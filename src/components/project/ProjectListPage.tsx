@@ -74,8 +74,22 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
 
     useAppStore.getState().reset()
 
-    const projectModels = await loadModelsFromProject(folderHandle, meta)
-    for (const pm of projectModels) {
+    // reset() lands on 'idle', which renders the upload zone. Switch to the
+    // viewer up front so a project that already has models never flashes
+    // "Upload IFC" while its files are being read off disk.
+    setStep('viewing')
+
+    // Restore settings before the models stream in
+    if (meta.renderSettings) {
+      setRealisticMode(meta.renderSettings.realisticMode)
+      setLightingParams(meta.renderSettings)
+    }
+
+    useModelStore.getState().setActiveModelId(null)
+
+    // Each model is added the moment its bytes are read, so the sidebar list
+    // fills in one by one rather than staying empty until the last file lands
+    await loadModelsFromProject(folderHandle, meta, (pm) => {
       addModel({
         modelId: pm.modelId,
         originalFileName: pm.originalFileName,
@@ -88,18 +102,7 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
         rotation: pm.rotation,
         scale: pm.scale,
       })
-    }
-    
-    // Restore settings if present
-    if (meta.renderSettings) {
-      setRealisticMode(meta.renderSettings.realisticMode)
-      setLightingParams(meta.renderSettings)
-    }
-
-    useModelStore.getState().setActiveModelId(null)
-
-    // Set viewing step first so RenderPanel and others mount if needed
-    setStep('viewing')
+    })
   }
 
   const handleDeleteRecent = async (projectId: string) => {

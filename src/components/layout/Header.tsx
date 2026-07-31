@@ -14,6 +14,8 @@ export function Header() {
     clearModels()
     useAppStore.getState().setMaterialPickerActive(false)
     useAppStore.getState().setSelectedMaterialElement(null)
+    useAppStore.getState().setIsFullscreen(false)
+    useAppStore.getState().setIsToolbarVisible(true)
     useModelStore.getState().setActiveModelId(null)
     closeProject()
     setStep('projects')
