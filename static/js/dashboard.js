@@ -178,7 +178,8 @@
   };
 
   function t(str) {
-    if (document.documentElement.lang === "ar") {
+    const langEl = document.querySelector('.app-shell') || document.documentElement;
+    if (langEl.lang === "ar") {
       return arDict[str] || str;
     }
     return str;
