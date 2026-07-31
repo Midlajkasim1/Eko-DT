@@ -123,6 +123,20 @@ function templatesPlugin() {
   }
 }
 
+const MIME_TYPES: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.woff2': 'font/woff2',
+  '.woff': 'font/woff',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+}
+
 function staticFolderPlugin() {
   const staticPath = path.resolve(__dirname, 'static')
   return {
@@ -131,13 +145,20 @@ function staticFolderPlugin() {
       server.middlewares.use('/static', (req: any, res: any, next: any) => {
         const rawUrl: string = req.url || ''
         const urlPath = rawUrl.split('?')[0]
-        
+
         const filePath = path.join(staticPath, urlPath)
+        // Prevent path traversal out of static/
+        if (!filePath.startsWith(staticPath)) {
+          res.statusCode = 403
+          res.end('Forbidden')
+          return
+        }
         if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-          const content = fs.readFileSync(filePath, 'utf-8')
-          if (filePath.endsWith('.html')) res.setHeader('Content-Type', 'text/html; charset=utf-8')
-          else if (filePath.endsWith('.css')) res.setHeader('Content-Type', 'text/css; charset=utf-8')
-          else if (filePath.endsWith('.js')) res.setHeader('Content-Type', 'application/javascript; charset=utf-8')
+          // Read as a Buffer — decoding binaries (.woff2) as utf-8 corrupts them
+          const content = fs.readFileSync(filePath)
+          const mime = MIME_TYPES[path.extname(filePath).toLowerCase()]
+          if (mime) res.setHeader('Content-Type', mime)
+          res.setHeader('Content-Length', content.length)
           res.end(content)
         } else {
           next()
