@@ -36,13 +36,35 @@ const DEFAULT_FIN_ENDPOINTS = {
   "Carbon_Emission_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3105de9e-0091a3a6,2026-01-01..today()%2C%7B-limit%7D)"
 }
 
-const MARSA_FIN_LIVE_POINTS = {
-  ...DEFAULT_FIN_LIVE_POINTS,
+// Site preset — must stay in sync with backend/config.json (single source of truth)
+const SITE_FIN_LIVE_POINTS = {
   "total_power": "p:{project}:r:3181ee6e-67dac181",
-  "carbon": "p:{project}:r:3181f7a2-4652169b"
+  "peak_demand": "p:{project}:r:3181f788-2d229f48",
+  "energy_deviation": "p:{project}:r:3181f71f-2f0083d7",
+  "energy_intensity": "p:{project}:r:3181f767-e5cb6329",
+  "energy_performance": "p:{project}:r:3182117b-3c286f7b",
+  "carbon": "p:{project}:r:3181f7a2-4652169b",
+  "water_consumption": "p:{project}:r:310346fb-95c42637",
+  "current_month": "p:{project}:r:31034e49-4c6c035e",
+  "previous_month": "p:{project}:r:3105c5a1-a272e1a7",
+  "target_monthly": "p:{project}:r:31a06992-90fb9d52",
+  "target_current": "p:{project}:r:3196cd3e-505a1625",
+  "comfort_compliance": "p:{project}:r:319d6f6b-b5411f43",
+  "ra_co2": "p:{project}:r:318b19b8-0df2b231",
+  "ahu": "p:{project}:r:31034e49-b986583a",
+  "fcu": "p:{project}:r:3105c687-8436b4e7",
+  "boiler": "p:{project}:r:3105cf6b-faa023ca",
+  "chiller": "p:{project}:r:3105cf6b-d483c5f7",
+  "cooling_tower": "p:{project}:r:3105cf6b-ae5752c0",
+  "vav": "p:{project}:r:31034e49-efdd0bc0",
+  "lighting": "p:{project}:r:3105c687-d66c2275",
+  "power_sockets": "p:{project}:r:3105c687-d5277330",
+  "pumps": "p:{project}:r:3105cf6b-c3032a1e",
+  "mcc1": "p:{project}:r:3195bbf6-c7b4de9a",
+  "mcc2": "p:{project}:r:3195bc40-ac80ac08"
 }
 
-const MARSA_FIN_ENDPOINTS = {
+const SITE_FIN_ENDPOINTS = {
   "Total_Power_Consumption_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3181ee6e-67dac181,2026-05-21..today()%2C%7B-limit%7D)",
   "Power_Usage_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3181ee6e-67dac181,2026-05-21..today()%2C%7B-limit%7D)",
   "Peak_Demand_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3181f788-2d229f48,2026-05-21..today()%2C%7B-limit%7D)",
@@ -51,23 +73,23 @@ const MARSA_FIN_ENDPOINTS = {
   "VAV_Consumption_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:31034e49-efdd0bc0,2026-01-01..today()%2C%7B-limit%7D)",
   "Water_Consumption_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:310346fb-95c42637,2026-01-01..today()%2C%7B-limit%7D)",
   "Carbon_Emission_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3105de9e-0091a3a6,2026-01-01..today()%2C%7B-limit%7D)",
+  "Carbon_Points_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3181f7a2-4652169b,2026-05-21..today()%2C%7B-limit%7D)",
   "Consumption_Level1_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:310346fb-ce2c6cd5,2025-01-01..today()%2C%7B-limit%7D)",
   "Consumption_Level2_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:31034e49-cd80ee43,2025-01-01..today()%2C%7B-limit%7D)",
   "Consumption_Level3_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:31034e49-2b40797d,2025-01-01..today()%2C%7B-limit%7D)",
-  "PMU07_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3195bc40-eede63ec,2026-05-21..today()%2C%7B-limit%7D)",
-  "PMU06_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3195bc40-6c15d0fe,2026-05-21..today()%2C%7B-limit%7D)",
-  "PMU09_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3195bbf6-c7b4de9a,2026-05-21..today()%2C%7B-limit%7D)",
   "PMU04_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3195bc40-ac80ac08,2026-05-21..today()%2C%7B-limit%7D)",
   "PMU05_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3195bc40-9a32d7b7,2026-05-21..today()%2C%7B-limit%7D)",
+  "PMU06_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3195bc40-6c15d0fe,2026-05-21..today()%2C%7B-limit%7D)",
+  "PMU07_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3195bc40-eede63ec,2026-05-21..today()%2C%7B-limit%7D)",
   "PMU08_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3195bc40-ff5411e5,2026-05-21..today()%2C%7B-limit%7D)",
+  "PMU09_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3195bbf6-c7b4de9a,2026-05-21..today()%2C%7B-limit%7D)",
   "WM_BF_Cold_Wtr_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:31b02214-cfdc6152,2026-05-21..today()%2C%7B-limit%7D)",
   "WM_FF_Ret_Hot_Wtr_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:31b02287-41e84804,2026-05-21..today()%2C%7B-limit%7D)",
   "WM_FF_Sup_Cold_Wtr_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:31b02287-f021f2a0,2026-05-21..today()%2C%7B-limit%7D)",
   "WM_FF_Sup_Hot_Wtr_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:31b02287-40064c83,2026-05-21..today()%2C%7B-limit%7D)",
   "GM_GF_01_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:31b02287-febfc212,2026-05-21..today()%2C%7B-limit%7D)",
   "GM_GF_02_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:31b022c7-cd184ea5,2026-05-21..today()%2C%7B-limit%7D)",
-  "GM_GF_03_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:31b022c7-06dbd6f5,2026-05-21..today()%2C%7B-limit%7D)",
-  "Carbon_Points_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:3181f7a2-4652169b,2026-05-21..today()%2C%7B-limit%7D)"
+  "GM_GF_03_his": "/api/{project}/eval?expr=hisRead(@p:{project}:r:31b022c7-06dbd6f5,2026-05-21..today()%2C%7B-limit%7D)"
 }
 
 interface ProjectSettingsModalProps {
@@ -313,7 +335,7 @@ export function ProjectSettingsModal({ visible, onClose }: ProjectSettingsModalP
                 <button 
                   className="ds-btn ds-btn-secondary" 
                   style={{ padding: '4px 12px', fontSize: '12px' }}
-                  onClick={() => update('finLivePoints', MARSA_FIN_LIVE_POINTS)}
+                  onClick={() => update('finLivePoints', SITE_FIN_LIVE_POINTS)}
                 >
                   Load Marsa Al Arab
                 </button>
@@ -348,7 +370,7 @@ export function ProjectSettingsModal({ visible, onClose }: ProjectSettingsModalP
                 <button 
                   className="ds-btn ds-btn-secondary" 
                   style={{ padding: '4px 12px', fontSize: '12px' }}
-                  onClick={() => update('finEndpoints', MARSA_FIN_ENDPOINTS)}
+                  onClick={() => update('finEndpoints', SITE_FIN_ENDPOINTS)}
                 >
                   Load Marsa Al Arab
                 </button>

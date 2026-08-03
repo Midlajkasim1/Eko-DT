@@ -12,14 +12,15 @@ import re
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Optional
+from urllib.parse import quote
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from fin_client import FinScramClient, parse_custom_response, aggregate_and_restructure
+from fin_client import FinScramClient, safe_get
 
 # ─── Load Config ─────────────────────────────────────────────────────────────
 
@@ -34,125 +35,175 @@ FIN_SERVER_URL = CONFIG.get("fin_server_url", "https://localhost")
 # ─── Global State ────────────────────────────────────────────────────────────
 
 client: Optional[FinScramClient] = None
-polling_task: Optional[asyncio.Task] = None
+polling_tasks: list[asyncio.Task] = []
 
 # Cached data (updated by background polling)
 cached_equip_data: dict = {}
 cached_power_data: dict = {}
 cached_building_data: dict = {}
-cached_sensor_avg: dict = {"temp": None, "humidity": None, "co2": None, "water": None}
+cached_sensor_avg: dict = {"temp": None, "humidity": None, "co2": None}
 cached_power_history: dict = {}
 cached_fdd_summary: list = []
+cached_meter_data: dict = {}
+cached_alarm_data: dict = {}
+cached_facility: dict = {}
 
 
 # ─── Background Polling ─────────────────────────────────────────────────────
 
-async def polling_loop():
-    """Background loop that fetches FIN data every 30s (realtime) and 5s (power)."""
-    global cached_equip_data, cached_power_data, cached_building_data
-    global cached_sensor_avg, cached_power_history, cached_fdd_summary
+async def realtime_loop():
+    """Fetch equipment, alarms, histories, and derived summaries."""
+    global cached_equip_data, cached_building_data, cached_power_history
+    global cached_fdd_summary, cached_meter_data, cached_alarm_data, cached_facility
 
-    if not client or not client.is_authenticated:
-        return
+    rt_endpoints = CONFIG.get("realtime_endpoints", {})
+    pw_endpoints = CONFIG.get("power_endpoints", {})
+    interval = CONFIG.get("polling", {}).get("realtime_ms", 30000) / 1000
 
-    while True:
+    while client and client.is_authenticated:
         try:
-            # Resolve endpoints from config
-            rt_endpoints = CONFIG.get("realtime_endpoints", {})
-            pw_endpoints = CONFIG.get("power_endpoints", {})
-            live_ids = CONFIG.get("live_point_ids", {})
-
-            # 1. Fetch realtime equipment data
             realtime = await client.fetch_realtime_data(rt_endpoints)
             cached_equip_data = {
                 "timestamp": datetime.now().isoformat(),
                 "equipment": _flatten_equip(realtime),
             }
-
-            # 2. Fetch power histories
-            power_hist = await client.fetch_power_histories(pw_endpoints)
-            cached_power_history = power_hist
-
-            # 3. Fetch live point values in parallel
-            live_tasks = {}
-            for key, point_id in live_ids.items():
-                live_tasks[key] = client.fetch_live_point(point_id)
-
-            live_results = {}
-            keys = list(live_tasks.keys())
-            values = await asyncio.gather(*live_tasks.values(), return_exceptions=True)
-            for k, v in zip(keys, values):
-                live_results[k] = None if isinstance(v, Exception) else v
-
-            # 4. Compute sensor averages from realtime data
             _compute_sensor_averages(realtime)
-
-            # 5. Build FDD summary
-            fdd_list = []
-            for floor_name, floor_data in realtime.items():
-                for eq in floor_data.get("hvac", []):
-                    rules = {}
-                    for pt in eq.get("points", []):
-                        nav = str(pt.get("navName") or "")
-                        val = pt.get("currentValue", "N/A")
-                        if nav.upper().startswith("RULE_"):
-                            rules[nav] = str(val)
-                    if rules:
-                        fdd_list.append({
-                            "equip": eq.get("name", "Unknown"),
-                            "floor": floor_name,
-                            "alarms": len(eq.get("alarms", [])),
-                            "rules": rules,
-                        })
-            cached_fdd_summary = fdd_list
-
-            # 6. Build power live payload
-            cached_power_data = {
-                "timestamp": datetime.now().isoformat(),
-                "total_power": live_results.get("total_power", 0) or 0,
-                "carbon_emission": live_results.get("carbon", 0) or 0,
-                "water_consumption": cached_sensor_avg.get("water", 0) or 0,
-                "previous_month": live_results.get("previous_month", 0) or 0,
-                "current_month": live_results.get("current_month", 0) or 0,
-                "target_monthly": live_results.get("target_monthly"),
-                "avg_temp": cached_sensor_avg.get("temp", 0) or 0,
-                "avg_hum": cached_sensor_avg.get("humidity", 0) or 0,
-                "avg_co2": cached_sensor_avg.get("co2", 0) or 0,
-                "ahu": live_results.get("ahu", 0) or 0,
-                "fcu": live_results.get("fcu", 0) or 0,
-                "boiler": live_results.get("boiler", 0) or 0,
-                "chiller": live_results.get("chiller", 0) or 0,
-                "cooling_tower": live_results.get("cooling_tower", 0) or 0,
-                "vav": live_results.get("vav", 0) or 0,
-                "lighting": live_results.get("lighting", 0) or 0,
-                "power_sockets": live_results.get("power_sockets", 0) or 0,
-                "pumps": live_results.get("pumps", 0) or 0,
-                "unit": "kWh",
-                "power_history": cached_power_history,
-                "fdd": cached_fdd_summary,
-            }
-
-            # 7. Build building info
-            facility_services = _compute_facility_services(realtime)
+            cached_fdd_summary = _build_fdd_summary(realtime)
+            cached_meter_data = _extract_meters(realtime, CONFIG.get("meter_profile", {}))
+            cached_alarm_data = _flatten_alarms(client.last_alarm_rows, CONFIG.get("severity_bands", {}))
+            cached_facility = _compute_facility_services(realtime)
+            cached_power_history = await client.fetch_power_histories(pw_endpoints)
             cached_building_data = {
                 "status": "success",
                 "Building_Info": {
                     "timestamp": datetime.now().isoformat(),
                     "Equipments": realtime,
-                    "buildingPowerUsageHistory": power_hist,
-                    "facilityServices": facility_services,
+                    "buildingPowerUsageHistory": cached_power_history,
+                    "facilityServices": cached_facility,
                 },
             }
-            
-            # Also add facility_services directly to power_data for easier frontend consumption
-            cached_power_data["facilityServices"] = facility_services
-
-            print(f"[FIN] ✓ Data refreshed at {datetime.now().strftime('%H:%M:%S')}")
-            await asyncio.sleep(30)
-
+            await asyncio.sleep(interval)
         except Exception as e:
-            print(f"[FIN] ✗ Polling error: {e}")
+            print(f"[FIN] realtime loop error: {e}")
             await asyncio.sleep(10)
+
+
+async def live_loop():
+    """Poll configured live points; failed reads stay null, never a fake 0."""
+    global cached_power_data
+
+    live_ids = CONFIG.get("live_point_ids", {})
+    interval = CONFIG.get("polling", {}).get("live_ms", 5000) / 1000
+
+    while client and client.is_authenticated:
+        try:
+            values = await asyncio.gather(
+                *(client.fetch_live_point(pid) for pid in live_ids.values()),
+                return_exceptions=True,
+            )
+            live_results = {
+                key: None if isinstance(val, Exception) else val
+                for key, val in zip(live_ids, values)
+            }
+            cached_power_data = {
+                "timestamp": datetime.now().isoformat(),
+                **live_results,
+                "carbon_emission": live_results.get("carbon"),
+                "avg_temp": cached_sensor_avg.get("temp"),
+                "avg_hum": cached_sensor_avg.get("humidity"),
+                "avg_co2": cached_sensor_avg.get("co2"),
+                "unit": "kWh",
+                "power_history": cached_power_history,
+                "fdd": cached_fdd_summary,
+                "facilityServices": cached_facility,
+            }
+            await asyncio.sleep(interval)
+        except Exception as e:
+            print(f"[FIN] live loop error: {e}")
+            await asyncio.sleep(interval)
+
+
+def _build_fdd_summary(realtime: dict) -> list[dict]:
+    summary = []
+    for floor_name, floor_data in realtime.items():
+        for eq in floor_data.get("hvac", []):
+            rules = {
+                str(pt.get("navName")): str(pt.get("currentValue", "N/A"))
+                for pt in eq.get("points", [])
+                if str(pt.get("navName") or "").upper().startswith("RULE_")
+            }
+            if rules:
+                summary.append({
+                    "equip": eq.get("name", "Unknown"),
+                    "floor": floor_name,
+                    "alarms": len(eq.get("alarms", [])),
+                    "rules": rules,
+                })
+    return summary
+
+
+def _extract_meters(realtime: dict, profile: dict) -> dict:
+    prefix = str(profile.get("prefix", "")).upper()
+    point_map = profile.get("point_map", {})
+    if not prefix or not point_map:
+        return {}
+
+    meters: dict = {}
+    for floor_data in realtime.values():
+        for eq in floor_data.get("hvac", []):
+            name = str(eq.get("name", ""))
+            if not name.upper().startswith(prefix):
+                continue
+            metrics: dict = {key: None for key in point_map}
+            for pt in eq.get("points", []):
+                nav = str(pt.get("navName", "")).lower().replace("-", " ").replace("_", " ")
+                best_key, best_len = None, -1
+                for key, aliases in point_map.items():
+                    for alias in aliases:
+                        if alias in nav and len(alias) > best_len:
+                            best_key, best_len = key, len(alias)
+                if not best_key:
+                    continue
+                match = re.search(r"-?\d+(?:\.\d+)?", str(pt.get("currentValue", "")))
+                if match:
+                    metrics[best_key] = float(match.group())
+            meters[name] = metrics
+    return meters
+
+
+def _flatten_alarms(rows: list, bands: dict) -> dict:
+    critical_max = bands.get("critical", 250)
+    warning_max = bands.get("warning", 400)
+    alarms = []
+    counts = {"critical": 0, "warning": 0, "info": 0}
+
+    for row in rows or []:
+        if row.get("alarm") is not True or row.get("active") is not True:
+            continue
+        priority = row.get("priority") if isinstance(row.get("priority"), (int, float)) else None
+        if priority is not None and priority <= critical_max:
+            severity = "critical"
+        elif priority is not None and priority <= warning_max:
+            severity = "warning"
+        else:
+            severity = "info"
+        counts[severity] += 1
+        source = row.get("sourceRef")
+        alarms.append({
+            "source": safe_get(source, "dis") or safe_get(source, "val") or "",
+            "message": row.get("message", ""),
+            "priority": priority,
+            "severity": severity,
+            "occurred": row.get("occurred") or row.get("created"),
+            "state": row.get("state"),
+        })
+
+    alarms.sort(key=lambda a: str(a.get("occurred") or ""), reverse=True)
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "alarms": alarms,
+        "counts": {**counts, "total": sum(counts.values())},
+    }
 
 
 def _flatten_equip(realtime: dict) -> list[dict]:
@@ -284,11 +335,18 @@ async def lifespan(app: FastAPI):
     """Startup/shutdown lifecycle."""
     yield
     # Cleanup
-    global polling_task, client
-    if polling_task and not polling_task.done():
-        polling_task.cancel()
+    global polling_tasks, client
+    _cancel_polling()
     if client:
         await client.close()
+
+
+def _cancel_polling():
+    global polling_tasks
+    for task in polling_tasks:
+        if not task.done():
+            task.cancel()
+    polling_tasks = []
 
 
 app = FastAPI(
@@ -327,7 +385,7 @@ class StatusResponse(BaseModel):
 @app.post("/api/fin/login")
 async def login(req: LoginRequest):
     """Authenticate with FIN server using SCRAM-SHA-256."""
-    global client, polling_task, FIN_SERVER_URL, PROJECT_NAME
+    global client, polling_tasks, FIN_SERVER_URL, PROJECT_NAME
 
     server_url = req.server_url or FIN_SERVER_URL
     project = req.project_name or PROJECT_NAME
@@ -336,9 +394,7 @@ async def login(req: LoginRequest):
     FIN_SERVER_URL = server_url
     PROJECT_NAME = project
 
-    # Stop existing polling
-    if polling_task and not polling_task.done():
-        polling_task.cancel()
+    _cancel_polling()
 
     # Close existing client
     if client:
@@ -350,8 +406,10 @@ async def login(req: LoginRequest):
     if not success:
         raise HTTPException(status_code=401, detail="Authentication failed")
 
-    # Start background polling
-    polling_task = asyncio.create_task(polling_loop())
+    polling_tasks = [
+        asyncio.create_task(realtime_loop()),
+        asyncio.create_task(live_loop()),
+    ]
 
     return {
         "status": "success",
@@ -387,6 +445,49 @@ async def get_power_live():
     return cached_power_data or {}
 
 
+@app.get("/api/fin/pmu-live")
+async def get_meter_live():
+    """Get power-meter equipment metrics keyed by meter name."""
+    if not client or not client.is_authenticated:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return cached_meter_data
+
+
+@app.get("/api/fin/alarms")
+async def get_alarms():
+    """Get the flat active-alarm list with counts by severity."""
+    if not client or not client.is_authenticated:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return cached_alarm_data or {
+        "timestamp": None,
+        "alarms": [],
+        "counts": {"critical": 0, "warning": 0, "info": 0, "total": 0},
+    }
+
+
+READ_ONLY_EXPR = re.compile(r"^\s*(readById|readAll|hisRead)\s*\(")
+BLOCKED_EXPR = re.compile(
+    r"pointWrite|pointOverride|pointEmergency|pointSetDef|pointAuto"
+    r"|ioWrite|invoke|commit|recNew|recEdit|recRemove|eval\s*\(",
+    re.IGNORECASE,
+)
+
+
+@app.get("/api/fin/eval")
+async def eval_read(expr: str):
+    """Read-only Axon passthrough for history charts and trends."""
+    if not client or not client.is_authenticated:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if len(expr) > 2000 or not READ_ONLY_EXPR.match(expr) or BLOCKED_EXPR.search(expr):
+        raise HTTPException(status_code=400, detail="Only readById, readAll, and hisRead expressions are allowed")
+    text = await client.fetch_api(
+        f"/api/{client.project_name}/eval?expr={quote(expr, safe='')}", is_text=True
+    )
+    if text is None:
+        raise HTTPException(status_code=502, detail="FIN request failed")
+    return PlainTextResponse(text, media_type="text/zinc")
+
+
 @app.get("/api/fin/building-info")
 async def get_building_info():
     """Get full building data with history."""
@@ -398,9 +499,8 @@ async def get_building_info():
 @app.post("/api/fin/logout")
 async def logout():
     """Disconnect from FIN server."""
-    global client, polling_task
-    if polling_task and not polling_task.done():
-        polling_task.cancel()
+    global client
+    _cancel_polling()
     if client:
         await client.close()
         client = None

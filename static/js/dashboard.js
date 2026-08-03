@@ -10,171 +10,113 @@
 
   const arDict = {
     'OPERATIONS OVERVIEW': 'نظرة عامة على التشغيل',
-    'OPEN ALARMS': 'التنبيهات المفتوحة',
-    '1 critical &middot; 2 warning': '1 حرج &middot; 2 تحذير',
-    'SYSTEMS LIVE': 'الأنظمة المباشرة',
-    'all integrations healthy': 'جميع التكاملات سليمة',
-    'LIVE': 'مباشر',
-    'COMFORT COMPLIANCE': 'الالتزام بالراحة',
-    'within target band': 'ضمن النطاق المستهدف',
-    'Event Statistics': 'إحصاءات الأحداث',
-    '1,204 events / 7 d': '1,204 حدث / 7 أيام',
-    'Live Systems': 'الأنظمة المباشرة',
-    '6/6 live': '6/6 مباشر',
-    'History Charts': 'الرسوم التاريخية',
-    '48 h retained': 'سجل 48 ساعة',
-    'Alarms': 'التنبيهات',
-    '3 open': '3 مفتوحة',
-    'Water': 'المياه',
-    '142 m³ today': '142 م³ اليوم',
-
     'ENERGY OVERVIEW': 'نظرة عامة على الطاقة',
-    'CONSUMED TODAY': 'الاستهلاك اليوم',
-    'forecast EOD 1,698 kWh': 'التوقع بنهاية اليوم 1,698 كيلوواط ساعة',
-    'CURRENT LOAD': 'الحمل الحالي',
-    '<span style="color:var(--warnTx)">▲ 22% above 71.8 kW baseline</span>': '<span style="color:var(--warnTx)">▲ 22% أعلى من الأساس 71.8</span>',
-    'ENERGY COST TODAY': 'تكلفة الطاقة اليوم',
-    '${t("at blended DEWA tariff")}': 'حسب تعرفة ديوا المدمجة',
-    'SAME DAY LAST MONTH': 'نفس اليوم الشهر الماضي',
-    '<span style="color:var(--posTx)">▼ 49.6% month-on-month</span>': '<span style="color:var(--posTx)">▼ 49.6% مقارنة بالشهر الماضي</span>',
-    'Waste Prevention': 'منع الهدر',
-    'AED 14.2K / mo': '14.2 ألف درهم/شهر',
-    'Portfolio Benchmarking': 'مقارنة المحفظة',
-    'Rank 2 of 4': 'المرتبة 2 من 4',
-    'Location Based Metering': 'القياس حسب الموقع',
-    '12 meters live': '12 عداد مباشر',
-    'Flow and Trend Anomaly': 'شذوذ التدفق والاتجاه',
-    '2 this week': '2 هذا الأسبوع',
-    'Budget Overrun': 'تجاوز الميزانية',
-    '+3.2% MTD': '+3.2% منذ بداية الشهر',
-    'Consumption': 'الاستهلاك',
-    '19.1 MWh today': '19.1 ميجاوات/اليوم',
-    'Forecasting': 'التنبؤ',
-    '41.8 MWh month end': '41.8 ميجاوات/نهاية الشهر',
-
     'ESG OVERVIEW': 'نظرة عامة على الاستدامة',
-    'CO2 TODAY': 'ثاني أكسيد الكربون اليوم',
-    '<span style="color:var(--posTx)">▼ 5.0% vs baseline</span>': '<span style="color:var(--posTx)">▼ 5.0% مقارنة بالأساس</span>',
-    'ENERGY VS TARGET': 'الطاقة مقابل الهدف',
-    'month to date': 'منذ بداية الشهر',
-    'FRAMEWORKS ON TRACK': 'الأطر قيد التنفيذ',
-    '<span style="color:var(--warnTx)">GRESB submission overdue</span>': '<span style="color:var(--warnTx)">تأخر تقديم GRESB</span>',
-    'Target vs Actual': 'الهدف مقابل الفعلي',
-    '▼ 4.1% vs target MTD': '▼ 4.1% مقابل الهدف',
-    'Net Zero': 'الحياد الكربوني',
-    '2040 trajectory on track': 'مسار 2040 قيد التنفيذ',
-    'Utility Bill Management': 'إدارة فواتير الخدمات',
-    'AED 182K this month': '182 ألف درهم هذا الشهر',
-    'Reporting': 'التقارير',
-    '2 reports due': 'تقريران مستحقان',
-
     'ASSETS OVERVIEW': 'نظرة عامة على الأصول',
-    'ASSETS REGISTERED': 'الأصول المسجلة',
-    'synced from Hexagon EAM': 'مزامنة من Hexagon EAM',
-    'OPEN WORK ORDERS': 'أوامر العمل المفتوحة',
-    'synced with Maximo': 'مزامنة مع Maximo',
-    'ASSETS IN ALARM': 'الأصول في حالة إنذار',
-    '1 critical: CH-2': '1 حرج: CH-2',
-    'Registry': 'السجل',
-    '1,240 assets': '1,240 أصل',
-    'Work Orders': 'أوامر العمل',
-    '380 synced': '380 متزامنة',
-    'Analytics': 'التحليلات',
-    '12 trends watched': 'مراقبة 12 اتجاه',
-    'RFID': 'تتبع RFID',
-    '96% tagged': '96% موسومة',
-
     'SPACES OVERVIEW': 'نظرة عامة على المساحات',
-    'ZONES OCCUPIED': 'المناطق المشغولة',
-    'peak 14:00–16:00': 'الذروة 14:00–16:00',
-    'IEQ INDEX': 'مؤشر جودة البيئة',
-    'good &middot; CO₂ within limits': 'جيد &middot; ثاني أكسيد الكربون ضمن الحدود',
-    'Room Data Sheets': 'بيانات الغرف',
-    '412 sheets': '412 ورقة',
-    'Heat Map': 'الخريطة الحرارية',
-    '2 hot zones': 'منطقتان حارتان',
-    'Zone Status': 'حالة المنطقة',
-    '64 / 66 normal': '64 / 66 طبيعي',
-    'Thermal Comfort': 'الراحة الحرارية',
-    '97.2% in band': '97.2% ضمن النطاق',
-    'IEQ': 'جودة البيئة (IEQ)',
-    'index 88 &middot; good': 'المؤشر 88 &middot; جيد',
-
     'MAINTENANCE OVERVIEW': 'نظرة عامة على الصيانة',
-    'PREVENTIVE JOBS DUE': 'أعمال الصيانة المستحقة',
-    'this week': 'هذا الأسبوع',
-    'OVERDUE': 'متأخرة',
-    'oldest 6 days': 'أقدمها 6 أيام',
-    'ON-TIME COMPLETION': 'الإنجاز في الوقت',
-    'Preventive Jobs': 'الأعمال الوقائية',
-    '14 due this week': '14 مستحقة هذا الأسبوع',
-    'Schedules': 'الجداول الزمنية',
-    '38 active': '38 نشطة',
-    'Status': 'الحالة',
-    '92% on time MTD': '92% في الوقت الموعد',
-
     'SECURITY OVERVIEW': 'نظرة عامة على الأمن',
-    'CAMERAS LIVE': 'الكاميرات المباشرة',
-    'read-only via VMS': 'للقراءة فقط عبر VMS',
-    'DOORS ONLINE': 'الأبواب المتصلة',
-    'read-only via access control': 'للقراءة فقط عبر التحكم',
-    'LIFE SAFETY': 'سلامة الأرواح',
-    'Normal': 'طبيعي',
-    'monitored, never controlled': 'مراقبة فقط، بدون تحكم',
-    'CCTV': 'كاميرات المراقبة',
-    '96 cameras live': '96 كاميرا مباشرة',
-    'Access Control': 'التحكم بالوصول',
-    '212 doors online': '212 باب متصل',
-    'Life Safety': 'سلامة الأرواح',
-    'Normal &middot; monitored': 'طبيعي &middot; مراقب',
-    
-    'AT A GLANCE': 'لمحة سريعة',
-    'Operations &middot; Marsa Al Arab': 'التشغيل &middot; مرسى العرب',
 
-    // Right panel subtitle strings
+    'OPEN ALARMS': 'التنبيهات المفتوحة',
+    'SYSTEMS LIVE': 'الأنظمة المباشرة',
+    'COMFORT COMPLIANCE': 'الالتزام بالراحة',
+    'CONSUMED TODAY': 'الاستهلاك اليوم',
+    'CURRENT LOAD': 'الحمل الحالي',
+    'SAME DAY LAST MONTH': 'نفس اليوم الشهر الماضي',
+    'CO2 TODAY': 'ثاني أكسيد الكربون اليوم',
+    'ENERGY VS TARGET': 'الطاقة مقابل الهدف',
+    'FRAMEWORKS ON TRACK': 'الأطر قيد التنفيذ',
+    'ASSETS REGISTERED': 'الأصول المسجلة',
+    'OPEN WORK ORDERS': 'أوامر العمل المفتوحة',
+    'ASSETS IN ALARM': 'الأصول في حالة إنذار',
+    'ZONES OCCUPIED': 'المناطق المشغولة',
+    'IEQ INDEX': 'مؤشر جودة البيئة',
+    'PREVENTIVE JOBS DUE': 'أعمال الصيانة المستحقة',
+    'OVERDUE': 'متأخرة',
+    'ON-TIME COMPLETION': 'الإنجاز في الوقت',
+    'CAMERAS LIVE': 'الكاميرات المباشرة',
+    'DOORS ONLINE': 'الأبواب المتصلة',
+    'LIFE SAFETY': 'سلامة الأرواح',
+
+    'Event Statistics': 'إحصاءات الأحداث',
+    'Live Systems': 'الأنظمة المباشرة',
+    'History Charts': 'الرسوم التاريخية',
+    'Alarms': 'التنبيهات',
+    'Water': 'المياه',
+    'Waste Prevention': 'منع الهدر',
+    'Portfolio Benchmarking': 'مقارنة المحفظة',
+    'Location Based Metering': 'القياس حسب الموقع',
+    'Flow and Trend Anomaly': 'شذوذ التدفق والاتجاه',
+    'Budget Overrun': 'تجاوز الميزانية',
+    'Consumption': 'الاستهلاك',
+    'Forecasting': 'التنبؤ',
+    'Target vs Actual': 'الهدف مقابل الفعلي',
+    'Net Zero': 'الحياد الكربوني',
+    'Utility Bill Management': 'إدارة فواتير الخدمات',
+    'Reporting': 'التقارير',
+    'Registry': 'السجل',
+    'Work Orders': 'أوامر العمل',
+    'Analytics': 'التحليلات',
+    'RFID': 'تتبع RFID',
+    'Room Data Sheets': 'بيانات الغرف',
+    'Heat Map': 'الخريطة الحرارية',
+    'Zone Status': 'حالة المنطقة',
+    'Thermal Comfort': 'الراحة الحرارية',
+    'IEQ': 'جودة البيئة (IEQ)',
+    'Preventive Jobs': 'الأعمال الوقائية',
+    'Schedules': 'الجداول الزمنية',
+    'Status': 'الحالة',
+    'CCTV': 'كاميرات المراقبة',
+    'Access Control': 'التحكم بالوصول',
+    'Life Safety': 'سلامة الأرواح',
+
+    'AT A GLANCE': 'لمحة سريعة',
+    'LIVE': 'مباشر',
+    'Systems': 'الأنظمة',
+    'forecast EOD': 'التوقع بنهاية اليوم',
+    'month-on-month': 'مقارنة بالشهر الماضي',
+    'within target band': 'ضمن النطاق المستهدف',
+    'equipment reporting': 'المعدات المتصلة',
+    'critical': 'حرج',
+    'warning': 'تحذير',
+    'info': 'معلومة',
+    'open': 'مفتوحة',
+    'live': 'مباشر',
+    'findings': 'نتائج',
+    'meters live': 'عداد مباشر',
+    'MWh today': 'ميجاواط ساعة اليوم',
+    'In design': 'قيد التصميم',
+    'Requires portfolio': 'يتطلب محفظة عقارات',
+    'Requires targets': 'يتطلب أهدافاً',
+    'Requires budget targets in Settings': 'يتطلب أهداف ميزانية في الإعدادات',
+    'Detail view in design': 'عرض التفاصيل قيد التصميم',
+
     '7-day trend and top opportunities': 'اتجاه 7 أيام وأبرز الفرص',
     'Avoidable consumption &middot; FDD + schedule analysis': 'الاستهلاك القابل للتجنب &middot; تحليل FDD والجداول',
     'Sub-view': 'عرض فرعي',
     'Module highlights': 'أبرز وحدات النظام',
-
-    // Right panel stub text
-    'shows the built pattern.': 'يعرض النمط المطوّر.',
-    'Detail view in design': 'عرض التفاصيل قيد التصميم',
-    'Module highlights in design': 'أبرز الوحدات قيد التصميم',
-    'see': 'راجع',
-    'for the built pattern.': 'للنمط المطوّر.',
-
-    // Energy chart labels
-    'Actual': 'الفعلي',
-    'Baseline': 'الأساسي',
-    'Excess': 'الزائد',
     'Consumption, 7 days': 'الاستهلاك، 7 أيام',
-    'Baseline vs Actual': 'الأساسي مقابل الفعلي',
+    'Daily consumption': 'الاستهلاك اليومي',
     'kWh / day': 'كيلوواط ساعة / يوم',
-    'Hourly average load by day &middot; last 7 days': 'متوسط الحمل بالساعة يومياً &middot; آخر 7 أيام',
+    'Actual': 'الفعلي',
+    'Baseline overlay requires targets in Settings': 'يتطلب عرض خط الأساس أهدافاً في الإعدادات',
+    'Off-hours Load Heatmap': 'خريطة الحمل خارج ساعات العمل',
+    'Hour-of-week average load &middot; last 28 days': 'متوسط الحمل بالساعة أسبوعياً &middot; آخر 28 يوماً',
+    'OPPORTUNITIES': 'الفرص',
+    'WARNING': 'تحذير',
+    'No active findings': 'لا نتائج نشطة',
+    'No active alarms': 'لا تنبيهات نشطة',
+    'No history yet': 'لا يوجد سجل بعد',
+    'Today only — trends require alarm history': 'اليوم فقط — تتطلب الاتجاهات سجل التنبيهات',
+    'The assistant service is not connected yet. Live values are available on the Operations and Energy overviews.': 'خدمة المساعد غير متصلة بعد. القيم المباشرة متاحة في نظرتي التشغيل والطاقة.',
+
     'Mon': 'الاثنين',
     'Tue': 'الثلاثاء',
     'Wed': 'الأربعاء',
     'Thu': 'الخميس',
     'Fri': 'الجمعة',
     'Sat': 'السبت',
-    'Sun': 'الأحد',
-    'Off-hours Load Heatmap': 'خريطة الحمل خارج ساعات العمل',
-
-    // Opportunities section
-    'OPPORTUNITIES': 'الفرص',
-    'WARNING': 'تحذير',
-    'Create work order': 'إنشاء أمر عمل',
-    'Trend': 'الاتجاه',
-    'Night setback not applied, L11 west': 'تخفيض الليل غير مطبّق، الطابق 11 غرب',
-    'AED 6.1K / mo': '6.1 ألف درهم/شهر',
-    'Zone temperatures hold occupied setpoints overnight. Applying the night setback schedule would remove most of the off-hours load plateau visible in the heatmap.': 'تحافظ درجات حرارة المناطق على نقاط الضبط المأهولة طوال الليل. سيؤدي تطبيق جدول التخفيض الليلي إلى إزالة معظم الحمل خارج ساعات العمل.',
-    'Simultaneous heat and cool, L11': 'تسخين وتبريد متزامن، الطابق 11',
-    'AED 4.9K / mo': '4.9 ألف درهم/شهر',
-    'AHU heating coil valve and VAV reheat coils operate against active cooling coil. Synchronizing temperature loop schedules will eliminate dual-energy waste.': 'تعمل صمامات ملف التسخين في وحدة المعالجة الهوائية وملفات إعادة التسخين ضد ملف التبريد النشط. ستقضي مزامنة جداول حلقة درجة الحرارة على هدر الطاقة المزدوج.',
-    'Car park lighting on daylight hours': 'إضاءة مواقف السيارات خلال ساعات النهار',
-    'AED 3.2K / mo': '3.2 ألف درهم/شهر',
-    'Lighting circuits in P1\u20132 run continuously. A daylight interlock or schedule would cut roughly half of the circuit consumption.': 'تعمل دوائر الإضاءة في P1-P2 باستمرار. سيؤدي استخدام قفل ضوء النهار أو جدول زمني إلى خفض نحو نصف استهلاك الدوائر.'
+    'Sun': 'الأحد'
   };
 
   function t(str) {
@@ -185,107 +127,237 @@
     return str;
   }
 
+  /* ── Live data access ── */
+  const live = {
+    get power() { return window.DashboardData ? window.DashboardData.power : null; },
+    get equipment() { return window.DashboardData ? window.DashboardData.equipment : null; },
+    get alarms() { return window.DashboardData ? window.DashboardData.alarms : null; },
+    get meters() { return window.DashboardData ? window.DashboardData.meters : null; },
+    get connected() { return !!(window.DashboardData && window.DashboardData.connected); },
+  };
+
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  function fmt(v, digits = 0) {
+    return v == null || !isFinite(v) ? '—' : Number(v).toLocaleString('en-US', { maximumFractionDigits: digits });
+  }
+
+  const MONTH_INDEX = {
+    january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
+    july: 6, august: 7, september: 8, october: 9, november: 10, december: 11,
+  };
+  const HOUR_INDEX = {};
+  for (let h = 0; h < 24; h++) {
+    HOUR_INDEX[`${h % 12 === 0 ? 12 : h % 12} ${h < 12 ? 'am' : 'pm'}`] = h;
+  }
+
+  // Nested year → month → 'month day' → 'h am/pm' historian shape from the backend
+  function flattenHistory(nested) {
+    const out = [];
+    for (const [year, months] of Object.entries(nested || {})) {
+      for (const [month, days] of Object.entries(months || {})) {
+        const m = MONTH_INDEX[month];
+        if (m == null) continue;
+        for (const [dayKey, hours] of Object.entries(days || {})) {
+          const d = parseInt(String(dayKey).split(' ')[1], 10);
+          if (!d) continue;
+          for (const [hourLabel, val] of Object.entries(hours || {})) {
+            const h = HOUR_INDEX[hourLabel];
+            const num = parseFloat(val);
+            if (h == null || !isFinite(num)) continue;
+            out.push({ ts: new Date(+year, m, d, h), val: num });
+          }
+        }
+      }
+    }
+    return out.sort((a, b) => a.ts - b.ts);
+  }
+
+  function historySeries(key) {
+    const power = live.power;
+    const nested = power && power.power_history ? power.power_history[key] : null;
+    return nested ? flattenHistory(nested) : [];
+  }
+
+  function sumDay(series, dayDate, maxHour = 24) {
+    let sum = 0, count = 0;
+    for (const p of series) {
+      if (p.ts.getFullYear() === dayDate.getFullYear() &&
+          p.ts.getMonth() === dayDate.getMonth() &&
+          p.ts.getDate() === dayDate.getDate() &&
+          p.ts.getHours() < maxHour) {
+        sum += p.val;
+        count++;
+      }
+    }
+    return count ? { sum, count } : null;
+  }
+
+  function energyKpis() {
+    const series = historySeries('Total_Power_Consumption_his');
+    const now = new Date();
+    const today = sumDay(series, now);
+    const lastMonthDay = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+    const lastMonth = sumDay(series, lastMonthDay);
+    const lastMonthSameHours = today ? sumDay(series, lastMonthDay, now.getHours() + 1) : null;
+    let momPct = null;
+    if (today && lastMonthSameHours && lastMonthSameHours.sum > 0) {
+      momPct = ((today.sum - lastMonthSameHours.sum) / lastMonthSameHours.sum) * 100;
+    }
+    const power = live.power;
+    return {
+      consumed: today ? today.sum : null,
+      eod: today ? (today.sum / today.count) * 24 : null,
+      lastMonth: lastMonth ? lastMonth.sum : null,
+      momPct,
+      load: power ? power.total_power : null,
+      spark: series.slice(-24),
+    };
+  }
+
+  function sparkPaths(points) {
+    if (!points || points.length < 2) return null;
+    const vals = points.map(p => p.val);
+    const min = Math.min(...vals);
+    const span = (Math.max(...vals) - min) || 1;
+    const coords = points.map((p, i) => {
+      const x = (i / (points.length - 1)) * 240;
+      const y = 44 - ((p.val - min) / span) * 34;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    const line = 'M' + coords.join(' L');
+    return { line, area: `${line} L240,48 L0,48 Z` };
+  }
+
+  function operationsKpis() {
+    const counts = live.alarms ? live.alarms.counts : null;
+    const power = live.power;
+    const fac = power ? power.facilityServices : null;
+    const comfort = power ? power.comfort_compliance : null;
+    return [
+      {
+        label: 'OPEN ALARMS',
+        v: counts ? String(counts.total) : '—',
+        cap: counts ? `${counts.critical} ${t('critical')} &middot; ${counts.warning} ${t('warning')}` : '—',
+        crit: !!counts && counts.critical > 0,
+      },
+      {
+        label: 'SYSTEMS LIVE',
+        v: fac ? `${fac.onlineEquipment}/${fac.totalEquipment}` : '—',
+        cap: t('equipment reporting'),
+      },
+      {
+        label: 'COMFORT COMPLIANCE',
+        v: comfort != null ? Number(comfort).toFixed(1) : '—',
+        unit: comfort != null ? '%' : '',
+        cap: t('within target band'),
+      },
+    ];
+  }
+
+  function activeFindings() {
+    const fdd = live.power ? live.power.fdd : null;
+    const findings = [];
+    (fdd || []).forEach(f => {
+      Object.entries(f.rules || {}).forEach(([rule, val]) => {
+        if (val === 'T' || val === 'true' || val === 'True') {
+          findings.push({ equip: f.equip, floor: f.floor, rule });
+        }
+      });
+    });
+    return findings;
+  }
+
+  function glanceValue(modId, item) {
+    const counts = live.alarms ? live.alarms.counts : null;
+    if (modId === 'operations') {
+      const fac = live.power ? live.power.facilityServices : null;
+      if (item.id === 'alarms' || item.id === 'evstats') return counts ? `${counts.total} ${t('open')}` : '—';
+      if (item.id === 'livesys') return fac ? `${fac.onlineEquipment}/${fac.totalEquipment} ${t('live')}` : '—';
+      return '—';
+    }
+    if (modId === 'energy') {
+      if (item.id === 'waste') { const n = activeFindings().length; return n ? `${n} ${t('findings')}` : '—'; }
+      if (item.id === 'lbm') { const m = live.meters; const n = m ? Object.keys(m).length : 0; return n ? `${n} ${t('meters live')}` : '—'; }
+      if (item.id === 'cons') { const k = energyKpis(); return k.consumed != null ? `${(k.consumed / 1000).toFixed(1)} ${t('MWh today')}` : '—'; }
+      if (item.id === 'bench') return t('Requires portfolio');
+      if (item.id === 'budget') return t('Requires targets');
+      if (item.id === 'fcst') return t('In design');
+      return '—';
+    }
+    return t('In design');
+  }
+
   const modDefs = {
     operations: {
       ovEn: 'OPERATIONS OVERVIEW',
-      kpis: [
-        { label: 'OPEN ALARMS', v: '3', cap: '1 critical &middot; 2 warning', crit: true },
-        { label: 'SYSTEMS LIVE', v: '6/6', cap: 'all integrations healthy' },
-        { label: 'COMFORT COMPLIANCE', v: '97.2', unit: '%', cap: 'within target band' }
-      ],
       l2: [
-        { id: 'evstats', name: 'Event Statistics', val: '1,204 events / 7 d' },
-        { id: 'livesys', name: 'Live Systems', val: '6/6 live' },
-        { id: 'histch', name: 'History Charts', val: '48 h retained' },
-        { id: 'alarms', name: 'Alarms', val: '3 open' },
-        { id: 'water', name: 'Water', val: '142 m³ today' }
+        { id: 'evstats', name: 'Event Statistics' },
+        { id: 'livesys', name: 'Live Systems' },
+        { id: 'histch', name: 'History Charts' },
+        { id: 'alarms', name: 'Alarms' },
+        { id: 'water', name: 'Water' }
       ]
     },
     energy: {
       ovEn: 'ENERGY OVERVIEW',
-      kpis: [
-        { label: 'CONSUMED TODAY', v: '1,022', unit: 'kWh', cap: 'forecast EOD 1,698 kWh' },
-        { label: 'CURRENT LOAD', v: '87.44', unit: 'kW', cap: '<span style="color:var(--warnTx)">▲ 22% above 71.8 kW baseline</span>' },
-        { label: 'ENERGY COST TODAY', v: 'AED 3,940', cap: '${t("at blended DEWA tariff")}' },
-        { label: 'SAME DAY LAST MONTH', v: '2,029.63', unit: 'kWh', cap: '<span style="color:var(--posTx)">▼ 49.6% month-on-month</span>' }
-      ],
       l2: [
-        { id: 'waste', name: 'Waste Prevention', val: 'AED 14.2K / mo' },
-        { id: 'bench', name: 'Portfolio Benchmarking', val: 'Rank 2 of 4' },
-        { id: 'lbm', name: 'Location Based Metering', val: '12 meters live' },
-        { id: 'anom', name: 'Flow and Trend Anomaly', val: '2 this week' },
-        { id: 'budget', name: 'Budget Overrun', val: '+3.2% MTD' },
-        { id: 'cons', name: 'Consumption', val: '19.1 MWh today' },
-        { id: 'fcst', name: 'Forecasting', val: '41.8 MWh month end' }
+        { id: 'waste', name: 'Waste Prevention' },
+        { id: 'bench', name: 'Portfolio Benchmarking' },
+        { id: 'lbm', name: 'Location Based Metering' },
+        { id: 'anom', name: 'Flow and Trend Anomaly' },
+        { id: 'budget', name: 'Budget Overrun' },
+        { id: 'cons', name: 'Consumption' },
+        { id: 'fcst', name: 'Forecasting' }
       ]
     },
     esg: {
       ovEn: 'ESG OVERVIEW',
-      kpis: [
-        { label: 'CO2 TODAY', v: '8.4', unit: 't', cap: '<span style="color:var(--posTx)">▼ 5.0% vs baseline</span>' },
-        { label: 'ENERGY VS TARGET', v: '-4.1', unit: '%', cap: 'month to date' },
-        { label: 'FRAMEWORKS ON TRACK', v: '3/4', cap: '<span style="color:var(--warnTx)">GRESB submission overdue</span>' }
-      ],
+      kpiLabels: ['CO2 TODAY', 'ENERGY VS TARGET', 'FRAMEWORKS ON TRACK'],
       l2: [
-        { id: 'tva', name: 'Target vs Actual', val: '▼ 4.1% vs target MTD' },
-        { id: 'nz', name: 'Net Zero', val: '2040 trajectory on track' },
-        { id: 'ubm', name: 'Utility Bill Management', val: 'AED 182K this month' },
-        { id: 'rep', name: 'Reporting', val: '2 reports due' }
+        { id: 'tva', name: 'Target vs Actual' },
+        { id: 'nz', name: 'Net Zero' },
+        { id: 'ubm', name: 'Utility Bill Management' },
+        { id: 'rep', name: 'Reporting' }
       ]
     },
     assets: {
       ovEn: 'ASSETS OVERVIEW',
-      kpis: [
-        { label: 'ASSETS REGISTERED', v: '1,240', cap: 'synced from Hexagon EAM' },
-        { label: 'OPEN WORK ORDERS', v: '380', cap: 'synced with Maximo' },
-        { label: 'ASSETS IN ALARM', v: '3', cap: '1 critical: CH-2', crit: true }
-      ],
+      kpiLabels: ['ASSETS REGISTERED', 'OPEN WORK ORDERS', 'ASSETS IN ALARM'],
       l2: [
-        { id: 'reg', name: 'Registry', val: '1,240 assets' },
-        { id: 'wo', name: 'Work Orders', val: '380 synced' },
-        { id: 'ana', name: 'Analytics', val: '12 trends watched' },
-        { id: 'rfid', name: 'RFID', val: '96% tagged' }
+        { id: 'reg', name: 'Registry' },
+        { id: 'wo', name: 'Work Orders' },
+        { id: 'ana', name: 'Analytics' },
+        { id: 'rfid', name: 'RFID' }
       ]
     },
     spaces: {
       ovEn: 'SPACES OVERVIEW',
-      kpis: [
-        { label: 'COMFORT COMPLIANCE', v: '97.2', unit: '%', cap: 'within target band' },
-        { label: 'ZONES OCCUPIED', v: '68', unit: '%', cap: 'peak 14:00–16:00' },
-        { label: 'IEQ INDEX', v: '88', cap: 'good &middot; CO₂ within limits' }
-      ],
+      kpiLabels: ['COMFORT COMPLIANCE', 'ZONES OCCUPIED', 'IEQ INDEX'],
       l2: [
-        { id: 'rds', name: 'Room Data Sheets', val: '412 sheets' },
-        { id: 'heat', name: 'Heat Map', val: '2 hot zones' },
-        { id: 'zone', name: 'Zone Status', val: '64 / 66 normal' },
-        { id: 'tc', name: 'Thermal Comfort', val: '97.2% in band' },
-        { id: 'ieq', name: 'IEQ', val: 'index 88 &middot; good' }
+        { id: 'rds', name: 'Room Data Sheets' },
+        { id: 'heat', name: 'Heat Map' },
+        { id: 'zone', name: 'Zone Status' },
+        { id: 'tc', name: 'Thermal Comfort' },
+        { id: 'ieq', name: 'IEQ' }
       ]
     },
     maintenance: {
       ovEn: 'MAINTENANCE OVERVIEW',
-      kpis: [
-        { label: 'PREVENTIVE JOBS DUE', v: '14', cap: 'this week' },
-        { label: 'OVERDUE', v: '2', cap: 'oldest 6 days', crit: true },
-        { label: 'ON-TIME COMPLETION', v: '92', unit: '%', cap: 'month to date' }
-      ],
+      kpiLabels: ['PREVENTIVE JOBS DUE', 'OVERDUE', 'ON-TIME COMPLETION'],
       l2: [
-        { id: 'pj', name: 'Preventive Jobs', val: '14 due this week' },
-        { id: 'sch', name: 'Schedules', val: '38 active' },
-        { id: 'stat', name: 'Status', val: '92% on time MTD' }
+        { id: 'pj', name: 'Preventive Jobs' },
+        { id: 'sch', name: 'Schedules' },
+        { id: 'stat', name: 'Status' }
       ]
     },
     security: {
       ovEn: 'SECURITY OVERVIEW',
-      kpis: [
-        { label: 'CAMERAS LIVE', v: '96', cap: 'read-only via VMS' },
-        { label: 'DOORS ONLINE', v: '212', cap: 'read-only via access control' },
-        { label: 'LIFE SAFETY', v: 'Normal', cap: 'monitored, never controlled' }
-      ],
+      kpiLabels: ['CAMERAS LIVE', 'DOORS ONLINE', 'LIFE SAFETY'],
       l2: [
-        { id: 'cctv', name: 'CCTV', val: '96 cameras live' },
-        { id: 'ac', name: 'Access Control', val: '212 doors online' },
-        { id: 'ls', name: 'Life Safety', val: 'Normal &middot; monitored' }
+        { id: 'cctv', name: 'CCTV' },
+        { id: 'ac', name: 'Access Control' },
+        { id: 'ls', name: 'Life Safety' }
       ]
     }
   };
@@ -310,51 +382,48 @@
     if (ovtabText) ovtabText.textContent = t(data.ovEn);
 
     let kpiHtml = '';
-    
+
     if (modId === 'energy') {
+      const k = energyKpis();
+      const spark = sparkPaths(k.spark);
+      const momHtml = k.momPct == null ? '' :
+        `<span style="color:${k.momPct > 0 ? 'var(--warnTx)' : 'var(--posTx)'}">${k.momPct > 0 ? '▲' : '▼'} ${Math.abs(k.momPct).toFixed(1)}% ${t('month-on-month')}</span>`;
       kpiHtml = `
         <div>
           <div class="kpi-label">${t("CONSUMED TODAY")}</div>
           <div class="kpi-value-row">
-            <span class="kpi-val">1,022</span>
+            <span class="kpi-val">${fmt(k.consumed)}</span>
             <span class="kpi-unit">kWh</span>
           </div>
-          <div class="kpi-sub">
-            ${t("forecast EOD 1,698 kWh")}
-          </div>
+          <div class="kpi-sub">${k.eod == null ? '—' : `${t('forecast EOD')} ${fmt(k.eod)} kWh`}</div>
         </div>
         <div>
           <div class="kpi-label">${t("CURRENT LOAD")}</div>
           <div class="kpi-value-row">
-            <span class="kpi-val-lg">87.44</span>
+            <span class="kpi-val-lg">${fmt(k.load, 2)}</span>
             <span class="kpi-unit">kW</span>
             <svg class="histclock" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--warnTx)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
           </div>
+          ${spark ? `
           <svg viewBox="0 0 240 48" preserveAspectRatio="none" style="width: 100%; height: 44px; display: block; margin-block: 6px;">
-            <path d="M0,48 L0,32 C20,38 40,24 60,30 C80,36 100,20 120,25 C140,30 160,15 180,20 C200,25 220,10 240,15 L240,48 Z" fill="var(--acc8)" stroke="none"></path>
-            <path d="M0,32 C20,38 40,24 60,30 C80,36 100,20 120,25 C140,30 160,15 180,20 C200,25 220,10 240,15" fill="none" stroke="var(--acc)" stroke-width="1.5"></path>
-          </svg>
-          ${t("<span style=\"color:var(--warnTx)\">▲ 22% above 71.8 kW baseline</span>")}
-        </div>
-        <div>
-          <div class="kpi-label">${t("ENERGY COST TODAY")}</div>
-          <div class="kpi-value-row">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--t2);">AED</span>
-            <span class="kpi-val">3,940</span>
-          </div>
-          <div class="kpi-sub">${t("at blended DEWA tariff")}</div>
+            <path d="${spark.area}" fill="var(--acc8)" stroke="none"></path>
+            <path d="${spark.line}" fill="none" stroke="var(--acc)" stroke-width="1.5"></path>
+          </svg>` : ''}
         </div>
         <div>
           <div class="kpi-label">${t("SAME DAY LAST MONTH")}</div>
           <div class="kpi-value-row">
-            <span class="kpi-val">2,029.63</span>
+            <span class="kpi-val">${fmt(k.lastMonth)}</span>
             <span class="kpi-unit">kWh</span>
           </div>
-          ${t("<span style=\"color:var(--posTx)\">▼ 49.6% month-on-month</span>")}
+          ${momHtml}
         </div>
       `;
     } else {
-      data.kpis.forEach((kpi) => {
+      const kpis = modId === 'operations'
+        ? operationsKpis()
+        : (data.kpiLabels || []).map((label) => ({ label, v: '—', cap: t('In design') }));
+      kpis.forEach((kpi) => {
         let capHtml = `<div class="kpi-sub">${t(kpi.cap)}</div>`;
         if (kpi.crit) {
           capHtml = `<span style="display:inline-block;margin-block-start:5px;padding:3px 8px;border-radius:4px;background:var(--warnT);border:1px solid var(--warnB);color:var(--warnTx);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;line-height:1.5">▲ ${t(kpi.cap)}</span>`;
@@ -388,7 +457,7 @@
       glanceHtml += `
           <button class="glance-item ${activeClass}">
             <span class="glance-name">${t(item.name)}</span>
-            <span class="glance-val font-mono">${t(item.val)}</span>
+            <span class="glance-val font-mono">${glanceValue(modId, item)}</span>
             <svg class="glance-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
           </button>
       `;
@@ -448,24 +517,9 @@
             <span style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1)">${t('Consumption, 7 days')}</span>
             <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t3)">${t('kWh / day')}</span>
           </div>
-          <svg viewBox="0 0 330 122" style="width:100%;height:auto;display:block" role="img" aria-label="7-day consumption trend">
-            <line x1="30" y1="8" x2="318" y2="8" stroke="var(--bd1)" stroke-dasharray="2 3"/>
-            <line x1="30" y1="54" x2="318" y2="54" stroke="var(--bd1)" stroke-dasharray="2 3"/>
-            <line x1="30" y1="100" x2="318" y2="100" stroke="var(--bd1)"/>
-            <g font-family="'JetBrains Mono',monospace" font-size="8" fill="var(--t3)">
-              <text x="24" y="103" text-anchor="end">0</text><text x="24" y="57" text-anchor="end">1.5k</text><text x="24" y="12" text-anchor="end">3k</text>
-              <text x="30" y="114" text-anchor="middle">${t('Mon')}</text><text x="78" y="114" text-anchor="middle">${t('Tue')}</text>
-              <text x="126" y="114" text-anchor="middle">${t('Wed')}</text><text x="174" y="114" text-anchor="middle">${t('Thu')}</text>
-              <text x="222" y="114" text-anchor="middle">${t('Fri')}</text><text x="270" y="114" text-anchor="middle">${t('Sat')}</text>
-              <text x="318" y="114" text-anchor="middle">${t('Sun')}</text>
-            </g>
-            <polyline points="30,20.9 78,20 126,19 174,20.6 222,16.9 270,27 318,27.9" fill="none" stroke="var(--bd2)" stroke-width="1" stroke-dasharray="4 3"/>
-            <polyline points="30,23 78,16.3 126,17.4 174,22.1 222,10.9 270,27.9 318,19.7" fill="none" stroke="var(--acc)" stroke-width="1.5"/>
-            <g fill="var(--acc)"><circle cx="30" cy="23" r="2"/><circle cx="78" cy="16.3" r="2"/><circle cx="126" cy="17.4" r="2"/><circle cx="174" cy="22.1" r="2"/><circle cx="222" cy="10.9" r="2"/><circle cx="270" cy="27.9" r="2"/><circle cx="318" cy="19.7" r="2"/></g>
-          </svg>
+          ${weeklyChartHtml('line')}
           <div style="display:flex;gap:12px;margin-block-start:8px">
             <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:14px;height:2px;background:var(--acc)"></span>${t('Actual')}</span>
-            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:14px;height:0;border-block-start:2px dashed var(--bd2)"></span>${t('Baseline')}</span>
           </div>
         </div>
         <div style="font-family:var(--fH),sans-serif;font-size:10px;font-weight:600;letter-spacing:0.8px;color:var(--t2);margin-block-start:2px">${t('OPPORTUNITIES')}</div>
@@ -475,111 +529,180 @@
       html = `
         <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:13px">
           <div style="display:flex;align-items:baseline;gap:8px;margin-block-end:10px">
-            <span style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1)">${t('Baseline vs Actual')}</span>
+            <span style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1)">${t('Daily consumption')}</span>
             <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t3)">${t('kWh / day')}</span>
           </div>
-          <svg viewBox="0 0 330 122" style="width:100%;height:auto;display:block" role="img" aria-label="Baseline vs actual daily consumption">
-            <line x1="30" y1="8" x2="318" y2="8" stroke="var(--bd1)" stroke-dasharray="2 3"/>
-            <line x1="30" y1="54" x2="318" y2="54" stroke="var(--bd1)" stroke-dasharray="2 3"/>
-            <line x1="30" y1="100" x2="318" y2="100" stroke="var(--bd1)"/>
-            <g font-family="'JetBrains Mono',monospace" font-size="8" fill="var(--t3)">
-              <text x="24" y="103" text-anchor="end">0</text><text x="24" y="57" text-anchor="end">1.5k</text><text x="24" y="12" text-anchor="end">3k</text>
-              <text x="46" y="114" text-anchor="middle">${t('Mon')}</text><text x="87" y="114" text-anchor="middle">${t('Tue')}</text>
-              <text x="128" y="114" text-anchor="middle">${t('Wed')}</text><text x="169" y="114" text-anchor="middle">${t('Thu')}</text>
-              <text x="210" y="114" text-anchor="middle">${t('Fri')}</text><text x="251" y="114" text-anchor="middle">${t('Sat')}</text>
-              <text x="292" y="114" text-anchor="middle">${t('Sun')}</text>
-            </g>
-            <g fill="var(--bd2)"><rect x="34" y="20.9" width="12" height="79.1"/><rect x="75" y="20" width="12" height="80"/><rect x="116" y="19" width="12" height="81"/><rect x="157" y="20.6" width="12" height="79.4"/><rect x="198" y="16.9" width="12" height="83.1"/><rect x="239" y="27" width="12" height="73"/><rect x="280" y="27.9" width="12" height="72.1"/></g>
-            <g fill="var(--btnP)"><rect x="48" y="23" width="12" height="77"/><rect x="89" y="16.3" width="12" height="83.7"/><rect x="130" y="17.4" width="12" height="82.6"/><rect x="171" y="22.1" width="12" height="77.9"/><rect x="212" y="10.9" width="12" height="89.1"/><rect x="253" y="27.9" width="12" height="72.1"/><rect x="294" y="19.7" width="12" height="80.3"/></g>
-            <g fill="var(--warn)"><rect x="89" y="16.3" width="12" height="3.7"/><rect x="130" y="17.4" width="12" height="1.6"/><rect x="212" y="10.9" width="12" height="6"/><rect x="294" y="19.7" width="12" height="8.2"/></g>
-          </svg>
-          <div style="display:flex;gap:12px;margin-block-start:8px">
-            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--bd2)"></span>${t('Baseline')}</span>
-            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--btnP)"></span>${t('Actual')}</span>
-            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--warn)"></span>${t('Excess')}</span>
-          </div>
+          ${weeklyChartHtml('bars')}
+          <div style="font-size:10.5px;color:var(--t3);margin-block-start:8px">${t('Baseline overlay requires targets in Settings')}</div>
         </div>
         <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:13px">
           <div style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1);margin-block-end:10px">${t('Off-hours Load Heatmap')}</div>
           ${heatmapHtml()}
-          <div style="font-size:10.5px;color:var(--t3);margin-block-start:8px">${t('Hourly average load by day &middot; last 7 days')}</div>
+          <div style="font-size:10.5px;color:var(--t3);margin-block-start:8px">${t('Hour-of-week average load &middot; last 28 days')}</div>
         </div>
         <div style="font-family:var(--fH),sans-serif;font-size:10px;font-weight:600;letter-spacing:0.8px;color:var(--t2);margin-block-start:2px">${t('OPPORTUNITIES')}</div>
         ${oppRowsHtml()}
       `;
+    } else if (showStub && subId === 'evstats') {
+      html = eventStatsHtml();
+    } else if (showStub && subId === 'alarms') {
+      html = alarmListHtml();
     } else if (showStub) {
-      html = `<div style="padding:26px 14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;line-height:1.5;color:var(--t3)">${t('Detail view in design')} — ${t('see')} ${modLabel ? modLabel + ' › ' : ''}${subLabel} ${t('for the built pattern.')}</div>`;
+      html = `<div style="padding:26px 14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;line-height:1.5;color:var(--t3)">${t(STUB_REASONS[subId] || 'Detail view in design')}</div>`;
     } else {
-      // Non-energy module home — stub
-      html = `<div style="padding:26px 14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;line-height:1.5;color:var(--t3)">${t('Module highlights in design')} — ${modLabel} ${t('shows the built pattern.')}</div>`;
+      html = `<div style="padding:26px 14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;line-height:1.5;color:var(--t3)">${t('In design')}</div>`;
     }
 
     rpContent.innerHTML = html;
   }
 
-  let openOppIndex = null;
+  const STUB_REASONS = {
+    bench: 'Requires portfolio',
+    budget: 'Requires budget targets in Settings',
+    fcst: 'In design',
+  };
 
-  function oppRowsHtml() {
-    const opps = [
-      {
-        title: 'Night setback not applied, L11 west',
-        aed: 'AED 6.1K / mo',
-        desc: 'Zone temperatures hold occupied setpoints overnight. Applying the night setback schedule would remove most of the off-hours load plateau visible in the heatmap.'
-      },
-      {
-        title: 'Simultaneous heat and cool, L11',
-        aed: 'AED 4.9K / mo',
-        desc: 'AHU heating coil valve and VAV reheat coils operate against active cooling coil. Synchronizing temperature loop schedules will eliminate dual-energy waste.'
-      },
-      {
-        title: 'Car park lighting on daylight hours',
-        aed: 'AED 3.2K / mo',
-        desc: 'Lighting circuits in P1\u20132 run continuously. A daylight interlock or schedule would cut roughly half of the circuit consumption.'
-      }
-    ];
+  function weeklyChartHtml(kind) {
+    const series = historySeries('Total_Power_Consumption_his');
+    const now = new Date();
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const s = sumDay(series, d);
+      days.push({ date: d, sum: s ? s.sum : null });
+    }
+    const known = days.filter(d => d.sum != null);
+    if (!known.length) {
+      return `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">${t('No history yet')}</div>`;
+    }
+    const max = Math.max(...known.map(d => d.sum)) || 1;
+    const yFor = v => 100 - (v / max) * 92;
+    const short = v => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : String(Math.round(v));
+    const dayLabels = days.map((d, i) =>
+      `<text x="${30 + i * 48}" y="114" text-anchor="middle">${t(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.date.getDay()])}</text>`).join('');
+    let marks = '';
+    if (kind === 'bars') {
+      marks = '<g fill="var(--btnP)">' + days.map((d, i) =>
+        d.sum == null ? '' : `<rect x="${24 + i * 48}" y="${yFor(d.sum).toFixed(1)}" width="12" height="${(100 - yFor(d.sum)).toFixed(1)}"/>`).join('') + '</g>';
+    } else {
+      const pts = [];
+      const dots = [];
+      days.forEach((d, i) => {
+        if (d.sum == null) return;
+        const y = yFor(d.sum).toFixed(1);
+        pts.push(`${30 + i * 48},${y}`);
+        dots.push(`<circle cx="${30 + i * 48}" cy="${y}" r="2"/>`);
+      });
+      marks = `<polyline points="${pts.join(' ')}" fill="none" stroke="var(--acc)" stroke-width="1.5"/><g fill="var(--acc)">${dots.join('')}</g>`;
+    }
+    return `
+          <svg viewBox="0 0 330 122" style="width:100%;height:auto;display:block" role="img" aria-label="7-day consumption">
+            <line x1="30" y1="8" x2="318" y2="8" stroke="var(--bd1)" stroke-dasharray="2 3"/>
+            <line x1="30" y1="54" x2="318" y2="54" stroke="var(--bd1)" stroke-dasharray="2 3"/>
+            <line x1="30" y1="100" x2="318" y2="100" stroke="var(--bd1)"/>
+            <g font-family="'JetBrains Mono',monospace" font-size="8" fill="var(--t3)">
+              <text x="24" y="103" text-anchor="end">0</text>
+              <text x="24" y="57" text-anchor="end">${short(max / 2)}</text>
+              <text x="24" y="12" text-anchor="end">${short(max)}</text>
+              ${dayLabels}
+            </g>
+            ${marks}
+          </svg>`;
+  }
 
-    return opps.map((o, i) => {
-      const isOpen = openOppIndex === i;
-      const chevronTransform = isOpen ? 'rotate(90deg)' : 'none';
-      const bodyHtml = isOpen ? `
-        <div class="opp-body">
-          <p style="margin:0;font-size:12px;line-height:1.5;color:var(--t2)">${t(o.desc)}</p>
-          <div style="display:flex;gap:8px">
-            <button style="flex:1;padding:7px 10px;border-radius:6px;background:transparent;border:1px solid var(--bd2);color:var(--t1);font-size:12px;font-weight:500;cursor:pointer" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">${t('Create work order')}</button>
-            <button style="flex:none;padding:7px 16px;border-radius:6px;background:var(--btnP);border:1px solid transparent;color:var(--btnPfg);font-size:12px;font-weight:500;cursor:pointer" onmouseover="this.style.filter='brightness(.94)'" onmouseout="this.style.filter='none'">${t('Trend')}</button>
-          </div>
-        </div>
-      ` : '';
+  function eventStatsHtml() {
+    const counts = live.alarms ? live.alarms.counts : null;
+    if (!counts) {
+      return `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">—</div>`;
+    }
+    const tile = (label, v, color) => `
+      <div style="flex:1;background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:${color}">${v}</div>
+        <div style="font-size:10px;letter-spacing:0.8px;color:var(--t3);text-transform:uppercase;margin-block-start:4px">${label}</div>
+      </div>`;
+    return `
+      <div style="display:flex;gap:8px">
+        ${tile(t('critical'), counts.critical, 'var(--crit)')}
+        ${tile(t('warning'), counts.warning, 'var(--warn)')}
+        ${tile('info', counts.info, 'var(--info)')}
+      </div>
+      <div style="padding:12px;border:1px dashed var(--bd1);border-radius:8px;font-size:11.5px;color:var(--t3);text-align:center">${t('Today only — trends require alarm history')}</div>`;
+  }
 
+  function alarmListHtml() {
+    const data = live.alarms;
+    if (!data) {
+      return `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">—</div>`;
+    }
+    if (!data.alarms.length) {
+      return `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">${t('No active alarms')}</div>`;
+    }
+    const sevStyle = {
+      critical: 'background:var(--critT);border:1px solid var(--crit);color:var(--crit)',
+      warning: 'background:var(--warnT);border:1px solid var(--warnB);color:var(--warnTx)',
+      info: 'background:var(--s3);border:1px solid var(--bd2);color:var(--t2)',
+    };
+    return data.alarms.map((a) => {
+      const when = a.occurred ? new Date(String(a.occurred).replace(/ [A-Za-z_\/]+$/, '')) : null;
+      const timeStr = when && !isNaN(when) ?
+        `${String(when.getDate()).padStart(2, '0')}/${String(when.getMonth() + 1).padStart(2, '0')} ${String(when.getHours()).padStart(2, '0')}:${String(when.getMinutes()).padStart(2, '0')}` : '';
       return `
-        <article style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;overflow:hidden">
-          <button class="opp-btn" data-opp-index="${i}" style="display:flex;align-items:center;gap:8px;width:100%;padding:11px 13px;background:transparent;border:none;cursor:pointer;text-align:start" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">
-            <span style="flex:none;padding:2px 7px;border-radius:4px;background:var(--warnT);border:1px solid var(--warnB);color:var(--warnTx);font-family:var(--fH),sans-serif;font-size:9.5px;font-weight:600;letter-spacing:1px">${t('WARNING')}</span>
-            <span style="flex:1;min-width:0;font-family:var(--fH),sans-serif;font-size:12px;font-weight:500;color:var(--t1)">${t(o.title)}</span>
-            <span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600;color:var(--t1)">${t(o.aed)}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:var(--t3);transform:${chevronTransform};transition:transform 0.2s ease"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-          ${bodyHtml}
-        </article>
-      `;
+        <article style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="flex:none;padding:2px 7px;border-radius:4px;font-family:var(--fH),sans-serif;font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;${sevStyle[a.severity] || sevStyle.info}">${t(a.severity)}</span>
+            <span style="flex:1;min-width:0;font-family:var(--fH),sans-serif;font-size:12px;font-weight:500;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.source)}</span>
+            <span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3)">${timeStr}</span>
+          </div>
+          <div style="font-size:11.5px;line-height:1.4;color:var(--t2)">${esc(a.message)}</div>
+        </article>`;
     }).join('');
   }
 
+  function oppRowsHtml() {
+    if (!live.power) {
+      return `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">\u2014</div>`;
+    }
+    const findings = activeFindings();
+    if (!findings.length) {
+      return `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">${t('No active findings')}</div>`;
+    }
+    return findings.map((f) => `
+        <article style="display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:11px 13px">
+          <span style="flex:none;padding:2px 7px;border-radius:4px;background:var(--warnT);border:1px solid var(--warnB);color:var(--warnTx);font-family:var(--fH),sans-serif;font-size:9.5px;font-weight:600;letter-spacing:1px">${t('WARNING')}</span>
+          <span style="flex:1;min-width:0;font-family:var(--fH),sans-serif;font-size:12px;font-weight:500;color:var(--t1)">${esc(f.rule.replace(/_/g, ' '))} &middot; ${esc(f.equip)}</span>
+          <span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--t3)">${esc(f.floor)}</span>
+        </article>
+    `).join('');
+  }
+
+  // Hour-of-week load intensity averaged over the last 28 days of the historian
   function heatmapHtml() {
-    const days = [t('Mon'),t('Tue'),t('Wed'),t('Thu'),t('Fri'),t('Sat'),t('Sun')];
-    const intensity = [
-      [0.3,0.3,0.3,0.3,0.6,0.7,0.8,0.8,0.6,0.5,0.5,0.6,0.6,0.5,0.5,0.5,0.6,0.7,0.7,0.6,0.5,0.4,0.3,0.3],
-      [0.3,0.3,0.3,0.3,0.6,0.7,0.8,0.8,0.6,0.5,0.5,0.6,0.6,0.5,0.5,0.5,0.6,0.9,0.8,0.6,0.5,0.4,0.3,0.3],
-      [0.3,0.3,0.3,0.3,0.6,0.7,0.8,0.8,0.6,0.5,0.5,0.6,0.6,0.5,0.5,0.5,0.6,0.7,0.7,0.6,0.5,0.4,0.3,0.3],
-      [0.3,0.3,0.3,0.3,0.6,0.7,0.8,0.8,0.6,0.5,0.5,0.6,0.6,0.5,0.5,0.5,0.6,0.8,0.7,0.6,0.5,0.4,0.3,0.3],
-      [0.3,0.3,0.3,0.3,0.6,0.7,0.9,0.8,0.6,0.5,0.5,0.6,0.6,0.5,0.5,0.5,0.6,0.7,0.8,0.6,0.5,0.4,0.3,0.3],
-      [0.3,0.3,0.3,0.3,0.4,0.4,0.5,0.5,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.3,0.3,0.3,0.3],
-      [0.3,0.3,0.3,0.3,0.4,0.4,0.5,0.5,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.3,0.3,0.3,0.3]
-    ];
-    const bgFor = v => v >= 0.58 ? 'var(--btnP)' : (v >= 0.4 ? 'color-mix(in srgb, var(--btnP) 50%, var(--s3))' : 'var(--s3)');
-    let rows = days.map((d, i) => {
-      const cells = intensity[i].map(v => `<span style="display:block;aspect-ratio:1;border-radius:2px;background:${bgFor(v)}"></span>`).join('');
-      return `<div style="display:grid;grid-template-columns:30px repeat(24,1fr);gap:2px;margin-block-end:2px;align-items:center;direction:ltr"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3)">${d}</span>${cells}</div>`;
+    const series = historySeries('Total_Power_Consumption_his');
+    const cutoff = Date.now() - 28 * 86400000;
+    const sums = Array.from({ length: 7 }, () => Array(24).fill(0));
+    const counts = Array.from({ length: 7 }, () => Array(24).fill(0));
+    for (const p of series) {
+      if (p.ts.getTime() < cutoff) continue;
+      const day = (p.ts.getDay() + 6) % 7;
+      sums[day][p.ts.getHours()] += p.val;
+      counts[day][p.ts.getHours()]++;
+    }
+    const cells = sums.map((row, d) => row.map((s, h) => counts[d][h] ? s / counts[d][h] : null));
+    const known = cells.flat().filter(v => v != null);
+    if (!known.length) {
+      return `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">${t('No history yet')}</div>`;
+    }
+    const min = Math.min(...known);
+    const span = (Math.max(...known) - min) || 1;
+    const bgFor = v => {
+      if (v == null) return 'var(--s3)';
+      const f = (v - min) / span;
+      return f >= 0.58 ? 'var(--btnP)' : (f >= 0.4 ? 'color-mix(in srgb, var(--btnP) 50%, var(--s3))' : 'var(--s3)');
+    };
+    const days = [t('Mon'), t('Tue'), t('Wed'), t('Thu'), t('Fri'), t('Sat'), t('Sun')];
+    const rows = days.map((d, i) => {
+      const rowCells = cells[i].map(v => `<span style="display:block;aspect-ratio:1;border-radius:2px;background:${bgFor(v)}"></span>`).join('');
+      return `<div style="display:grid;grid-template-columns:30px repeat(24,1fr);gap:2px;margin-block-end:2px;align-items:center;direction:ltr"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3)">${d}</span>${rowCells}</div>`;
     }).join('');
     return rows + `<div style="display:flex;justify-content:space-between;margin-inline-start:32px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3);direction:ltr"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>`;
   }
@@ -849,14 +972,6 @@
 
   // Close when clicking outside of any hotspot or dialog
   document.addEventListener('click', (e) => {
-    const oppBtn = e.target.closest('.opp-btn');
-    if (oppBtn) {
-      const idx = parseInt(oppBtn.getAttribute('data-opp-index'), 10);
-      openOppIndex = (openOppIndex === idx) ? null : idx;
-      renderRightPanel(currentModule, currentSubId);
-      return;
-    }
-
     const isClickInside = e.target.closest('.hs-pin') || e.target.closest('.hs-dialog');
     if (!isClickInside) {
       closeAllDialogs();
@@ -892,25 +1007,14 @@
   const SVG_W = 480, SVG_H = 34;
   const CHART_TOP = 2, CHART_BTM = 32; // line lives between y=2 and y=32
 
-  // Build a 193-sample energy waveform in SVG coords (y in 2..32)
-  const SERIES = (() => {
-    const n = 193;
-    const arr = [];
-    for (let i = 0; i < n; i++) {
-      const t = i / (n - 1);
-      // multi-frequency sine = realistic load curve
-      const v = 0.5
-        + 0.28 * Math.sin(t * Math.PI * 2.8 + 0.4)
-        + 0.12 * Math.sin(t * Math.PI * 9.1 + 1.2)
-        + 0.07 * Math.sin(t * Math.PI * 17 + 2.0);
-      arr.push(v); // 0..1
-    }
-    return arr;
-  })();
-  const VMIN = Math.min(...SERIES), VMAX = Math.max(...SERIES);
+  // Curve: last 48h of the building load historian; dots: today's active alarms
+  let SERIES = [];
+  let VMIN = 0, VMAX = 1;
+  let EVENTS = [];
 
   // Given a fractional position f (0=left/oldest, 1=right/now), return SVG y
   function seriesY(f) {
+    if (SERIES.length < 2) return (CHART_TOP + CHART_BTM) / 2;
     const idx = Math.round(f * (SERIES.length - 1));
     const v   = SERIES[Math.max(0, Math.min(SERIES.length - 1, idx))];
     return CHART_TOP + (CHART_BTM - CHART_TOP) * (1 - (v - VMIN) / (VMAX - VMIN));
@@ -918,6 +1022,7 @@
 
   // Build SVG M…L path string
   function buildSvgPath() {
+    if (SERIES.length < 2) return '';
     const pts = SERIES.map((v, i) => {
       const x = (i / (SERIES.length - 1)) * SVG_W;
       const y = CHART_TOP + (CHART_BTM - CHART_TOP) * (1 - (v - VMIN) / (VMAX - VMIN));
@@ -926,16 +1031,31 @@
     return 'M' + pts.join(' L');
   }
 
-  // Events: age in hours from now, sev 'warn'|'crit'
-  const EVENTS = [
-    { age: 47.0, sev: 'crit', tip: 'Chiller trip – L14'      },
-    { age: 38.5, sev: 'warn', tip: 'AHU overcool – L08'      },
-    { age: 31.0, sev: 'warn', tip: 'Schedule deviation – L3' },
-    { age: 22.3, sev: 'crit', tip: 'High kW demand spike'    },
-    { age: 14.8, sev: 'warn', tip: 'Pump VFD fault – Zone B' },
-    { age:  7.2, sev: 'warn', tip: 'CO₂ sensor OOL – L06'   },
-    { age:  2.1, sev: 'crit', tip: 'BMS comms loss – L11'    },
-  ];
+  function refreshTimelineData() {
+    const cutoff = Date.now() - TOTAL_HOURS * 3600000;
+    SERIES = historySeries('Total_Power_Consumption_his')
+      .filter(p => p.ts.getTime() >= cutoff)
+      .map(p => p.val);
+    const power = live.power;
+    if (power && power.total_power != null) SERIES.push(power.total_power);
+    if (SERIES.length >= 2) {
+      VMIN = Math.min(...SERIES);
+      VMAX = Math.max(...SERIES);
+      if (VMAX === VMIN) VMAX = VMIN + 1;
+    }
+    EVENTS = ((live.alarms && live.alarms.alarms) || []).map((a) => {
+      if (!a.occurred) return null;
+      const ts = new Date(String(a.occurred).replace(/ [A-Za-z_\/]+$/, ''));
+      if (isNaN(ts)) return null;
+      const age = (Date.now() - ts.getTime()) / 3600000;
+      if (age < 0 || age > TOTAL_HOURS) return null;
+      const sev = a.severity === 'critical' ? 'crit' : (a.severity === 'warning' ? 'warn' : 'info');
+      return { age, sev, tip: `${a.source}: ${a.message}` };
+    }).filter(Boolean);
+    renderSvg();
+    renderEventDots();
+    updateStepBtns();
+  }
 
   let isLive    = true;
   let cursorAge = 0;
@@ -1013,14 +1133,14 @@
       const svgY = seriesY(frac);               // y within viewBox (2..32)
       const pxTop = (svgY / SVG_H) * 32 + 2;   // convert to px within 32px chart, then +2 for chart top offset
       const xPct  = (frac * 100).toFixed(2) + '%';
-      const color = ev.sev === 'crit' ? 'var(--crit)' : 'var(--warn)';
+      const color = ev.sev === 'crit' ? 'var(--crit)' : (ev.sev === 'warn' ? 'var(--warn)' : 'var(--info)');
+      const size  = ev.sev === 'crit' ? 14 : (ev.sev === 'warn' ? 11 : 8);
 
       const dot = document.createElement('button');
       dot.setAttribute('aria-label', ev.tip);
       dot.setAttribute('data-ev-idx', i);
       dot.title = ev.tip;
-      // width/height 12px, centered with -6px margins — exactly as in reference
-      dot.style.cssText = `position:absolute;left:${xPct};top:${pxTop.toFixed(1)}px;width:12px;height:12px;margin-left:-6px;margin-top:-6px;padding:0;border-radius:50%;background:${color};border:1.5px solid var(--s1);cursor:pointer;z-index:3;pointer-events:auto;`;
+      dot.style.cssText = `position:absolute;left:${xPct};top:${pxTop.toFixed(1)}px;width:${size}px;height:${size}px;margin-left:${-size / 2}px;margin-top:${-size / 2}px;padding:0;border-radius:50%;background:${color};border:1.5px solid var(--s1);cursor:pointer;z-index:3;pointer-events:auto;`;
       dot.addEventListener('click', () => jumpToEvent(i));
       scrubEventsEl.appendChild(dot);
     });
@@ -1098,6 +1218,7 @@
 
   // ── Prev / Next ───────────────────────────────────────────────────────────
   function stepPrev() {
+    if (!EVENTS.length) return;
     const older = EVENTS.filter(e => e.age > cursorAge + 0.01);
     const prev  = older.length ? older.reduce((a,b) => a.age < b.age ? a : b) : null;
     if (prev) {
@@ -1124,6 +1245,11 @@
 
   function updateStepBtns() {
     if (!scrubPrevBtn || !scrubNextBtn) return;
+    if (!EVENTS.length) {
+      scrubPrevBtn.disabled = true;
+      scrubNextBtn.disabled = isLive;
+      return;
+    }
     const oldestAge = Math.max(...EVENTS.map(e => e.age));
     scrubPrevBtn.disabled = !isLive && (cursorAge >= oldestAge - 0.05);
     scrubNextBtn.disabled = isLive;
@@ -1187,13 +1313,46 @@
 
   // ── Init ─────────────────────────────────────────────────────────────────
   function initScrubbar() {
-    renderSvg();
+    refreshTimelineData();
     renderTicks();
-    renderEventDots();
     goLive();
   }
   initScrubbar();
   window.addEventListener('resize', () => { renderTicks(); renderEventDots(); });
+
+  /* ── Live data subscription ── */
+  function updateConnectionPill() {
+    const dot = $('#systemsDot');
+    const label = $('#systemsLabel');
+    const ok = live.connected;
+    if (dot) {
+      dot.classList.toggle('status-ok', ok);
+      dot.classList.toggle('status-warn', !ok);
+    }
+    if (label) label.textContent = `${t('Systems')} ${ok ? '1/1' : '0/1'}`;
+  }
+
+  function updateNotifBadge() {
+    const badge = $('.notif-badge');
+    if (!badge) return;
+    const crit = (live.alarms && live.alarms.counts && live.alarms.counts.critical) || 0;
+    badge.textContent = String(crit);
+    badge.style.display = crit > 0 ? '' : 'none';
+  }
+
+  updateConnectionPill();
+  updateNotifBadge();
+
+  window.addEventListener('dashboard-data', (e) => {
+    const type = e.detail && e.detail.type;
+    if (type === 'power' || type === 'equipment' || type === 'alarms' || type === 'meters') {
+      renderModuleOverview(currentModule, currentSubId);
+      renderRightPanel(currentModule, currentSubId);
+    }
+    if (type === 'power' || type === 'alarms') refreshTimelineData();
+    if (type === 'alarms') updateNotifBadge();
+    if (type === 'status') updateConnectionPill();
+  });
 
 
 
@@ -1693,20 +1852,8 @@
   const presetBtns = $$('.ask-eko-bar button');
   let ekoStreamTimer = null;
 
-  const ekoAnswers = {
-    spike: "Afternoon load is running 23% above the 71.8 kW baseline, and roughly two-thirds of the excess traces to Chiller CH-2 &mdash; its condenser approach has been rising for 11 days, so it draws more power per ton of cooling just as afternoon demand peaks. Clearing the suspected tube fouling would recover most of it; the remainder aligns with elevated F&B tenant load between 13:00 and 16:00.",
-    yesterday: "Yesterday's load peaked at 88.1 kW between 15:00 and 17:00, about 23% above the 71.8 kW baseline, and most of the excess traces to Chiller CH-2 drawing extra power as its condenser approach kept rising through the afternoon.",
-    faults: "Three faults are open: CH-2 condenser approach rising (critical, AED 9,400/mo), AHU-L12-03 setpoint deviation (warning, AED 3,100/mo), and simultaneous heat/cool on L11 west (warning, AED 1,900/mo). Work orders are drafted for the first two and can be pushed to Maximo in one click.",
-    report: "Drafting the July owner report: energy is tracking 6.2% under baseline month-to-date, comfort compliance is at 97.2%, and FDD has identified AED 21.7K/mo of avoidable cost &mdash; led by the CH-2 remediation plan. The PDF will appear under Reports when ready."
-  };
-
-  function getEkoAnswer(text) {
-    const t = text.toLowerCase();
-    if (t.includes('yesterday')) return ekoAnswers.yesterday;
-    if (t.includes('fault') || t.includes('fdd')) return ekoAnswers.faults;
-    if (t.includes('report')) return ekoAnswers.report;
-    if (t.includes('spike') || t.includes('baseline') || t.includes('west tower')) return ekoAnswers.spike;
-    return ekoAnswers.spike;
+  function getEkoAnswer() {
+    return t('The assistant service is not connected yet. Live values are available on the Operations and Energy overviews.');
   }
 
   function appendEkoMessage(userText, aiText) {

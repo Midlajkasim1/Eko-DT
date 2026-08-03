@@ -34,26 +34,40 @@ export interface FinFddRule {
   rules: Record<string, string>
 }
 
+/**
+ * Live point values are keyed by the backend config's live_point_ids;
+ * a failed read is null (never a fake 0).
+ */
 export interface FinPowerLiveResponse {
   timestamp: string
-  total_power: number
-  carbon_emission: number
-  water_consumption: number
-  previous_month: number
-  current_month: number
+  total_power: number | null
+  peak_demand: number | null
+  energy_deviation: number | null
+  energy_intensity: number | null
+  energy_performance: number | null
+  carbon: number | null
+  carbon_emission: number | null
+  water_consumption: number | null
+  current_month: number | null
+  previous_month: number | null
   target_monthly: number | null
+  target_current: number | null
+  comfort_compliance: number | null
+  ra_co2: number | null
+  ahu: number | null
+  fcu: number | null
+  boiler: number | null
+  chiller: number | null
+  cooling_tower: number | null
+  vav: number | null
+  lighting: number | null
+  power_sockets: number | null
+  pumps: number | null
+  mcc1: number | null
+  mcc2: number | null
   avg_temp: number
   avg_hum: number
   avg_co2: number
-  ahu: number
-  fcu: number
-  boiler: number
-  chiller: number
-  cooling_tower: number
-  vav: number
-  lighting: number
-  power_sockets: number
-  pumps: number
   unit: string
   power_history: Record<string, unknown>
   fdd: FinFddRule[]

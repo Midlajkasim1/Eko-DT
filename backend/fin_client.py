@@ -1,6 +1,6 @@
 """
 FIN Framework SCRAM-SHA-256 Client & Zinc Parser
-Ported from the Hospital (ekoMedical) fin_connector.py as a reusable template.
+Reusable, project-agnostic connector client.
 All project-specific values are loaded from config.json.
 """
 
@@ -314,6 +314,7 @@ class FinScramClient:
         self.client = httpx.AsyncClient(verify=False, timeout=15.0)
         self.auth_headers: dict[str, str] = {}
         self.is_authenticated = False
+        self.last_alarm_rows: list[dict] = []
 
     async def authenticate(self, username: str, password: str) -> bool:
         """Perform SCRAM-SHA-256 authentication."""
@@ -505,6 +506,7 @@ class FinScramClient:
         points = parse_zinc_csv(points_text)
         equipment = parse_zinc_csv(equip_text)
         alarms = parse_zinc_csv(alarms_text)
+        self.last_alarm_rows = alarms
 
         # Extract FDD points from alarm metadata
         fdd_points = parse_alarm_fdd_points(alarms_text)

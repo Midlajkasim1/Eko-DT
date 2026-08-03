@@ -48,7 +48,7 @@
         <span class="badge badge-live"><span class="pulse-dot"></span><span data-i18n="live">LIVE</span></span>
         <span class="badge" data-i18n="onprem">ON-PREMISES</span>
         <button class="badge badge-systems" id="systemsBtn" aria-haspopup="dialog" aria-expanded="false">
-          <span class="status-dot status-ok"></span><span data-i18n="systems">Systems 6/6</span>
+          <span class="status-dot" id="systemsDot"></span><span id="systemsLabel">—</span>
         </button>
       </div>
 
@@ -70,9 +70,9 @@
         <button class="icon-btn" id="reportsBtn" aria-label="Reports library" title="Reports library" data-i18n-title="reportsTip" aria-haspopup="dialog" aria-expanded="false">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v5h5"></path><path d="M16 13H8M16 17H8"></path></svg>
         </button>
-        <button class="icon-btn" aria-label="Notifications, 3 unread" title="Notifications">
+        <button class="icon-btn" aria-label="Notifications" title="Notifications">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
-          <span class="notif-badge">3</span>
+          <span class="notif-badge" style="display:none"></span>
         </button>
         <div class="avatar-wrap">
           <button class="avatar-btn" id="userMenu" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu">AY</button>
@@ -100,10 +100,9 @@
           live: 'LIVE',
           onprem: 'ON-PREMISES',
           operations: 'Operations',
-          systems: 'Systems 6/6',
           askHdr: 'ASK EKO',
           clearChat: 'Clear',
-          chatFoot: 'Streams from live site data',
+          chatFoot: 'Assistant not connected yet',
           escCloses: 'Esc closes',
           askPh: 'Ask EKO: "why is the west tower above baseline?"',
           btnYest: 'What happened yesterday afternoon?',
@@ -198,10 +197,9 @@
           live: 'مباشر',
           onprem: 'تشغيل محلي',
           operations: 'التشغيل',
-          systems: 'الأنظمة 6/6',
           askHdr: 'اسأل EKO',
           clearChat: 'مسح',
-          chatFoot: 'يُبث من بيانات الموقع المباشرة',
+          chatFoot: 'المساعد غير متصل بعد',
           escCloses: 'Esc للإغلاق',
           askPh: 'اسأل EKO: "لماذا يتجاوز البرج الغربي خط الأساس؟"',
           btnYest: 'ماذا حدث بعد ظهر الأمس؟',
@@ -343,10 +341,10 @@
           <span class="nav-chevron"><span class="nav-chevron-circle"><svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span></span>
         </button>
         <div class="nav-subs hidden" data-parent="energy">
-          <button class="sub-item" data-sub="waste"><span class="sub-label" data-i18n="wasteprevention">Waste Prevention</span><span class="sub-dot warn" title="AED 14.2K / mo"></span></button>
+          <button class="sub-item" data-sub="waste"><span class="sub-label" data-i18n="wasteprevention">Waste Prevention</span></button>
           <button class="sub-item" data-sub="bench"><span class="sub-label" data-i18n="portfoliobenchmarking">Portfolio Benchmarking</span></button>
           <button class="sub-item" data-sub="lbm"><span class="sub-label" data-i18n="locationbasedmetering">Location Based Metering</span></button>
-          <button class="sub-item" data-sub="anom"><span class="sub-label" data-i18n="flowandtrendanomaly">Flow and Trend Anomaly</span><span class="sub-dot warn" title="2 anomalies"></span></button>
+          <button class="sub-item" data-sub="anom"><span class="sub-label" data-i18n="flowandtrendanomaly">Flow and Trend Anomaly</span></button>
           <button class="sub-item" data-sub="budget"><span class="sub-label" data-i18n="budgetoverrun">Budget Overrun</span></button>
           <button class="sub-item" data-sub="cons"><span class="sub-label" data-i18n="consumption">Consumption</span></button>
           <button class="sub-item" data-sub="fcst"><span class="sub-label" data-i18n="forecasting">Forecasting</span></button>
@@ -445,96 +443,6 @@
             <div class="vp-grad"></div>
             
             <div class="vp-layer" style="position: absolute; inset: 0; pointer-events: none;">
-            <div class="hs-pin" style="left: 52%; top: 52%;" data-target="dialog-ahu">
-              <button class="hs-btn warn" aria-label="AHU-L12-03 details" aria-expanded="false">
-                <span class="hs-dot"></span>
-              </button>
-              <div class="hs-tooltip">
-                <span class="hs-title">AHU-L12-03</span>
-                <span class="hs-status warn">▲ +1.8 °C vs SP</span>
-              </div>
-            </div>
-
-            <div class="hs-pin" style="left: 47%; top: 74%;" data-target="dialog-ch2">
-              <button class="hs-btn crit" aria-label="Chiller CH-2 details" aria-expanded="false">
-                <span class="hs-dot"></span>
-              </button>
-              <div class="hs-tooltip">
-                <span class="hs-title">CH-2</span>
-                <span class="hs-status crit">▲ approach rising</span>
-              </div>
-            </div>
-
-            <div class="hs-pin" style="left: 68%; top: 60%;" data-target="dialog-pm">
-              <button class="hs-btn info" aria-label="Substation PM-06 details" aria-expanded="false">
-                <span class="hs-dot"></span>
-              </button>
-              <div class="hs-tooltip">
-                <span class="hs-title">PM-06</span>
-                <span class="hs-status info">87.44 kW live</span>
-              </div>
-            </div>
-
-            <!-- Hotspot Dialogs -->
-            <div class="hs-dialog" id="dialog-ahu" style="left: calc(52% + 38px); top: 52%; transform: translateY(-30%);" aria-label="AHU-L12-03" hidden>
-              <div class="hs-dialog-header">
-                <span class="badge badge-warn">WARNING</span>
-                <span class="hs-dialog-title">AHU-L12-03</span>
-                <button class="hs-close" aria-label="Close">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
-                </button>
-              </div>
-              <div class="hs-dialog-body">
-                <div class="hs-row"><span class="hs-label">Supply air</span><span class="hs-val val-warn">▲ +1.8 °C vs SP</span></div>
-                <div class="hs-row"><span class="hs-label">Fan speed</span><span class="hs-val val-norm">78%</span></div>
-                <div class="hs-row"><span class="hs-label">Filter ΔP</span><span class="hs-val val-norm">Elevated</span></div>
-                <div class="hs-impact"><span class="hs-label">Est. impact</span><span class="hs-val">AED 3,100 / mo</span></div>
-              </div>
-              <div class="hs-dialog-footer">
-                <button class="btn btn-sec">Create WO</button>
-                <button class="btn btn-pri">View Trend</button>
-              </div>
-            </div>
-
-            <div class="hs-dialog" id="dialog-ch2" style="left: calc(47% + 38px); top: 74%; transform: translateY(-70%);" aria-label="Chiller CH-2" hidden>
-              <div class="hs-dialog-header">
-                <span class="badge badge-crit">CRITICAL</span>
-                <span class="hs-dialog-title">Chiller CH-2</span>
-                <button class="hs-close" aria-label="Close">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
-                </button>
-              </div>
-              <div class="hs-dialog-body">
-                <div class="hs-row"><span class="hs-label">Condenser approach</span><span class="hs-val val-crit">▲ +2.1 K · 11 days</span></div>
-                <div class="hs-row"><span class="hs-label">COP</span><span class="hs-val val-norm">4.1 (▼ 9%)</span></div>
-                <div class="hs-row"><span class="hs-label">Likely cause</span><span class="hs-val val-norm">Tube fouling</span></div>
-                <div class="hs-impact"><span class="hs-label">Est. impact</span><span class="hs-val">AED 9,400 / mo</span></div>
-              </div>
-              <div class="hs-dialog-footer">
-                <button class="btn btn-sec">Create WO</button>
-                <button class="btn btn-pri">View Trend</button>
-              </div>
-            </div>
-
-            <div class="hs-dialog" id="dialog-pm" style="left: calc(68% - 296px); top: 60%; transform: translateY(-50%);" aria-label="Substation PM-06" hidden>
-              <div class="hs-dialog-header">
-                <span class="badge badge-info">LIVE</span>
-                <span class="hs-dialog-title">Substation PM-06</span>
-                <button class="hs-close" aria-label="Close">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
-                </button>
-              </div>
-              <div class="hs-dialog-body">
-                <div class="hs-row"><span class="hs-label">Current load</span><span class="hs-val val-norm">87.44 kW</span></div>
-                <div class="hs-row"><span class="hs-label">Meters online</span><span class="hs-val val-pos">214 / 214</span></div>
-                <div class="hs-row"><span class="hs-label">Consumed today</span><span class="hs-val val-norm">1,022 kWh</span></div>
-              </div>
-              <div class="hs-dialog-footer">
-                <button class="btn btn-sec">Open meter</button>
-                <button class="btn btn-pri">View Trend</button>
-              </div>
-            </div>
-
             <!-- Viewport UI Overlays -->
             <div class="vp-caption" style="letter-spacing: 1px; font-weight: 500;" data-i18n="vpcaption">MARSA AL ARAB &middot; LIVE MODEL &middot; ALL FLOORS</div>
             <div class="vp-histbanner" style="display: none;">
@@ -788,7 +696,7 @@
 
       <!-- Footer -->
       <div style="flex: none; padding: 8px 14px; border-top: 1px solid var(--bd1); background: var(--s2); font-size: 11px; color: var(--t3); display: flex; align-items: center; justify-content: space-between;">
-        <span data-i18n="chatFoot">Streams from live site data</span>
+        <span data-i18n="chatFoot">Assistant not connected yet</span>
         <span data-i18n="escCloses">Esc closes</span>
       </div>
     </div>
@@ -875,6 +783,7 @@
     </footer>
 
   </div>
+  <script src="/static/js/data-provider.js?v=1" defer></script>
   <script src="/static/js/dashboard.js?v=1" defer></script>
 </body>
 </html>
