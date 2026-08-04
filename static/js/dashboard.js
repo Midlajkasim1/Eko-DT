@@ -74,6 +74,7 @@
     'LIVE': 'مباشر',
     'Systems': 'الأنظمة',
     'forecast EOD': 'التوقع بنهاية اليوم',
+    'PMU live sum': 'المجموع المباشر لعدادات PMU',
     'month-on-month': 'مقارنة بالشهر الماضي',
     'within target band': 'ضمن النطاق المستهدف',
     'equipment reporting': 'المعدات المتصلة',
@@ -84,6 +85,17 @@
     'live': 'مباشر',
     'findings': 'نتائج',
     'meters live': 'عداد مباشر',
+    'PMU trends': 'اتجاهات عدادات PMU',
+    'Meter': 'العداد',
+    'No meter data yet': 'لا بيانات عدادات بعد',
+    'trend history available — click row': 'سجل الاتجاه متاح — انقر على الصف',
+    'Live PMU meters · 5 parameters': 'عدادات PMU المباشرة · 5 معايير',
+    'Hourly load vs typical profile': 'الحمل بالساعة مقابل النمط المعتاد',
+    'Today': 'اليوم',
+    'hour': 'ساعة',
+    'Typical profile': 'النمط المعتاد',
+    'anomaly hours': 'ساعات شاذة',
+    'No history for this day': 'لا يوجد سجل لهذا اليوم',
     'MWh today': 'ميجاواط ساعة اليوم',
     'In design': 'قيد التصميم',
     'Requires portfolio': 'يتطلب محفظة عقارات',
@@ -193,6 +205,89 @@
     return count ? { sum, count } : null;
   }
 
+  // Live building load from the individual PMU meters (fallback when the
+  // FIN total_power point is not reporting). Returns {sum, count} or null.
+  function pmuLiveSum() {
+    const meters = live.meters;
+    if (!meters) return null;
+    let sum = 0, count = 0;
+    Object.values(meters).forEach((m) => {
+      const v = m ? m.active_power : null;
+      if (typeof v === 'number' && isFinite(v)) { sum += v; count++; }
+    });
+    return count ? { sum, count } : null;
+  }
+
+  function liveLoadKw() {
+    const power = live.power;
+    if (power && power.total_power != null) return power.total_power;
+    const pmu = pmuLiveSum();
+    return pmu ? pmu.sum : null;
+  }
+
+  // PMU historian keys present in the power_history payload (PMU04_his …)
+  function pmuHistKeys() {
+    const power = live.power;
+    if (!power || !power.power_history) return [];
+    return Object.keys(power.power_history).filter((k) => /^PMU\d+_his$/i.test(k)).sort();
+  }
+
+  // Historian key for a live meter, if its PMU number has one (PMU04-09)
+  function meterHistKey(name) {
+    const m = String(name).match(/^PMU\d+/i);
+    if (!m) return null;
+    const key = m[0].toUpperCase() + '_his';
+    const power = live.power;
+    return power && power.power_history && power.power_history[key] ? key : null;
+  }
+
+  // Zone part of the FIN nav name: PMU05_SMDB_KIT → "SMDB KIT"
+  function meterZoneLabel(name) {
+    const s = String(name).replace(/^PMU\d+[_\- ]*/i, '').replace(/_/g, ' ').trim();
+    return s || String(name);
+  }
+
+  function shortNum(v, digits = 1) {
+    if (v == null || !isFinite(v)) return '—';
+    if (Math.abs(v) >= 10000) return (v / 1000).toFixed(1) + 'k';
+    return Number(v).toLocaleString('en-US', { maximumFractionDigits: digits });
+  }
+
+  // Values for each hour (0-23) of one calendar day, null where no sample
+  function hourValues(series, dayDate) {
+    const out = Array(24).fill(null);
+    for (const p of series) {
+      if (p.ts.getFullYear() === dayDate.getFullYear() &&
+          p.ts.getMonth() === dayDate.getMonth() &&
+          p.ts.getDate() === dayDate.getDate()) {
+        out[p.ts.getHours()] = p.val;
+      }
+    }
+    return out;
+  }
+
+  // EOD projection from the intraday profile: scale today's partial sum by the
+  // typical full-day/partial-day ratio at this hour over the last 28 days.
+  // Days with gaps or bad (non-positive) sums are skipped so meter glitches
+  // never poison the forecast. Falls back to a flat projection.
+  function eodForecast(series, now, today) {
+    if (!today) return null;
+    const hour = now.getHours();
+    let fullSum = 0, partSum = 0, daysUsed = 0;
+    for (let i = 1; i <= 28; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const full = sumDay(series, d);
+      const part = sumDay(series, d, hour + 1);
+      if (full && part && full.count >= 20 && full.sum > 0 && part.sum > 0) {
+        fullSum += full.sum;
+        partSum += part.sum;
+        daysUsed++;
+      }
+    }
+    if (daysUsed >= 3 && partSum > 0) return today.sum * (fullSum / partSum);
+    return today.count ? (today.sum / today.count) * 24 : null;
+  }
+
   function energyKpis() {
     const series = historySeries('Total_Power_Consumption_his');
     const now = new Date();
@@ -205,12 +300,15 @@
       momPct = ((today.sum - lastMonthSameHours.sum) / lastMonthSameHours.sum) * 100;
     }
     const power = live.power;
+    const finLoad = power ? power.total_power : null;
+    const pmu = finLoad == null ? pmuLiveSum() : null;
     return {
       consumed: today ? today.sum : null,
-      eod: today ? (today.sum / today.count) * 24 : null,
+      eod: eodForecast(series, now, today),
       lastMonth: lastMonth ? lastMonth.sum : null,
       momPct,
-      load: power ? power.total_power : null,
+      load: finLoad != null ? finLoad : (pmu ? pmu.sum : null),
+      loadPmuCount: pmu ? pmu.count : 0,
       spark: series.slice(-24),
     };
   }
@@ -279,6 +377,7 @@
     if (modId === 'energy') {
       if (item.id === 'waste') { const n = activeFindings().length; return n ? `${n} ${t('findings')}` : '—'; }
       if (item.id === 'lbm') { const m = live.meters; const n = m ? Object.keys(m).length : 0; return n ? `${n} ${t('meters live')}` : '—'; }
+      if (item.id === 'anom') { const n = pmuHistKeys().length; return n ? `${n} ${t('PMU trends')}` : '—'; }
       if (item.id === 'cons') { const k = energyKpis(); return k.consumed != null ? `${(k.consumed / 1000).toFixed(1)} ${t('MWh today')}` : '—'; }
       if (item.id === 'bench') return t('Requires portfolio');
       if (item.id === 'budget') return t('Requires targets');
@@ -364,6 +463,10 @@
 
   let currentModule = 'operations';
   let currentSubId = null;
+  // Sub-view selections (persist across live-data re-renders)
+  let lbmSelectedPmu = null;
+  let anomPmu = null;
+  let anomDayOffset = 0;
   const vpOvp = $('.vp-ovp');
 
   renderModuleOverview('operations', null);
@@ -404,6 +507,7 @@
             <span class="kpi-unit">kW</span>
             <svg class="histclock" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--warnTx)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
           </div>
+          ${k.loadPmuCount ? `<div class="kpi-sub">${t('PMU live sum')} &middot; ${k.loadPmuCount} PMU</div>` : ''}
           ${spark ? `
           <svg viewBox="0 0 240 48" preserveAspectRatio="none" style="width: 100%; height: 44px; display: block; margin-block: 6px;">
             <path d="${spark.area}" fill="var(--acc8)" stroke="none"></path>
@@ -482,7 +586,9 @@
     const isEnergyMod = modId === 'energy';
     const hasSub      = !!subId;
     const showWaste   = hasSub && subId === 'waste';
-    const showStub    = hasSub && !showWaste;
+    const showLbm     = hasSub && subId === 'lbm';
+    const showAnom    = hasSub && subId === 'anom';
+    const showStub    = hasSub && !showWaste && !showLbm && !showAnom;
     const showEnergyHome = !hasSub && isEnergyMod;
     const modLabel    = document.querySelector(`.nav-item[data-module="${modId}"] .nav-label`)?.textContent.trim() || modId;
     const subLabel    = document.querySelector(`.sub-item[data-sub="${subId}"] .sub-label`)?.textContent.trim() || subId || '';
@@ -499,6 +605,10 @@
         rpSub.textContent = t('7-day trend and top opportunities'); rpSub.style.display = '';
       } else if (showWaste) {
         rpSub.textContent = t('Avoidable consumption &middot; FDD + schedule analysis'); rpSub.style.display = '';
+      } else if (showLbm) {
+        rpSub.textContent = t('Live PMU meters · 5 parameters'); rpSub.style.display = '';
+      } else if (showAnom) {
+        rpSub.textContent = t('Hourly load vs typical profile'); rpSub.style.display = '';
       } else if (showStub) {
         rpSub.textContent = t('Sub-view'); rpSub.style.display = '';
       } else {
@@ -543,6 +653,10 @@
         <div style="font-family:var(--fH),sans-serif;font-size:10px;font-weight:600;letter-spacing:0.8px;color:var(--t2);margin-block-start:2px">${t('OPPORTUNITIES')}</div>
         ${oppRowsHtml()}
       `;
+    } else if (showLbm) {
+      html = lbmPanelHtml();
+    } else if (showAnom) {
+      html = anomPanelHtml();
     } else if (showStub && subId === 'evstats') {
       html = eventStatsHtml();
     } else if (showStub && subId === 'alarms') {
@@ -562,8 +676,8 @@
     fcst: 'In design',
   };
 
-  function weeklyChartHtml(kind) {
-    const series = historySeries('Total_Power_Consumption_his');
+  function weeklyChartHtml(kind, seriesOverride) {
+    const series = seriesOverride || historySeries('Total_Power_Consumption_his');
     const now = new Date();
     const days = [];
     for (let i = 6; i >= 0; i--) {
@@ -673,6 +787,173 @@
           <span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--t3)">${esc(f.floor)}</span>
         </article>
     `).join('');
+  }
+
+  /* ── Location Based Metering panel ── */
+  function lbmPanelHtml() {
+    const meters = live.meters;
+    const names = meters ? Object.keys(meters).sort() : [];
+    if (!names.length) {
+      return `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">${t('No meter data yet')}</div>`;
+    }
+    const pmu = pmuLiveSum();
+    if (lbmSelectedPmu && !names.includes(lbmSelectedPmu)) lbmSelectedPmu = null;
+    if (!lbmSelectedPmu) lbmSelectedPmu = names.find((n) => meterHistKey(n)) || null;
+
+    const tile = (v, label) => `
+      <div style="flex:1;background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:600;color:var(--t1)">${v}</div>
+        <div style="font-size:9.5px;letter-spacing:0.6px;color:var(--t3);text-transform:uppercase;margin-block-start:3px">${label}</div>
+      </div>`;
+
+    const cols = [
+      ['active_power', 'kW', 1],
+      ['current', 'A', 1],
+      ['voltage', 'V', 0],
+      ['frequency', 'Hz', 1],
+      ['total_energy', 'kWh', 0],
+    ];
+
+    const rowsHtml = names.map((name) => {
+      const m = meters[name] || {};
+      const hasHis = !!meterHistKey(name);
+      const sel = hasHis && name === lbmSelectedPmu;
+      const num = (String(name).match(/^PMU\d+/i) || [null])[0];
+      const cells = cols.map(([key, , d]) =>
+        `<td style="padding:4px 6px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t2);white-space:nowrap">${shortNum(m[key], d)}</td>`).join('');
+      return `
+        <tr ${hasHis ? `data-lbm-pmu="${esc(name)}"` : ''} style="border-top:1px solid var(--bd1);${hasHis ? 'cursor:pointer;' : ''}${sel ? 'background:var(--acc8);' : ''}">
+          <td style="padding:4px 6px;max-width:112px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(name)}">
+            ${num ? `<span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3)">${esc(num.toUpperCase())}</span> ` : ''}
+            <span style="font-size:10.5px;color:var(--t1)">${esc(meterZoneLabel(name))}</span>
+            ${hasHis ? '<span style="font-size:8px;color:var(--acc);vertical-align:middle"> ●</span>' : ''}
+          </td>${cells}
+        </tr>`;
+    }).join('');
+
+    const selKey = lbmSelectedPmu ? meterHistKey(lbmSelectedPmu) : null;
+    const chart = selKey ? `
+      <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:13px">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-block-end:10px">
+          <span style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1)">${esc(lbmSelectedPmu)}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t3)">${t('kWh / day')}</span>
+        </div>
+        ${weeklyChartHtml('line', historySeries(selKey))}
+      </div>` : '';
+
+    return `
+      <div style="display:flex;gap:8px">
+        ${tile(String(names.length), t('meters live'))}
+        ${tile(pmu ? shortNum(pmu.sum, 1) : '—', 'Σ kW')}
+      </div>
+      <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr>
+            <th style="padding:5px 6px;text-align:start;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--t3)">${t('Meter')}</th>
+            ${cols.map((c) => `<th style="padding:5px 6px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--t3)">${c[1]}</th>`).join('')}
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+      <div style="font-size:10px;color:var(--t3)">● ${t('trend history available — click row')}</div>
+      ${chart}`;
+  }
+
+  /* ── Flow and Trend Anomaly panel ── */
+  function anomPanelHtml() {
+    const keys = pmuHistKeys();
+    if (!keys.length) {
+      return `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">${t('No history yet')}</div>`;
+    }
+    if (!anomPmu || !keys.includes(anomPmu)) anomPmu = keys[0];
+    const now = new Date();
+    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - anomDayOffset);
+    const series = historySeries(anomPmu);
+
+    const pill = (attrs, label, sel) =>
+      `<button ${attrs} style="padding:3px 9px;border-radius:999px;border:1px solid ${sel ? 'var(--acc)' : 'var(--bd2)'};background:${sel ? 'var(--acc8)' : 'var(--s2)'};color:${sel ? 'var(--acc)' : 'var(--t2)'};font-family:'JetBrains Mono',monospace;font-size:9.5px;cursor:pointer;white-space:nowrap">${label}</button>`;
+
+    const pmuPills = keys.map((k) => pill(`data-anom-pmu="${esc(k)}"`, esc(k.replace(/_his$/i, '')), k === anomPmu)).join('');
+    const dayPills = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const lbl = i === 0 ? t('Today') : t(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()]);
+      return pill(`data-anom-day="${i}"`, lbl, i === anomDayOffset);
+    }).join('');
+
+    const chart = anomChartHtml(series, day);
+    return `
+      <div style="display:flex;flex-wrap:wrap;gap:5px">${pmuPills}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">${dayPills}</div>
+      <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:13px">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-block-end:10px">
+          <span style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1)">${esc(anomPmu.replace(/_his$/i, ''))}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t3)">kWh / ${t('hour')}</span>
+        </div>
+        ${chart.html}
+        <div style="display:flex;gap:12px;margin-block-start:8px;flex-wrap:wrap">
+          <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:14px;height:2px;background:var(--acc)"></span>${t('Actual')}</span>
+          <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:14px;height:0;border-top:2px dashed var(--t3)"></span>${t('Typical profile')}</span>
+          <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:8px;height:8px;border-radius:50%;background:var(--warn)"></span>${chart.anomalies} ${t('anomaly hours')}</span>
+        </div>
+      </div>`;
+  }
+
+  // One day's hourly curve vs the typical profile (same weekday, last 4 weeks).
+  // Hours deviating >30% from a positive profile are flagged as anomalies.
+  function anomChartHtml(series, dayDate) {
+    const actual = hourValues(series, dayDate);
+    const refDays = [1, 2, 3, 4].map((w) =>
+      hourValues(series, new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate() - 7 * w)));
+    const profile = Array.from({ length: 24 }, (_, h) => {
+      const vals = refDays.map((r) => r[h]).filter((v) => v != null && v >= 0);
+      return vals.length >= 2 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+    });
+    if (!actual.some((v) => v != null)) {
+      return { anomalies: 0, html: `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">${t('No history for this day')}</div>` };
+    }
+    const known = [...actual, ...profile].filter((v) => v != null && v >= 0);
+    const max = Math.max(...known) || 1;
+    const x = (h) => 30 + h * 12.5;
+    const y = (v) => 100 - (Math.max(0, v) / max) * 92;
+    const short = (v) => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : String(Math.round(v));
+
+    const actPts = [], dots = [], anomDots = [];
+    let anomalies = 0;
+    for (let h = 0; h < 24; h++) {
+      const v = actual[h];
+      if (v == null) continue;
+      const px = x(h).toFixed(1), py = y(v).toFixed(1);
+      actPts.push(`${px},${py}`);
+      const p = profile[h];
+      if (p != null && p > 0 && Math.abs(v - p) / p > 0.3) {
+        anomalies++;
+        anomDots.push(`<circle cx="${px}" cy="${py}" r="3"/>`);
+      } else {
+        dots.push(`<circle cx="${px}" cy="${py}" r="1.6"/>`);
+      }
+    }
+    const profPts = profile.map((p, h) => p == null ? null : `${x(h).toFixed(1)},${y(p).toFixed(1)}`).filter(Boolean);
+    const hourLabels = [0, 6, 12, 18, 23].map((h) =>
+      `<text x="${x(h)}" y="114" text-anchor="middle">${String(h).padStart(2, '0')}</text>`).join('');
+    return {
+      anomalies,
+      html: `
+          <svg viewBox="0 0 330 122" style="width:100%;height:auto;display:block;direction:ltr" role="img" aria-label="hourly load vs typical profile">
+            <line x1="30" y1="8" x2="318" y2="8" stroke="var(--bd1)" stroke-dasharray="2 3"/>
+            <line x1="30" y1="54" x2="318" y2="54" stroke="var(--bd1)" stroke-dasharray="2 3"/>
+            <line x1="30" y1="100" x2="318" y2="100" stroke="var(--bd1)"/>
+            <g font-family="'JetBrains Mono',monospace" font-size="8" fill="var(--t3)">
+              <text x="24" y="103" text-anchor="end">0</text>
+              <text x="24" y="57" text-anchor="end">${short(max / 2)}</text>
+              <text x="24" y="12" text-anchor="end">${short(max)}</text>
+              ${hourLabels}
+            </g>
+            ${profPts.length >= 2 ? `<polyline points="${profPts.join(' ')}" fill="none" stroke="var(--t3)" stroke-width="1" stroke-dasharray="3 3"/>` : ''}
+            ${actPts.length >= 2 ? `<polyline points="${actPts.join(' ')}" fill="none" stroke="var(--acc)" stroke-width="1.5"/>` : ''}
+            <g fill="var(--acc)">${dots.join('')}</g>
+            <g fill="var(--warn)">${anomDots.join('')}</g>
+          </svg>`,
+    };
   }
 
   // Hour-of-week load intensity averaged over the last 28 days of the historian
@@ -883,6 +1164,21 @@
     });
   }
 
+  /* ── LBM / Anomaly sub-view interactions (delegated — panel re-renders on data) ── */
+  const rpContentEl = document.getElementById('rpContent');
+  if (rpContentEl) {
+    rpContentEl.addEventListener('click', (e) => {
+      const lbmRow = e.target.closest('[data-lbm-pmu]');
+      const aPmu = e.target.closest('[data-anom-pmu]');
+      const aDay = e.target.closest('[data-anom-day]');
+      if (!lbmRow && !aPmu && !aDay) return;
+      if (lbmRow) lbmSelectedPmu = lbmRow.getAttribute('data-lbm-pmu');
+      if (aPmu) anomPmu = aPmu.getAttribute('data-anom-pmu');
+      if (aDay) anomDayOffset = parseInt(aDay.getAttribute('data-anom-day'), 10) || 0;
+      renderRightPanel(currentModule, currentSubId);
+    });
+  }
+
   /* ── Property Switcher Dropdown ── */
   const propSwitcher = $('#propSwitcher');
   const propMenu = $('#propMenu');
@@ -1036,8 +1332,8 @@
     SERIES = historySeries('Total_Power_Consumption_his')
       .filter(p => p.ts.getTime() >= cutoff)
       .map(p => p.val);
-    const power = live.power;
-    if (power && power.total_power != null) SERIES.push(power.total_power);
+    const liveLoad = liveLoadKw();
+    if (liveLoad != null) SERIES.push(liveLoad);
     if (SERIES.length >= 2) {
       VMIN = Math.min(...SERIES);
       VMAX = Math.max(...SERIES);
