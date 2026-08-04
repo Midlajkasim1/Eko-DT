@@ -311,10 +311,12 @@ class FinScramClient:
     def __init__(self, base_url: str, project_name: str):
         self.base_url = base_url.rstrip('/')
         self.project_name = project_name
-        self.client = httpx.AsyncClient(verify=False, timeout=15.0)
+        # readAll(point...) on a full site returns a large grid; 15s was not enough
+        self.client = httpx.AsyncClient(verify=False, timeout=60.0)
         self.auth_headers: dict[str, str] = {}
         self.is_authenticated = False
         self.last_alarm_rows: list[dict] = []
+        self.last_point_rows: list[dict] = []
 
     async def authenticate(self, username: str, password: str) -> bool:
         """Perform SCRAM-SHA-256 authentication."""
@@ -463,7 +465,7 @@ class FinScramClient:
             parts = self._parse_csv_line(data_line)
             if curval_idx < len(parts):
                 raw = parts[curval_idx]
-                match = re.search(r'[\d.]+', raw)
+                match = re.search(r'-?[\d.]+', raw)
                 if match:
                     return float(match.group())
             return None
@@ -507,6 +509,7 @@ class FinScramClient:
         equipment = parse_zinc_csv(equip_text)
         alarms = parse_zinc_csv(alarms_text)
         self.last_alarm_rows = alarms
+        self.last_point_rows = points
 
         # Extract FDD points from alarm metadata
         fdd_points = parse_alarm_fdd_points(alarms_text)
@@ -620,11 +623,20 @@ class FinScramClient:
                     val = True
                 elif val == "F" or val is False:
                     val = False
-                if val is None or val == "" or val == "N/A":
-                    continue
+
+                # A point with no current value is not reporting, but if it is
+                # historized we still keep it so its trend stays chartable.
+                is_his = p.get("his") is True
+                reporting = not (val is None or val == "" or val == "N/A")
+                if not reporting:
+                    if not is_his:
+                        continue
+                    val = None
 
                 unit = p.get("unit", "") or ""
-                if isinstance(val, bool):
+                if val is None:
+                    display_val = "—"
+                elif isinstance(val, bool):
                     display_val = "T" if val else "F"
                 elif isinstance(val, (int, float)):
                     val = round(val, 2)
@@ -643,17 +655,27 @@ class FinScramClient:
                 formatted_points.append({
                     "navName": p_nav,
                     "currentValue": display_val,
-                    "status": p.get("status", "ok"),
+                    # A missing/blank status tag means "no fault reported", not a fault
+                    "status": p.get("status") or p.get("curStatus") or "ok",
+                    "id": str(safe_get(p.get("id"), "val") or "").lstrip("@"),
+                    "his": is_his,
+                    "reporting": reporting,
+                    "unit": unit,
                 })
 
             floor = safe_get(equip.get("floorRef"), "dis", "Unknown Floor")
             type_tag = "cctv" if "cctv" in nav_name.lower() else "hvac"
+
+            # FIN marker tags (ahu, fcu, pump, meter, lift, facp…) classify the
+            # equipment; everything was previously lumped into one "hvac" bucket
+            tags = [k for k, v in equip.items() if v is True and k not in ("equip", "inAlarm")]
 
             equip_data = {
                 "name": nav_name,
                 "bimId": equip.get("bimId") or equip_id or nav_name,
                 "alarms": equip_alarms,
                 "points": formatted_points,
+                "tags": tags,
             }
 
             if floor not in floor_wise:

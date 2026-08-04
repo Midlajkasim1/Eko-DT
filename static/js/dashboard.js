@@ -75,6 +75,43 @@
     'Systems': 'الأنظمة',
     'forecast EOD': 'التوقع بنهاية اليوم',
     'PMU live sum': 'المجموع المباشر لعدادات PMU',
+    'Peak demand · 15-min': 'الطلب الأقصى · كل 15 دقيقة',
+    'Peak demand, last 24 readings · kW': 'الطلب الأقصى، آخر 24 قراءة · كيلوواط',
+    'Hourly consumption, last 24 h · kWh': 'الاستهلاك بالساعة، آخر 24 ساعة · كيلوواط ساعة',
+    'Total and per-service consumption over time': 'الاستهلاك الكلي وحسب الخدمة عبر الزمن',
+    'BY SERVICE': 'حسب الخدمة',
+    'Service': 'الخدمة',
+    'share': 'الحصة',
+    'total': 'الإجمالي',
+    'services': 'خدمات',
+    'Total building': 'إجمالي المبنى',
+    'Historian last collected': 'آخر تجميع للسجل منذ',
+    'ago': '',
+    'Showing': 'يعرض',
+    'No history in this range': 'لا يوجد سجل في هذه الفترة',
+    'Negative total — meter reset or bad data': 'إجمالي سالب — إعادة ضبط العداد أو بيانات خاطئة',
+    'Services sum to': 'مجموع الخدمات',
+    'vs building total': 'مقابل إجمالي المبنى',
+    'the two do not reconcile': 'القيمتان غير متطابقتين',
+    'service(s) report a negative total — meter reset or bad data': 'خدمة/خدمات بإجمالي سالب — إعادة ضبط العداد أو بيانات خاطئة',
+    'click again for building total': 'انقر مرة أخرى لإجمالي المبنى',
+    'no data': 'لا بيانات',
+    'avg': 'متوسط',
+    'ref': 'مرجع',
+    'metered by': 'يُقاس بواسطة',
+    'Electrical distribution boards · one PMU per board': 'لوحات التوزيع الكهربائية · عداد PMU لكل لوحة',
+    'Motor control centre 01 · basement': 'مركز التحكم بالمحركات 01 · القبو',
+    'Motor control centre 02 · basement': 'مركز التحكم بالمحركات 02 · القبو',
+    'Kitchen sub-main distribution board': 'لوحة التوزيع الفرعية للمطبخ',
+    'Low-voltage feeder pillar · zone 7': 'عمود التغذية منخفض الجهد · المنطقة 7',
+    'Automatic transfer switch · essential supply': 'مفتاح النقل التلقائي · التغذية الأساسية',
+    'Sump / sewage pump station 02 control panel': 'لوحة تحكم محطة ضخ الصرف 02',
+    'MCC 1': 'لوحة MCC 1',
+    'MCC 2': 'لوحة MCC 2',
+    'Kitchen SMDB': 'لوحة المطبخ SMDB',
+    'LVFP': 'لوحة LVFP',
+    'ATS': 'مفتاح النقل ATS',
+    'Sump pump': 'مضخة التصريف',
     'month-on-month': 'مقارنة بالشهر الماضي',
     'within target band': 'ضمن النطاق المستهدف',
     'equipment reporting': 'المعدات المتصلة',
@@ -96,7 +133,56 @@
     'Typical profile': 'النمط المعتاد',
     'anomaly hours': 'ساعات شاذة',
     'No history for this day': 'لا يوجد سجل لهذا اليوم',
+    'Loading…': 'جارٍ التحميل…',
+    'series': 'سلسلة',
+    'channels': 'قنوات',
+    'points': 'نقاط',
+    'healthy': 'سليمة',
+    'faulted': 'معطلة',
+    'Staleness requires per-point thresholds': 'تتطلب حالة التقادم عتبات لكل نقطة',
+    'No equipment in alarm': 'لا معدات في حالة إنذار',
+    'No equipment reported yet': 'لا معدات مسجلة بعد',
+    'No points reporting': 'لا نقاط مسجلة',
+    'No historized points on this equipment': 'لا نقاط ذات سجل لهذه المعدة',
+    'No historized points reported by FIN': 'لم تُبلّغ FIN عن نقاط ذات سجل',
+    'No meter history yet': 'لا يوجد سجل للعدادات بعد',
+    'EQUIPMENT IN ALARM': 'المعدات في حالة إنذار',
+    'ALARMS': 'التنبيهات',
+    'POINTS': 'النقاط',
+    'All equipment': 'كل المعدات',
+    'Equipment liveness and point detail': 'حالة المعدات وتفاصيل النقاط',
+    'Chart picker over historized points': 'اختيار الرسم من النقاط ذات السجل',
+    'Water and gas meters · consumption and health': 'عدادات المياه والغاز · الاستهلاك والحالة',
+    'Counts by severity and day': 'الأعداد حسب الخطورة واليوم',
+    'Active alarm list': 'قائمة التنبيهات النشطة',
+    'Live alarms and equipment health': 'التنبيهات المباشرة وحالة المعدات',
+    'Configured historians': 'السجلات المهيأة',
+    'FIN historized points': 'نقاط FIN ذات السجل',
+    'Loading FIN point list…': 'جارٍ تحميل قائمة نقاط FIN…',
+    'Events by day': 'الأحداث حسب اليوم',
+    'Today only — FIN retains no alarm history for this range': 'اليوم فقط — لا تحتفظ FIN بسجل تنبيهات لهذه الفترة',
+    'Channel': 'القناة',
+    'last': 'آخر قراءة',
+    'WATER': 'المياه',
+    'GAS': 'الغاز',
+    'water channels': 'قنوات مياه',
+    'gas meter': 'عداد غاز',
+    'live total': 'الإجمالي المباشر',
+    '1 gas meter · 3 kitchen channels': 'عداد غاز واحد · 3 قنوات مطبخ',
+    'meter reading': 'قراءة العداد',
+    'per-interval': 'لكل فترة',
+    'Basement · cold water': 'القبو · مياه باردة',
+    'L1 kitchen · supply cold': 'مطبخ الطابق 1 · تغذية باردة',
+    'L1 kitchen · supply hot': 'مطبخ الطابق 1 · تغذية ساخنة',
+    'L1 kitchen · return hot': 'مطبخ الطابق 1 · عودة ساخنة',
+    'Kitchen channel 1': 'قناة المطبخ 1',
+    'Kitchen channel 2': 'قناة المطبخ 2',
+    'Kitchen channel 3': 'قناة المطبخ 3',
     'MWh today': 'ميجاواط ساعة اليوم',
+    'Widen panel': 'توسيع اللوحة',
+    'Narrow panel': 'تضييق اللوحة',
+    'events': 'أحداث',
+    'more': 'أخرى',
     'In design': 'قيد التصميم',
     'Requires portfolio': 'يتطلب محفظة عقارات',
     'Requires targets': 'يتطلب أهدافاً',
@@ -225,20 +311,19 @@
     return pmu ? pmu.sum : null;
   }
 
-  // PMU historian keys present in the power_history payload (PMU04_his …)
+  // Per-PMU historian keys in the power_history payload (PMU04_MCC_02_his …)
   function pmuHistKeys() {
     const power = live.power;
     if (!power || !power.power_history) return [];
-    return Object.keys(power.power_history).filter((k) => /^PMU\d+_his$/i.test(k)).sort();
+    return Object.keys(power.power_history).filter((k) => /^PMU\d+/i.test(k)).sort();
   }
 
-  // Historian key for a live meter, if its PMU number has one (PMU04-09)
+  // Historian key for a live meter, matched on its PMU number
   function meterHistKey(name) {
     const m = String(name).match(/^PMU\d+/i);
     if (!m) return null;
-    const key = m[0].toUpperCase() + '_his';
-    const power = live.power;
-    return power && power.power_history && power.power_history[key] ? key : null;
+    const prefix = m[0].toUpperCase();
+    return pmuHistKeys().find((k) => k.toUpperCase().startsWith(prefix)) || null;
   }
 
   // Zone part of the FIN nav name: PMU05_SMDB_KIT → "SMDB KIT"
@@ -288,28 +373,65 @@
     return today.count ? (today.sum / today.count) * 24 : null;
   }
 
+  // xlsx: "Wire to PMU sum" — when the building total historian has no data for a
+  // day, fall back to summing the per-PMU historians for that day.
+  function daySumWithPmuFallback(series, day) {
+    const direct = sumDay(series, day);
+    if (direct) return direct;
+    const parts = pmuHistKeys().map((k) => sumDay(historySeries(k), day)).filter(Boolean);
+    if (!parts.length) return null;
+    return {
+      sum: parts.reduce((a, p) => a + p.sum, 0),
+      count: Math.max(...parts.map((p) => p.count)),
+      fromPmu: true,
+    };
+  }
+
   function energyKpis() {
     const series = historySeries('Total_Power_Consumption_his');
     const now = new Date();
-    const today = sumDay(series, now);
+    const today = daySumWithPmuFallback(series, now);
     const lastMonthDay = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-    const lastMonth = sumDay(series, lastMonthDay);
+    const lastMonth = daySumWithPmuFallback(series, lastMonthDay);
     const lastMonthSameHours = today ? sumDay(series, lastMonthDay, now.getHours() + 1) : null;
     let momPct = null;
     if (today && lastMonthSameHours && lastMonthSameHours.sum > 0) {
       momPct = ((today.sum - lastMonthSameHours.sum) / lastMonthSameHours.sum) * 100;
     }
+
+    // Live kW: FIN total → live PMU sum → Peak_Demand (the only kW point at
+    // Marsa whose historian is still collecting). Provenance is always labelled.
     const power = live.power;
     const finLoad = power ? power.total_power : null;
     const pmu = finLoad == null ? pmuLiveSum() : null;
+    let load = finLoad != null ? finLoad : (pmu ? pmu.sum : null);
+    let loadSrc = finLoad != null ? '' : (pmu ? 'pmu' : '');
+    if (load == null && power && power.peak_demand != null) {
+      load = power.peak_demand;
+      loadSrc = 'peak';
+    }
+
+    // The sparkline falls back to a different point *and a different unit*
+    // (kWh/h → kW), so its source is reported alongside it rather than left
+    // to be guessed from an unlabelled squiggle.
+    let spark = series.slice(-24);
+    let sparkSrc = 'energy';
+    if (!spark.length) {
+      spark = historySeries('Peak_Demand_his').slice(-24);
+      sparkSrc = 'peak';
+    }
+
     return {
       consumed: today ? today.sum : null,
+      consumedFromPmu: !!(today && today.fromPmu),
       eod: eodForecast(series, now, today),
       lastMonth: lastMonth ? lastMonth.sum : null,
       momPct,
-      load: finLoad != null ? finLoad : (pmu ? pmu.sum : null),
+      load,
+      loadSrc,
       loadPmuCount: pmu ? pmu.count : 0,
-      spark: series.slice(-24),
+      spark,
+      sparkSrc,
     };
   }
 
@@ -324,7 +446,12 @@
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     });
     const line = 'M' + coords.join(' L');
-    return { line, area: `${line} L240,48 L0,48 Z` };
+    const dots = points.map((p, i) => {
+      const x = (i / (points.length - 1)) * 240;
+      const y = 44 - ((p.val - min) / span) * 34;
+      return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="transparent" data-tip="${esc(`${stamp(p.ts)}\n${shortNum(p.val, 2)}`)}" style="cursor:crosshair"/>`;
+    }).join('');
+    return { line, area: `${line} L240,48 L0,48 Z`, dots };
   }
 
   function operationsKpis() {
@@ -372,6 +499,17 @@
       const fac = live.power ? live.power.facilityServices : null;
       if (item.id === 'alarms' || item.id === 'evstats') return counts ? `${counts.total} ${t('open')}` : '—';
       if (item.id === 'livesys') return fac ? `${fac.onlineEquipment}/${fac.totalEquipment} ${t('live')}` : '—';
+      if (item.id === 'histch') {
+        const cfg = live.power && live.power.power_history ? Object.keys(live.power.power_history).length : 0;
+        const fin = async$.hisPoints ? async$.hisPoints.points.length : 0;
+        const n = cfg + fin;
+        return n ? `${n} ${t('series')}` : '—';
+      }
+      if (item.id === 'water') {
+        const hist = live.power && live.power.power_history ? live.power.power_history : null;
+        const n = hist ? WATER_CHANNELS.filter((c) => hist[c.key]).length : 0;
+        return n ? `${n} ${t('channels')}` : '—';
+      }
       return '—';
     }
     if (modId === 'energy') {
@@ -402,12 +540,12 @@
       ovEn: 'ENERGY OVERVIEW',
       l2: [
         { id: 'waste', name: 'Waste Prevention' },
-        { id: 'bench', name: 'Portfolio Benchmarking' },
+        // { id: 'bench', name: 'Portfolio Benchmarking' },
         { id: 'lbm', name: 'Location Based Metering' },
         { id: 'anom', name: 'Flow and Trend Anomaly' },
-        { id: 'budget', name: 'Budget Overrun' },
+        // { id: 'budget', name: 'Budget Overrun' },
         { id: 'cons', name: 'Consumption' },
-        { id: 'fcst', name: 'Forecasting' }
+        // { id: 'fcst', name: 'Forecasting' }
       ]
     },
     esg: {
@@ -467,6 +605,172 @@
   let lbmSelectedPmu = null;
   let anomPmu = null;
   let anomDayOffset = 0;
+  let livesysSelected = null;
+  let livesysPointId = null;
+  let histchPointId = null;
+  // A render replaces the panel's DOM. If it lands while a <select> is open the
+  // dropdown is torn out mid-choice, so the render is held until focus leaves.
+  // Declared here because renderRightPanel runs before the sub-view state below.
+  let rpRenderQueued = false;
+
+  // Water/gas channels. Labels come from the raw meter points behind each FIN
+  // aggregate: WM_FF_* are WATER_METER-ANC09-FF's WM_L1_KTCHN_* points, and the
+  // 3 gas keys are GM_GF_KITCH1-3 on the single GAS-METER-ANC09-GF.
+  const WATER_CHANNELS = [
+    { key: 'WM_BF_Cold_Wtr_his', label: 'Basement · cold water', kind: 'water' },
+    { key: 'WM_FF_Sup_Cold_Wtr_his', label: 'L1 kitchen · supply cold', kind: 'water' },
+    { key: 'WM_FF_Sup_Hot_Wtr_his', label: 'L1 kitchen · supply hot', kind: 'water' },
+    { key: 'WM_FF_Ret_Hot_Wtr_his', label: 'L1 kitchen · return hot', kind: 'water' },
+    { key: 'GM_GF_01_his', label: 'Kitchen channel 1', kind: 'gas' },
+    { key: 'GM_GF_02_his', label: 'Kitchen channel 2', kind: 'gas' },
+    { key: 'GM_GF_03_his', label: 'Kitchen channel 3', kind: 'gas' },
+  ];
+
+  // On-demand backend data (fetched once, then cached; render re-runs on arrival)
+  const async$ = { hisPoints: null, alarmHistory: null, pointHistory: {} };
+  const pending$ = {};
+
+  function afterLoad() { renderRightPanel(currentModule, currentSubId); }
+
+  function ensureHisPoints() {
+    if (async$.hisPoints || pending$.hisPoints || !window.DashboardData) return;
+    pending$.hisPoints = true;
+    window.DashboardData.getHisPoints().then((d) => {
+      pending$.hisPoints = false;
+      async$.hisPoints = d && d.points ? d : { points: [] };
+      afterLoad();
+    });
+  }
+
+  function ensureAlarmHistory() {
+    if (async$.alarmHistory || pending$.alarmHistory || !window.DashboardData) return;
+    pending$.alarmHistory = true;
+    // 30 days, not 7: a week catches 4 of the 343 retained alarms at Marsa and
+    // hides the 6 July cooling-valve event (196 alarms) completely.
+    window.DashboardData.getAlarmHistory(30).then((d) => {
+      pending$.alarmHistory = false;
+      async$.alarmHistory = d || { retained: false, byDay: [] };
+      afterLoad();
+    });
+  }
+
+  // Returns a flattened series, or null while still loading
+  function pointSeries(id, days = 7) {
+    if (!id || !window.DashboardData) return null;
+    const key = `${id}|${days}`;
+    if (async$.pointHistory[key]) return async$.pointHistory[key].series;
+    if (pending$[key]) return null;
+    pending$[key] = true;
+    window.DashboardData.getPointHistory(id, days).then((d) => {
+      pending$[key] = false;
+      async$.pointHistory[key] = {
+        series: d && d.history ? flattenHistory(d.history) : [],
+        unit: (d && d.unit) || '',
+      };
+      afterLoad();
+    });
+    return null;
+  }
+
+  function loadingBox() {
+    return `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">${t('Loading…')}</div>`;
+  }
+
+  function emptyBox(msg) {
+    return `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">${msg}</div>`;
+  }
+
+  /* ── Chart tooltips ──
+     Charts are re-rendered on every data tick, so hover is delegated: any mark
+     carrying data-tip shows the shared floating tooltip. */
+  const chartTip = (() => {
+    let el = null;
+    function ensure() {
+      if (el) return el;
+      el = document.createElement('div');
+      el.style.cssText = 'position:fixed;z-index:9999;pointer-events:none;display:none;' +
+        'padding:6px 9px;border-radius:6px;background:var(--s1);border:1px solid var(--bd2);' +
+        "color:var(--t1);font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.5;" +
+        'white-space:pre;box-shadow:0 4px 14px rgba(0,0,0,.45);direction:ltr';
+      document.body.appendChild(el);
+      return el;
+    }
+    return {
+      show(text, x, y) {
+        const e = ensure();
+        e.textContent = text;
+        e.style.display = 'block';
+        const w = e.offsetWidth || 130, h = e.offsetHeight || 34;
+        const vw = window.innerWidth || 1200;
+        let left = x + 14, top = y - h - 10;
+        if (left + w > vw - 8) left = x - w - 14;
+        if (left < 8) left = 8;
+        if (top < 8) top = y + 18;
+        e.style.left = left + 'px';
+        e.style.top = top + 'px';
+      },
+      hide() { if (el) el.style.display = 'none'; },
+    };
+  })();
+
+  function bindChartTips(container) {
+    if (!container || !container.addEventListener) return;
+    container.addEventListener('mousemove', (e) => {
+      const mark = e.target && e.target.closest ? e.target.closest('[data-tip]') : null;
+      if (mark) chartTip.show(mark.getAttribute('data-tip'), e.clientX, e.clientY);
+      else chartTip.hide();
+    });
+    container.addEventListener('mouseleave', () => chartTip.hide());
+  }
+
+  // Transparent full-height hover columns, so thin bars are still easy to hit
+  function hoverColumns(items, x0, colW, top = 8, height = 92) {
+    return items.map((it, i) => {
+      const x = x0 + i * colW;
+      return `<rect x="${x.toFixed(1)}" y="${top}" width="${colW.toFixed(1)}" height="${height}" fill="transparent" data-tip="${esc(it)}" style="cursor:crosshair"/>`;
+    }).join('');
+  }
+
+  /* ── Signed vertical scale ──
+     A meter reset or a bad interval can push a daily sum below zero. Plotting the
+     absolute value would draw that as ordinary consumption, so the axis keeps zero
+     where it really is: when any value is negative the baseline floats up and those
+     bars and points are drawn below it. */
+  function signedScale(values, top = 8, bottom = 100) {
+    const known = (values || []).filter((v) => v != null && isFinite(v));
+    let vmax = known.length ? Math.max(...known) : 1;
+    let vmin = known.length ? Math.min(...known) : 0;
+    if (vmax < 0) vmax = 0;      // all-negative data still shows the zero line
+    if (vmin > 0) vmin = 0;      // positive-only charts keep their zero baseline
+    if (vmax === vmin) vmax = vmin + 1;
+    const span = vmax - vmin;
+    return {
+      vmin, vmax, hasNeg: vmin < 0,
+      y: (v) => bottom - ((v - vmin) / span) * (bottom - top),
+    };
+  }
+
+  const axisNum = (v) => Math.abs(v) >= 1000 ? (v / 1000).toFixed(1) + 'k' : String(Math.round(v));
+
+  // Grid lines and y-axis labels for a signed scale; zero is always solid
+  function signedAxis(sc) {
+    const line = (yv, solid) => `<line x1="30" y1="${yv.toFixed(1)}" x2="318" y2="${yv.toFixed(1)}" stroke="var(--bd1)"${solid ? '' : ' stroke-dasharray="2 3"'}/>`;
+    const text = (yv, s) => `<text x="24" y="${(yv + 3).toFixed(1)}" text-anchor="end">${s}</text>`;
+    const zy = sc.y(0);
+    let grid = line(sc.y(sc.vmax), false) + line(zy, true);
+    let labels = text(sc.y(sc.vmax), axisNum(sc.vmax)) + text(zy, '0');
+    if (sc.hasNeg) {
+      grid += line(sc.y(sc.vmin), false);
+      labels += text(sc.y(sc.vmin), axisNum(sc.vmin));
+    } else {
+      grid += line(sc.y(sc.vmax / 2), false);
+      labels += text(sc.y(sc.vmax / 2), axisNum(sc.vmax / 2));
+    }
+    return { grid, labels, zero: zy };
+  }
+
+  const dayMon = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+  const stamp = (d) => `${dayMon(d)} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   const vpOvp = $('.vp-ovp');
 
   renderModuleOverview('operations', null);
@@ -507,12 +811,15 @@
             <span class="kpi-unit">kW</span>
             <svg class="histclock" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--warnTx)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
           </div>
-          ${k.loadPmuCount ? `<div class="kpi-sub">${t('PMU live sum')} &middot; ${k.loadPmuCount} PMU</div>` : ''}
+          ${k.loadSrc === 'pmu' ? `<div class="kpi-sub">${t('PMU live sum')} &middot; ${k.loadPmuCount} PMU</div>` : ''}
+          ${k.loadSrc === 'peak' ? `<div class="kpi-sub">${t('Peak demand · 15-min')}</div>` : ''}
           ${spark ? `
           <svg viewBox="0 0 240 48" preserveAspectRatio="none" style="width: 100%; height: 44px; display: block; margin-block: 6px;">
             <path d="${spark.area}" fill="var(--acc8)" stroke="none"></path>
             <path d="${spark.line}" fill="none" stroke="var(--acc)" stroke-width="1.5"></path>
-          </svg>` : ''}
+            ${spark.dots}
+          </svg>
+          <div class="kpi-sub">${k.sparkSrc === 'peak' ? t('Peak demand, last 24 readings · kW') : t('Hourly consumption, last 24 h · kWh')}</div>` : ''}
         </div>
         <div>
           <div class="kpi-label">${t("SAME DAY LAST MONTH")}</div>
@@ -576,7 +883,7 @@
 
 
   /* ── Right Panel Renderer ── */
-  function renderRightPanel(modId, subId) {
+  function renderRightPanel(modId, subId, force) {
     const rpContent = document.getElementById('rpContent');
     const rpTitle   = document.querySelector('.rp-title');
     const rpSub     = document.querySelector('.rp-subtitle');
@@ -586,10 +893,10 @@
     const isEnergyMod = modId === 'energy';
     const hasSub      = !!subId;
     const showWaste   = hasSub && subId === 'waste';
-    const showLbm     = hasSub && subId === 'lbm';
-    const showAnom    = hasSub && subId === 'anom';
-    const showStub    = hasSub && !showWaste && !showLbm && !showAnom;
+    const built       = hasSub && !!SUB_RENDERERS[subId];
+    const showStub    = hasSub && !showWaste && !built;
     const showEnergyHome = !hasSub && isEnergyMod;
+    const showOpsHome    = !hasSub && modId === 'operations';
     const modLabel    = document.querySelector(`.nav-item[data-module="${modId}"] .nav-label`)?.textContent.trim() || modId;
     const subLabel    = document.querySelector(`.sub-item[data-sub="${subId}"] .sub-label`)?.textContent.trim() || subId || '';
 
@@ -605,12 +912,12 @@
         rpSub.textContent = t('7-day trend and top opportunities'); rpSub.style.display = '';
       } else if (showWaste) {
         rpSub.textContent = t('Avoidable consumption &middot; FDD + schedule analysis'); rpSub.style.display = '';
-      } else if (showLbm) {
-        rpSub.textContent = t('Live PMU meters · 5 parameters'); rpSub.style.display = '';
-      } else if (showAnom) {
-        rpSub.textContent = t('Hourly load vs typical profile'); rpSub.style.display = '';
+      } else if (built) {
+        rpSub.textContent = t(SUB_SUBTITLES[subId] || 'Sub-view'); rpSub.style.display = '';
       } else if (showStub) {
         rpSub.textContent = t('Sub-view'); rpSub.style.display = '';
+      } else if (showOpsHome) {
+        rpSub.textContent = t('Live alarms and equipment health'); rpSub.style.display = '';
       } else {
         rpSub.textContent = t('Module highlights'); rpSub.style.display = 'none';
       }
@@ -653,20 +960,23 @@
         <div style="font-family:var(--fH),sans-serif;font-size:10px;font-weight:600;letter-spacing:0.8px;color:var(--t2);margin-block-start:2px">${t('OPPORTUNITIES')}</div>
         ${oppRowsHtml()}
       `;
-    } else if (showLbm) {
-      html = lbmPanelHtml();
-    } else if (showAnom) {
-      html = anomPanelHtml();
-    } else if (showStub && subId === 'evstats') {
-      html = eventStatsHtml();
-    } else if (showStub && subId === 'alarms') {
-      html = alarmListHtml();
+    } else if (built) {
+      html = SUB_RENDERERS[subId]();
     } else if (showStub) {
       html = `<div style="padding:26px 14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;line-height:1.5;color:var(--t3)">${t(STUB_REASONS[subId] || 'Detail view in design')}</div>`;
+    } else if (showOpsHome) {
+      html = operationsHomeHtml();
     } else {
       html = `<div style="padding:26px 14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;line-height:1.5;color:var(--t3)">${t('In design')}</div>`;
     }
 
+    const focus = document.activeElement;
+    if (!force && focus && focus.tagName === 'SELECT' &&
+        rpContent.contains && rpContent.contains(focus)) {
+      rpRenderQueued = true;     // flushed by the focusout handler below
+      return;
+    }
+    rpRenderQueued = false;
     rpContent.innerHTML = html;
   }
 
@@ -674,6 +984,594 @@
     bench: 'Requires portfolio',
     budget: 'Requires budget targets in Settings',
     fcst: 'In design',
+  };
+
+  const SUB_SUBTITLES = {
+    lbm: 'Live PMU meters · 5 parameters',
+    anom: 'Hourly load vs typical profile',
+    livesys: 'Equipment liveness and point detail',
+    histch: 'Chart picker over historized points',
+    water: 'Water and gas meters · consumption and health',
+    cons: 'Total and per-service consumption over time',
+    evstats: 'Counts by severity and day',
+    alarms: 'Active alarm list',
+  };
+
+  let waterSelected = null;
+  let consRange = 7;
+  let consSelected = null;
+
+  /* ── Shared chart + meter helpers ── */
+
+  // Generic time-series line chart; optional dashed reference series (e.g. setpoint)
+  function seriesLineChartHtml(series, refSeries, unit) {
+    if (!series || !series.length) return emptyBox(t('No history yet'));
+    const all = refSeries && refSeries.length ? series.concat(refSeries) : series;
+    const t0 = Math.min(...all.map((p) => p.ts.getTime()));
+    const t1 = Math.max(...all.map((p) => p.ts.getTime()));
+    const span = (t1 - t0) || 1;
+    const vals = all.map((p) => p.val);
+    let vmin = Math.min(...vals), vmax = Math.max(...vals);
+    if (vmax === vmin) { vmax = vmin + 1; }
+    const pad = (vmax - vmin) * 0.08;
+    vmin -= pad; vmax += pad;
+    const x = (ts) => 30 + ((ts - t0) / span) * 288;
+    const y = (v) => 100 - ((v - vmin) / (vmax - vmin)) * 92;
+    const pts = (s) => s.map((p) => `${x(p.ts.getTime()).toFixed(1)},${y(p.val).toFixed(1)}`).join(' ');
+    const fmtAxis = (v) => Math.abs(v) >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(1);
+    const dLabel = (ms) => {
+      const d = new Date(ms);
+      return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+    };
+    // The scale follows the data, so negatives already plot below — but mark where
+    // zero actually falls whenever the series crosses it
+    const zeroLine = (vmin < 0 && vmax > 0) ? `
+        <line x1="30" y1="${y(0).toFixed(1)}" x2="318" y2="${y(0).toFixed(1)}" stroke="var(--bd2)"/>
+        <text x="24" y="${(y(0) + 3).toFixed(1)}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="8" fill="var(--t3)">0</text>` : '';
+    return `
+      <svg viewBox="0 0 330 122" style="width:100%;height:auto;display:block;direction:ltr" role="img" aria-label="point trend">
+        <line x1="30" y1="8" x2="318" y2="8" stroke="var(--bd1)" stroke-dasharray="2 3"/>
+        <line x1="30" y1="54" x2="318" y2="54" stroke="var(--bd1)" stroke-dasharray="2 3"/>
+        <line x1="30" y1="100" x2="318" y2="100" stroke="var(--bd1)"/>
+        ${zeroLine}
+        <g font-family="'JetBrains Mono',monospace" font-size="8" fill="var(--t3)">
+          <text x="24" y="103" text-anchor="end">${fmtAxis(vmin)}</text>
+          <text x="24" y="57" text-anchor="end">${fmtAxis((vmin + vmax) / 2)}</text>
+          <text x="24" y="12" text-anchor="end">${fmtAxis(vmax)}</text>
+          <text x="30" y="114" text-anchor="middle">${dLabel(t0)}</text>
+          <text x="318" y="114" text-anchor="end">${dLabel(t1)}</text>
+          ${unit ? `<text x="174" y="114" text-anchor="middle">${esc(unit)}</text>` : ''}
+        </g>
+        ${/* Its own colour and a longer dash — in var(--t3) with a 3 3 dash it was
+              indistinguishable from the dashed grid lines behind it */''}
+        ${refSeries && refSeries.length >= 2 ? `<polyline points="${pts(refSeries)}" fill="none" stroke="var(--posTx)" stroke-width="1.4" stroke-dasharray="6 3"/>` : ''}
+        <polyline points="${pts(series)}" fill="none" stroke="var(--acc)" stroke-width="1.5"/>
+        <g>${series.map((p) => {
+          const ref = refSeries && refSeries.length
+            ? refSeries.reduce((a, r) => Math.abs(r.ts - p.ts) < Math.abs(a.ts - p.ts) ? r : a)
+            : null;
+          const tip = `${stamp(p.ts)}\n${shortNum(p.val, 2)}${unit ? ' ' + unit : ''}` +
+            (ref ? `\n${t('ref')} ${shortNum(ref.val, 2)}` : '');
+          return `<circle cx="${x(p.ts.getTime()).toFixed(1)}" cy="${y(p.val).toFixed(1)}" r="4" fill="transparent" data-tip="${esc(tip)}" style="cursor:crosshair"/>`;
+        }).join('')}</g>
+      </svg>`;
+  }
+
+  function lastReading(series) {
+    if (!series || !series.length) return null;
+    const last = series[series.length - 1];
+    return { ts: last.ts, val: last.val, ageH: (Date.now() - last.ts.getTime()) / 3600000 };
+  }
+
+  function ageLabel(hours) {
+    if (hours == null) return '—';
+    if (hours < 1) return `${Math.round(hours * 60)}m`;
+    if (hours < 48) return `${Math.round(hours)}h`;
+    return `${Math.round(hours / 24)}d`;
+  }
+
+  // Meters may historize a rising totalizer or a per-interval rate — detect which,
+  // so we never report a totalizer's absolute reading as period consumption.
+  function periodConsumption(series, hours) {
+    if (!series || series.length < 2) return null;
+    const cutoff = Date.now() - hours * 3600000;
+    const pts = series.filter((p) => p.ts.getTime() >= cutoff);
+    if (pts.length < 2) return null;
+    let rising = true;
+    for (let i = 1; i < pts.length; i++) {
+      if (pts[i].val < pts[i - 1].val - 1e-9) { rising = false; break; }
+    }
+    return rising
+      ? { value: pts[pts.length - 1].val - pts[0].val, mode: 'totalizer' }
+      : { value: pts.reduce((a, p) => a + p.val, 0), mode: 'interval' };
+  }
+
+  function statTile(value, label, color) {
+    return `
+      <div style="flex:1;min-width:0;background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:11px;text-align:center">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;color:${color || 'var(--t1)'};overflow:hidden;text-overflow:ellipsis">${value}</div>
+        <div style="font-size:9.5px;letter-spacing:0.6px;color:var(--t3);text-transform:uppercase;margin-block-start:3px">${label}</div>
+      </div>`;
+  }
+
+  function equipList() {
+    const eq = live.equipment;
+    return eq && Array.isArray(eq.equipment) ? eq.equipment : [];
+  }
+
+  // Point quality per the xlsx row: healthy vs faulted from the point status tag.
+  // Staleness stays unreported until per-type thresholds are agreed.
+  function pointQuality() {
+    let total = 0, healthy = 0, faulted = 0, historized = 0;
+    equipList().forEach((e) => {
+      (e.points || []).forEach((p) => {
+        total++;
+        if (p.his) historized++;
+        if (String(p.status || 'ok').toLowerCase() === 'ok') healthy++;
+        else faulted++;
+      });
+    });
+    return { total, healthy, faulted, historized };
+  }
+
+  /* ── Operations module home ── */
+  function operationsHomeHtml() {
+    const counts = live.alarms ? live.alarms.counts : null;
+    const fac = live.power ? live.power.facilityServices : null;
+    const inAlarm = equipList().filter((e) => e.inAlarm);
+    const q = pointQuality();
+
+    const alarmRows = inAlarm.length
+      ? inAlarm.slice(0, 8).map((e) => `
+        <button data-eq="${esc(e.name)}" style="width:100%;display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:9px 12px;cursor:pointer;text-align:start">
+          <span style="flex:none;width:6px;height:6px;border-radius:50%;background:var(--crit)"></span>
+          <span style="flex:1;min-width:0;font-family:var(--fH),sans-serif;font-size:12px;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.name)}</span>
+          <span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3)">${(e.alarms || []).length}</span>
+        </button>`).join('')
+      : emptyBox(t('No equipment in alarm'));
+
+    return `
+      <div style="display:flex;gap:8px">
+        ${statTile(counts ? String(counts.total) : '—', t('open'), counts && counts.critical ? 'var(--crit)' : null)}
+        ${statTile(fac ? `${fac.onlineEquipment}/${fac.totalEquipment}` : '—', t('live'))}
+        ${statTile(q.total ? String(q.total) : '—', t('points'))}
+      </div>
+      <div style="font-family:var(--fH),sans-serif;font-size:10px;font-weight:600;letter-spacing:0.8px;color:var(--t2);margin-block-start:2px">${t('EQUIPMENT IN ALARM')}</div>
+      ${alarmRows}`;
+  }
+
+  /* ── Live Systems: equipment list + detail ── */
+  function liveSystemsHtml() {
+    const list = equipList();
+    if (!list.length) return emptyBox(t('No equipment reported yet'));
+    if (livesysSelected) {
+      const eq = list.find((e) => e.name === livesysSelected);
+      if (eq) return equipDetailHtml(eq);
+      livesysSelected = null;
+    }
+    const q = pointQuality();
+    const rows = list.map((e) => {
+      const pts = (e.points || []).length;
+      const alarms = (e.alarms || []).length;
+      const dot = alarms ? 'var(--crit)' : (pts ? 'var(--pos, var(--acc))' : 'var(--t3)');
+      return `
+        <button data-eq="${esc(e.name)}" style="width:100%;display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:9px 12px;cursor:pointer;text-align:start">
+          <span style="flex:none;width:6px;height:6px;border-radius:50%;background:${dot}"></span>
+          <span style="flex:1;min-width:0">
+            <span style="display:block;font-family:var(--fH),sans-serif;font-size:12px;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.name)}</span>
+            <span style="display:block;font-size:10px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.floor || '')}</span>
+          </span>
+          <span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t3)">${pts}p</span>
+          ${alarms ? `<span style="flex:none;padding:1px 6px;border-radius:4px;background:var(--critT);border:1px solid var(--crit);color:var(--crit);font-family:'JetBrains Mono',monospace;font-size:9px">${alarms}</span>` : ''}
+        </button>`;
+    }).join('');
+
+    return `
+      <div style="display:flex;gap:8px">
+        ${statTile(String(q.total), t('points'))}
+        ${statTile(String(q.healthy), t('healthy'), 'var(--acc)')}
+        ${statTile(String(q.faulted), t('faulted'), q.faulted ? 'var(--warnTx)' : null)}
+      </div>
+      <div style="font-size:10px;color:var(--t3)">${t('Staleness requires per-point thresholds')}</div>
+      ${rows}`;
+  }
+
+  // Header shows the floor only: eq.category is the backend's catch-all bucket
+  // ("hvac" for anything non-CCTV), not a real classification, and eq.bimId is
+  // an internal FIN guid — neither means anything to an operator.
+  function equipDetailHtml(eq) {
+    const points = eq.points || [];
+    const hisPoints = points.filter((p) => p.his && p.id);
+    if (livesysPointId && !hisPoints.some((p) => p.id === livesysPointId)) livesysPointId = null;
+    // Timeline rule 3 / xlsx: chart the key signal against its setpoint when one
+    // exists. Pair on the name — RA_Temp ↔ RA_Temp_SP — rather than taking the
+    // first point containing "sp", which on an AHU with several measured signals
+    // would happily chart RA_Temp against Zone_Temp_SP.
+    const isSetpoint = (n) => /[_\s-](sp|setpoint|set_point|stpt)$/i.test(String(n));
+    const baseName = (n) => String(n).replace(/[_\s-](sp|setpoint|set_point|stpt)$/i, '');
+
+    if (!livesysPointId && hisPoints.length) {
+      const zone = hisPoints.find((p) => /temp/i.test(p.navName) && !isSetpoint(p.navName));
+      livesysPointId = (zone || hisPoints[0]).id;
+    }
+
+    const selected = hisPoints.find((p) => p.id === livesysPointId) || null;
+    let mainPoint = selected, refPoint = null;
+    if (selected) {
+      const base = baseName(selected.navName);
+      const pair = hisPoints.find((p) => p !== selected && baseName(p.navName) === base &&
+        isSetpoint(p.navName) !== isSetpoint(selected.navName));
+      // Clicking either half of a pair shows the same chart: measured solid,
+      // setpoint dashed. A setpoint on its own still charts by itself.
+      if (pair) {
+        mainPoint = isSetpoint(selected.navName) ? pair : selected;
+        refPoint = isSetpoint(selected.navName) ? selected : pair;
+      }
+    }
+    const series = mainPoint ? pointSeries(mainPoint.id) : [];
+    const refSeries = refPoint ? pointSeries(refPoint.id) : null;
+
+    // A setpoint that has a measured partner gets no chip of its own: both chips
+    // drew the identical measured-vs-setpoint chart, so the second was redundant.
+    // Orphan setpoints (no measurement to pair with) still get one.
+    const partnerOf = (p) => hisPoints.find((q) => q !== p && baseName(q.navName) === baseName(p.navName) &&
+      isSetpoint(q.navName) !== isSetpoint(p.navName));
+    const chipPoints = hisPoints.filter((p) => !(isSetpoint(p.navName) && partnerOf(p)));
+
+    const chipRow = chipPoints.length ? `
+      <div style="display:flex;flex-wrap:wrap;gap:5px">
+        ${chipPoints.map((p) => {
+          const on = mainPoint && p.id === mainPoint.id;
+          const sp = partnerOf(p);
+          return `<button data-eq-pt="${esc(p.id)}"${sp ? ` title="${esc(p.navName)} vs ${esc(sp.navName)}"` : ''} style="padding:3px 9px;border-radius:999px;border:1px solid ${on ? 'var(--acc)' : 'var(--bd2)'};background:${on ? 'var(--acc8)' : 'var(--s2)'};color:${on ? 'var(--acc)' : 'var(--t2)'};font-family:'JetBrains Mono',monospace;font-size:9.5px;cursor:pointer">${esc(p.navName)}${sp ? '<span style="opacity:.55"> +SP</span>' : ''}</button>`;
+        }).join('')}
+      </div>` : '';
+
+    const chartBlock = !hisPoints.length
+      ? emptyBox(t('No historized points on this equipment'))
+      : `<div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:13px">
+          <div style="display:flex;align-items:baseline;gap:8px;margin-block-end:10px">
+            <span style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1)">${esc(mainPoint ? mainPoint.navName : '')}</span>
+            ${refPoint ? `<span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t3)">vs ${esc(refPoint.navName)}</span>` : ''}
+          </div>
+          ${series == null ? loadingBox() : seriesLineChartHtml(series, refSeries, mainPoint ? mainPoint.unit : '')}
+          ${refPoint ? `
+          <div style="display:flex;gap:12px;margin-block-start:8px;flex-wrap:wrap">
+            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:14px;height:2px;background:var(--acc)"></span>${esc(mainPoint.navName)}</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--t3)"><span style="width:14px;height:0;border-top:2px dashed var(--posTx)"></span>${esc(refPoint.navName)}</span>
+          </div>` : ''}
+        </div>`;
+
+    const alarmsBlock = (eq.alarms || []).length ? `
+      <div style="font-family:var(--fH),sans-serif;font-size:10px;font-weight:600;letter-spacing:0.8px;color:var(--t2)">${t('ALARMS')}</div>
+      ${eq.alarms.map((a) => `
+        <div style="background:var(--critT);border:1px solid var(--crit);border-radius:8px;padding:9px 12px;font-size:11.5px;color:var(--t1)">
+          ${esc(a.alarm || '')}${a.priority ? `<span style="float:inline-end;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3)">P${esc(a.priority)}</span>` : ''}
+        </div>`).join('')}` : '';
+
+    // Point names and FDD messages are long ("Sensor No Response - Possible
+    // Faults : Check the SA Temp Sensor, …"). Truncating them hid the very text
+    // that says what is wrong, so nothing is clipped: short values sit inline on
+    // the right, long ones drop onto their own wrapped lines under the name.
+    const pointRows = points.length ? points.map((p) => {
+      const ok = String(p.status || 'ok').toLowerCase() === 'ok';
+      const val = String(p.currentValue == null ? '—' : p.currentValue);
+      const stacked = val.length > 22;
+      const valStyle = `font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.45;` +
+        `color:${ok ? 'var(--t1)' : 'var(--warnTx)'};overflow-wrap:anywhere`;
+      return `
+        <div style="display:flex;${stacked ? 'flex-direction:column;align-items:flex-start;gap:2px' : 'align-items:baseline;gap:10px'};padding:6px 9px;border-top:1px solid var(--bd1)">
+          <span style="${stacked ? '' : 'flex:1;min-width:0;'}font-size:10.5px;line-height:1.45;color:var(--t2);overflow-wrap:anywhere">${esc(p.navName)}${p.his ? '<span style="color:var(--acc);font-size:8px"> ●</span>' : ''}</span>
+          <span style="${stacked ? '' : 'flex:none;text-align:end;'}${valStyle}">${esc(val)}</span>
+        </div>`;
+    }).join('') : `<div style="padding:10px;text-align:center;font-size:11px;color:var(--t3)">${t('No points reporting')}</div>`;
+
+    return `
+      <button data-eq-back="1" style="align-self:flex-start;display:flex;align-items:center;gap:5px;background:none;border:none;color:var(--t2);font-size:11.5px;cursor:pointer;padding:0">← ${t('All equipment')}</button>
+      <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:11px 13px">
+        <div style="font-family:var(--fH),sans-serif;font-size:13px;font-weight:600;color:var(--t1)">${esc(eq.name)}</div>
+        <div style="font-size:10.5px;color:var(--t3);margin-block-start:2px">${esc(eq.floor || '')}</div>
+      </div>
+      ${alarmsBlock}
+      ${chipRow}
+      ${chartBlock}
+      <div style="font-family:var(--fH),sans-serif;font-size:10px;font-weight:600;letter-spacing:0.8px;color:var(--t2)">${t('POINTS')}</div>
+      <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;overflow:hidden">${pointRows}</div>`;
+  }
+
+  /* ── History Charts: picker over historized points ── */
+  function historyChartsHtml() {
+    ensureHisPoints();
+    const cfgKeys = live.power && live.power.power_history ? Object.keys(live.power.power_history) : [];
+    const finPoints = async$.hisPoints ? async$.hisPoints.points : null;
+    if (finPoints == null && !cfgKeys.length) return loadingBox();
+
+    const optGroup = (label, opts) => opts.length
+      ? `<optgroup label="${esc(label)}">${opts.join('')}</optgroup>` : '';
+    const cfgOpts = cfgKeys.map((k) =>
+      `<option value="cfg:${esc(k)}"${histchPointId === 'cfg:' + k ? ' selected' : ''}>${esc(k.replace(/_his$/i, '').replace(/_/g, ' '))}</option>`);
+
+    // FIN's point dis is already "<equip> <point>", so prefixing the equipRef
+    // repeated it — "ILIANA KPI_CALCULATION · ILIANA KPI_CALCULATION Peak_Demand" —
+    // and a native dropdown sizes itself to its widest option, which is why it
+    // spilled out of the panel. Strip the prefix; one optgroup per equipment
+    // carries the name once.
+    const pointLabel = (p) => {
+      const d = String(p.dis || p.navName || '').trim();
+      const e = String(p.equip || '').trim();
+      return (e && d.startsWith(e) ? d.slice(e.length).trim() : d) || d || String(p.id);
+    };
+    const byEquip = new Map();
+    (finPoints || []).forEach((p) => {
+      const k = p.equip || t('FIN historized points');
+      if (!byEquip.has(k)) byEquip.set(k, []);
+      byEquip.get(k).push(p);
+    });
+    const finGroups = [...byEquip.entries()].map(([equip, pts]) =>
+      optGroup(equip, pts.map((p) =>
+        `<option value="pt:${esc(p.id)}"${histchPointId === 'pt:' + p.id ? ' selected' : ''}>${esc(pointLabel(p))}</option>`))
+    ).join('');
+
+    if (!cfgOpts.length && !(finPoints || []).length) {
+      return emptyBox(t('No historized points reported by FIN'));
+    }
+    if (!histchPointId) histchPointId = cfgOpts.length ? 'cfg:' + cfgKeys[0] : 'pt:' + finPoints[0].id;
+
+    let series = null, unit = '', label = '';
+    if (histchPointId.startsWith('cfg:')) {
+      const key = histchPointId.slice(4);
+      series = historySeries(key);
+      label = key.replace(/_his$/i, '').replace(/_/g, ' ');
+    } else {
+      const id = histchPointId.slice(3);
+      series = pointSeries(id, 7);
+      const p = (finPoints || []).find((x) => x.id === id);
+      unit = p ? p.unit : '';
+      // The card heading has room for the equipment; the dropdown row does not
+      label = p ? (p.equip ? `${p.equip} · ${pointLabel(p)}` : pointLabel(p)) : id;
+    }
+
+    return `
+      <select id="histchSelect" style="width:100%;max-width:100%;padding:7px 9px;border-radius:8px;border:1px solid var(--bd2);background:var(--s2);color:var(--t1);font-family:var(--fH),sans-serif;font-size:11.5px">
+        ${optGroup(t('Configured historians'), cfgOpts)}
+        ${finGroups}
+      </select>
+      <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:13px">
+        <div style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1);margin-block-end:10px">${esc(label)}</div>
+        ${series == null ? loadingBox() : seriesLineChartHtml(series, null, unit)}
+      </div>
+      ${pending$.hisPoints ? `<div style="font-size:10px;color:var(--t3)">${t('Loading FIN point list…')}</div>` : ''}`;
+  }
+
+  /* ── Water: water + gas meters, consumption and health ── */
+  function waterPanelHtml() {
+    const hist = live.power && live.power.power_history ? live.power.power_history : null;
+    if (!hist) return emptyBox('—');
+    const rows = WATER_CHANNELS.filter((c) => hist[c.key]).map((c) => ({ ...c, series: historySeries(c.key) }));
+    if (!rows.length) return emptyBox(t('No meter history yet'));
+    if (waterSelected && !rows.some((r) => r.key === waterSelected)) waterSelected = null;
+    if (!waterSelected) waterSelected = rows[0].key;
+
+    const liveWater = live.power ? live.power.total_water : null;
+    const waterRows = rows.filter((r) => r.kind === 'water');
+    const gasRows = rows.filter((r) => r.kind === 'gas');
+
+    const table = (list, title, note) => !list.length ? '' : `
+      <div style="font-family:var(--fH),sans-serif;font-size:10px;font-weight:600;letter-spacing:0.8px;color:var(--t2);margin-block-start:2px">${title}</div>
+      ${note ? `<div style="font-size:10px;color:var(--t3);margin-block-end:-4px">${note}</div>` : ''}
+      <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr>
+            <th style="padding:5px 6px;text-align:start;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--t3)">${t('Channel')}</th>
+            <th style="padding:5px 6px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--t3)">24h</th>
+            <th style="padding:5px 6px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--t3)">7d</th>
+            <th style="padding:5px 6px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--t3)">${t('last')}</th>
+          </tr></thead>
+          <tbody>${list.map((r) => {
+            const d1 = periodConsumption(r.series, 24);
+            const d7 = periodConsumption(r.series, 168);
+            const last = lastReading(r.series);
+            const stale = last && last.ageH > 24;
+            return `
+            <tr data-wm="${esc(r.key)}" style="border-top:1px solid var(--bd1);cursor:pointer;${r.key === waterSelected ? 'background:var(--acc8);' : ''}">
+              <td style="padding:4px 6px;font-size:10.5px;color:var(--t1);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t(r.label)}</td>
+              <td style="padding:4px 6px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t2)">${d1 ? shortNum(d1.value, 1) : '—'}</td>
+              <td style="padding:4px 6px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t2)">${d7 ? shortNum(d7.value, 1) : '—'}</td>
+              <td style="padding:4px 6px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:${stale ? 'var(--warnTx)' : 'var(--t3)'}">${last ? ageLabel(last.ageH) : '—'}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>`;
+
+    const sel = rows.find((r) => r.key === waterSelected);
+    const mode = sel ? periodConsumption(sel.series, 168) : null;
+    const chart = sel ? `
+      <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:13px">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-block-end:10px">
+          <span style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1)">${t(sel.label)}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t3)">${mode ? t(mode.mode === 'totalizer' ? 'meter reading' : 'per-interval') : ''}</span>
+        </div>
+        ${seriesLineChartHtml(sel.series, null, '')}
+      </div>` : '';
+
+    return `
+      <div style="display:flex;gap:8px">
+        ${statTile(waterRows.length ? String(waterRows.length) : '—', t('water channels'))}
+        ${statTile(gasRows.length ? '1' : '—', t('gas meter'))}
+        ${statTile(liveWater != null ? shortNum(liveWater, 1) : '—', t('live total'))}
+      </div>
+      ${table(waterRows, t('WATER'), '')}
+      ${table(gasRows, t('GAS'), t('1 gas meter · 3 kitchen channels'))}
+      ${chart}`;
+  }
+
+  /* ── Consumption: total and per-service over time (xlsx row 13) ──
+     Per-service = the FIN hourly energy calcs per distribution board. This is
+     the reference view, so it deliberately does not repeat the overview KPIs. */
+  // Each "service" is an electrical distribution board, metered by one PMU.
+  // Panel and meter names verified against the FIN equipment list.
+  const SERVICE_CHANNELS = [
+    { key: 'Hourly_EC_MCC1_his', label: 'MCC 1', panel: 'MCC-01', meter: 'PMU09_MCC_01', desc: 'Motor control centre 01 · basement' },
+    { key: 'Hourly_EC_MCC2_his', label: 'MCC 2', panel: 'MCC-02', meter: 'PMU04_MCC_02', desc: 'Motor control centre 02 · basement' },
+    { key: 'Hourly_EC_SMDB_KIT_his', label: 'Kitchen SMDB', panel: 'SMDBs', meter: 'PMU05_SMDB_KIT', desc: 'Kitchen sub-main distribution board' },
+    { key: 'Hourly_EC_LVFP_his', label: 'LVFP', panel: 'LVFP Z7-01', meter: 'PMU06_LVFP_Z7_01', desc: 'Low-voltage feeder pillar · zone 7' },
+    { key: 'Hourly_EC_ATS_his', label: 'ATS', panel: 'ATS', meter: 'PMU07_ATS_E', desc: 'Automatic transfer switch · essential supply' },
+    { key: 'Hourly_EC_SP_his', label: 'Sump pump', panel: 'SUMP PUMP', meter: 'PMU08_SWPS02_CONTROLPANEL', desc: 'Sump / sewage pump station 02 control panel' },
+  ];
+
+  // Daily bars over an arbitrary range (weeklyChartHtml is fixed at 7 days, which
+  // renders empty whenever the historian stopped collecting more than a week ago).
+  function dailyBarsHtml(series, days) {
+    const now = new Date();
+    const bars = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const s = sumDay(series, d);
+      bars.push({ date: d, sum: s ? s.sum : null });
+    }
+    const known = bars.filter((b) => b.sum != null);
+    if (!known.length) return emptyBox(t('No history in this range'));
+
+    // Bars grow from the zero line, so a negative day hangs below it
+    const sc = signedScale(bars.map((b) => b.sum));
+    const ax = signedAxis(sc);
+    const w = 288 / days;
+    const bw = Math.max(1, w * (days > 30 ? 0.85 : 0.6));
+    const rects = bars.map((b, i) => {
+      if (b.sum == null) return '';
+      const yv = sc.y(b.sum);
+      const x = 30 + i * w + (w - bw) / 2;
+      return `<rect x="${x.toFixed(1)}" y="${Math.min(ax.zero, yv).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0.6, Math.abs(yv - ax.zero)).toFixed(1)}" fill="${b.sum < 0 ? 'var(--warn)' : 'var(--btnP)'}"/>`;
+    }).join('');
+
+    const mid = bars[Math.floor(bars.length / 2)];
+    const tips = bars.map((b) => {
+      const wd = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][b.date.getDay()];
+      return `${t(wd)} ${dayMon(b.date)}\n${b.sum == null ? t('no data') : shortNum(b.sum, 1) + ' kWh'}`;
+    });
+    return `
+      <svg viewBox="0 0 330 122" style="width:100%;height:auto;display:block;direction:ltr" role="img" aria-label="daily consumption">
+        ${ax.grid}
+        <g font-family="'JetBrains Mono',monospace" font-size="8" fill="var(--t3)">
+          ${ax.labels}
+          <text x="30" y="114" text-anchor="start">${dayMon(bars[0].date)}</text>
+          <text x="174" y="114" text-anchor="middle">${dayMon(mid.date)}</text>
+          <text x="318" y="114" text-anchor="end">${dayMon(bars[bars.length - 1].date)}</text>
+        </g>
+        ${rects}
+        ${hoverColumns(tips, 30, w)}
+      </svg>`;
+  }
+
+  function rangeSum(series, days) {
+    if (!series || !series.length) return null;
+    const now = new Date();
+    let sum = 0, n = 0;
+    for (let i = 0; i < days; i++) {
+      const d = sumDay(series, new Date(now.getFullYear(), now.getMonth(), now.getDate() - i));
+      if (d) { sum += d.sum; n += d.count; }
+    }
+    return n ? { sum, count: n } : null;
+  }
+
+  function consumptionPanelHtml() {
+    const hist = live.power && live.power.power_history ? live.power.power_history : null;
+    if (!hist) return emptyBox('—');
+
+    const total = historySeries('Total_Power_Consumption_his');
+    const services = SERVICE_CHANNELS
+      .filter((c) => hist[c.key])
+      .map((c) => ({ ...c, series: historySeries(c.key) }));
+    if (!total.length && !services.length) return emptyBox(t('No history yet'));
+
+    if (consSelected && !services.some((s) => s.key === consSelected)) consSelected = null;
+
+    const totalRange = rangeSum(total, consRange);
+    const svcRows = services.map((s) => ({ ...s, range: rangeSum(s.series, consRange), last: lastReading(s.series) }));
+    // Share is of the metered services, so the column sums to 100%. Dividing by
+    // the building total gave >100% wherever the two do not reconcile.
+    const denom = svcRows.reduce((a, s) => a + Math.max(0, s.range ? s.range.sum : 0), 0);
+    const svcTotal = svcRows.reduce((a, s) => a + (s.range ? s.range.sum : 0), 0);
+    const mismatch = totalRange && totalRange.sum > 0 && svcTotal > 0 &&
+      Math.abs(svcTotal - totalRange.sum) / totalRange.sum > 0.2;
+    const negatives = svcRows.filter((s) => s.range && s.range.sum < 0).length;
+
+    const pill = (attrs, label, sel) =>
+      `<button ${attrs} style="padding:3px 9px;border-radius:999px;border:1px solid ${sel ? 'var(--acc)' : 'var(--bd2)'};background:${sel ? 'var(--acc8)' : 'var(--s2)'};color:${sel ? 'var(--acc)' : 'var(--t2)'};font-family:'JetBrains Mono',monospace;font-size:9.5px;cursor:pointer">${label}</button>`;
+    const rangePills = [7, 30, 90]
+      .map((d) => pill(`data-cons-range="${d}"`, `${d}d`, d === consRange)).join('');
+
+    // Freshest sample across the shown series — makes a stalled historian obvious
+    const freshest = [total, ...services.map((s) => s.series)]
+      .map(lastReading).filter(Boolean)
+      .sort((a, b) => b.ts - a.ts)[0];
+    const staleNote = freshest && freshest.ageH > 24
+      ? `<div style="padding:9px 12px;border:1px solid var(--warnB);background:var(--warnT);border-radius:8px;font-size:11px;color:var(--warnTx)">${t('Historian last collected')} ${ageLabel(freshest.ageH)} ${t('ago')}</div>`
+      : '';
+
+    const svcTable = !svcRows.length ? '' : `
+      <div style="font-family:var(--fH),sans-serif;font-size:10px;font-weight:600;letter-spacing:0.8px;color:var(--t2);margin-block-start:2px">${t('BY SERVICE')}</div>
+      <div style="font-size:10px;color:var(--t3);margin-block-end:-4px">${t('Electrical distribution boards · one PMU per board')}</div>
+      <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr>
+            <th style="padding:5px 6px;text-align:start;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--t3)">${t('Service')}</th>
+            <th style="padding:5px 6px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--t3)">kWh</th>
+            <th style="padding:5px 6px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--t3)">${t('share')}</th>
+            <th style="padding:5px 6px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--t3)">${t('last')}</th>
+          </tr></thead>
+          <tbody>${svcRows.map((s) => {
+            const val = s.range ? s.range.sum : null;
+            // A negative daily sum is corrupt meter data, not a share of anything
+            const bad = val != null && val < 0;
+            const share = (val != null && val >= 0 && denom > 0) ? (val / denom) * 100 : null;
+            const stale = s.last && s.last.ageH > 24;
+            return `
+            <tr data-cons-svc="${esc(s.key)}" data-tip="${esc(`${s.panel} — ${t(s.desc)}\n${t('metered by')} ${s.meter}`)}" style="border-top:1px solid var(--bd1);cursor:pointer;${s.key === consSelected ? 'background:var(--acc8);' : ''}">
+              <td style="padding:4px 6px;font-size:10.5px;color:var(--t1);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                ${t(s.label)}<span style="display:block;font-size:9px;color:var(--t3);overflow:hidden;text-overflow:ellipsis">${esc(s.panel)}</span>
+              </td>
+              <td style="padding:4px 6px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:${bad ? 'var(--warnTx)' : 'var(--t2)'}" ${bad ? `title="${t('Negative total — meter reset or bad data')}"` : ''}>${val == null ? '—' : shortNum(val, 0)}</td>
+              <td style="padding:4px 6px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t3)">${share == null ? '—' : share.toFixed(0) + '%'}</td>
+              <td style="padding:4px 6px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:${stale ? 'var(--warnTx)' : 'var(--t3)'}">${s.last ? ageLabel(s.last.ageH) : '—'}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>`;
+
+    const sel = svcRows.find((s) => s.key === consSelected);
+    const chartSeries = sel ? sel.series : total;
+    const chartLabel = sel ? t(sel.label) : t('Total building');
+
+    return `
+      <div style="display:flex;flex-wrap:wrap;gap:5px">${rangePills}</div>
+      ${staleNote}
+      <div style="display:flex;gap:8px">
+        ${statTile(totalRange ? shortNum(totalRange.sum, 0) : '—', `${t('total')} ${consRange}d`)}
+        ${statTile(svcRows.length ? String(svcRows.length) : '—', t('services'))}
+      </div>
+      <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:13px">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-block-end:10px">
+          <span style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1)">${chartLabel}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t3)">${t('kWh / day')}</span>
+        </div>
+        ${dailyBarsHtml(chartSeries, consRange)}
+      </div>
+      ${svcTable}
+      ${mismatch ? `<div style="font-size:10px;color:var(--warnTx)">${t('Services sum to')} ${shortNum(svcTotal, 0)} kWh ${t('vs building total')} ${shortNum(totalRange.sum, 0)} kWh — ${t('the two do not reconcile')}</div>` : ''}
+      ${negatives ? `<div style="font-size:10px;color:var(--warnTx)">${negatives} ${t('service(s) report a negative total — meter reset or bad data')}</div>` : ''}
+      ${sel ? `<div style="font-size:10px;color:var(--t3)">${t('Showing')} ${chartLabel} — ${t('click again for building total')}</div>` : ''}`;
+  }
+
+  const SUB_RENDERERS = {
+    cons: consumptionPanelHtml,
+    lbm: lbmPanelHtml,
+    anom: anomPanelHtml,
+    livesys: liveSystemsHtml,
+    histch: historyChartsHtml,
+    water: waterPanelHtml,
+    evstats: eventStatsHtml,
+    alarms: alarmListHtml,
   };
 
   function weeklyChartHtml(kind, seriesOverride) {
@@ -689,15 +1587,19 @@
     if (!known.length) {
       return `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">${t('No history yet')}</div>`;
     }
-    const max = Math.max(...known.map(d => d.sum)) || 1;
-    const yFor = v => 100 - (v / max) * 92;
-    const short = v => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : String(Math.round(v));
+    const sc = signedScale(days.map((d) => d.sum));
+    const ax = signedAxis(sc);
+    const yFor = (v) => sc.y(v);
     const dayLabels = days.map((d, i) =>
       `<text x="${30 + i * 48}" y="114" text-anchor="middle">${t(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.date.getDay()])}</text>`).join('');
     let marks = '';
     if (kind === 'bars') {
-      marks = '<g fill="var(--btnP)">' + days.map((d, i) =>
-        d.sum == null ? '' : `<rect x="${24 + i * 48}" y="${yFor(d.sum).toFixed(1)}" width="12" height="${(100 - yFor(d.sum)).toFixed(1)}"/>`).join('') + '</g>';
+      // Anchored at zero: a negative day is drawn downward and flagged amber
+      marks = days.map((d, i) => {
+        if (d.sum == null) return '';
+        const y = yFor(d.sum);
+        return `<rect x="${24 + i * 48}" y="${Math.min(ax.zero, y).toFixed(1)}" width="12" height="${Math.max(0.6, Math.abs(y - ax.zero)).toFixed(1)}" fill="${d.sum < 0 ? 'var(--warn)' : 'var(--btnP)'}"/>`;
+      }).join('');
     } else {
       const pts = [];
       const dots = [];
@@ -711,16 +1613,16 @@
     }
     return `
           <svg viewBox="0 0 330 122" style="width:100%;height:auto;display:block" role="img" aria-label="7-day consumption">
-            <line x1="30" y1="8" x2="318" y2="8" stroke="var(--bd1)" stroke-dasharray="2 3"/>
-            <line x1="30" y1="54" x2="318" y2="54" stroke="var(--bd1)" stroke-dasharray="2 3"/>
-            <line x1="30" y1="100" x2="318" y2="100" stroke="var(--bd1)"/>
+            ${ax.grid}
             <g font-family="'JetBrains Mono',monospace" font-size="8" fill="var(--t3)">
-              <text x="24" y="103" text-anchor="end">0</text>
-              <text x="24" y="57" text-anchor="end">${short(max / 2)}</text>
-              <text x="24" y="12" text-anchor="end">${short(max)}</text>
+              ${ax.labels}
               ${dayLabels}
             </g>
             ${marks}
+            ${hoverColumns(days.map((d) => {
+              const wd = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.date.getDay()];
+              return `${t(wd)} ${dayMon(d.date)}\n${d.sum == null ? t('no data') : shortNum(d.sum, 1) + ' kWh'}`;
+            }), 30 - 24, 48)}
           </svg>`;
   }
 
@@ -734,13 +1636,52 @@
         <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:${color}">${v}</div>
         <div style="font-size:10px;letter-spacing:0.8px;color:var(--t3);text-transform:uppercase;margin-block-start:4px">${label}</div>
       </div>`;
+    ensureAlarmHistory();
+    const hist = async$.alarmHistory;
+    let trend;
+    if (!hist) {
+      trend = loadingBox();
+    } else if (!hist.retained || !hist.byDay.length) {
+      trend = `<div style="padding:12px;border:1px dashed var(--bd1);border-radius:8px;font-size:11.5px;color:var(--t3);text-align:center">${t('Today only — FIN retains no alarm history for this range')}</div>`;
+    } else {
+      const max = Math.max(...hist.byDay.map((d) => d.critical + d.warning + d.info)) || 1;
+      const w = 288 / hist.byDay.length;
+      const bars = hist.byDay.map((d, i) => {
+        const x = 30 + i * w + w * 0.2;
+        const bw = w * 0.6;
+        let yTop = 100;
+        return [['info', 'var(--info)'], ['warning', 'var(--warn)'], ['critical', 'var(--crit)']].map(([k, c]) => {
+          const h = (d[k] / max) * 92;
+          yTop -= h;
+          return h > 0 ? `<rect x="${x.toFixed(1)}" y="${yTop.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="${c}"/>` : '';
+        }).join('');
+      }).join('');
+      const labels = hist.byDay.map((d, i) =>
+        `<text x="${(30 + i * w + w / 2).toFixed(1)}" y="114" text-anchor="middle">${esc(d.date.slice(5))}</text>`).join('');
+      trend = `
+        <div style="background:var(--s2);border:1px solid var(--bd1);border-radius:8px;padding:13px">
+          <div style="font-family:var(--fH),sans-serif;font-size:12px;font-weight:600;color:var(--t1);margin-block-end:10px">${t('Events by day')}</div>
+          <svg viewBox="0 0 330 122" style="width:100%;height:auto;display:block;direction:ltr" role="img" aria-label="alarm counts by day">
+            <line x1="30" y1="100" x2="318" y2="100" stroke="var(--bd1)"/>
+            <g font-family="'JetBrains Mono',monospace" font-size="8" fill="var(--t3)">
+              <text x="24" y="103" text-anchor="end">0</text>
+              <text x="24" y="12" text-anchor="end">${max}</text>
+              ${labels}
+            </g>
+            ${bars}
+            ${hoverColumns(hist.byDay.map((d) =>
+              `${d.date}\n${t('critical')} ${d.critical}\n${t('warning')} ${d.warning}\ninfo ${d.info}`), 30, w)}
+          </svg>
+        </div>`;
+    }
+
     return `
       <div style="display:flex;gap:8px">
         ${tile(t('critical'), counts.critical, 'var(--crit)')}
         ${tile(t('warning'), counts.warning, 'var(--warn)')}
         ${tile('info', counts.info, 'var(--info)')}
       </div>
-      <div style="padding:12px;border:1px dashed var(--bd1);border-radius:8px;font-size:11.5px;color:var(--t3);text-align:center">${t('Today only — trends require alarm history')}</div>`;
+      ${trend}`;
   }
 
   function alarmListHtml() {
@@ -905,17 +1846,17 @@
     const refDays = [1, 2, 3, 4].map((w) =>
       hourValues(series, new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate() - 7 * w)));
     const profile = Array.from({ length: 24 }, (_, h) => {
-      const vals = refDays.map((r) => r[h]).filter((v) => v != null && v >= 0);
+      const vals = refDays.map((r) => r[h]).filter((v) => v != null);
       return vals.length >= 2 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
     });
     if (!actual.some((v) => v != null)) {
       return { anomalies: 0, html: `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">${t('No history for this day')}</div>` };
     }
-    const known = [...actual, ...profile].filter((v) => v != null && v >= 0);
-    const max = Math.max(...known) || 1;
+    // Negative hours are real readings (export or a meter reset), not zero
+    const sc = signedScale([...actual, ...profile]);
+    const ax = signedAxis(sc);
     const x = (h) => 30 + h * 12.5;
-    const y = (v) => 100 - (Math.max(0, v) / max) * 92;
-    const short = (v) => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : String(Math.round(v));
+    const y = (v) => sc.y(v);
 
     const actPts = [], dots = [], anomDots = [];
     let anomalies = 0;
@@ -939,19 +1880,22 @@
       anomalies,
       html: `
           <svg viewBox="0 0 330 122" style="width:100%;height:auto;display:block;direction:ltr" role="img" aria-label="hourly load vs typical profile">
-            <line x1="30" y1="8" x2="318" y2="8" stroke="var(--bd1)" stroke-dasharray="2 3"/>
-            <line x1="30" y1="54" x2="318" y2="54" stroke="var(--bd1)" stroke-dasharray="2 3"/>
-            <line x1="30" y1="100" x2="318" y2="100" stroke="var(--bd1)"/>
+            ${ax.grid}
             <g font-family="'JetBrains Mono',monospace" font-size="8" fill="var(--t3)">
-              <text x="24" y="103" text-anchor="end">0</text>
-              <text x="24" y="57" text-anchor="end">${short(max / 2)}</text>
-              <text x="24" y="12" text-anchor="end">${short(max)}</text>
+              ${ax.labels}
               ${hourLabels}
             </g>
             ${profPts.length >= 2 ? `<polyline points="${profPts.join(' ')}" fill="none" stroke="var(--t3)" stroke-width="1" stroke-dasharray="3 3"/>` : ''}
             ${actPts.length >= 2 ? `<polyline points="${actPts.join(' ')}" fill="none" stroke="var(--acc)" stroke-width="1.5"/>` : ''}
             <g fill="var(--acc)">${dots.join('')}</g>
             <g fill="var(--warn)">${anomDots.join('')}</g>
+            ${hoverColumns(Array.from({ length: 24 }, (_, h) => {
+              const v = actual[h], p = profile[h];
+              const dev = (v != null && p != null && p > 0) ? ((v - p) / p) * 100 : null;
+              return `${String(h).padStart(2, '0')}:00\n${v == null ? t('no data') : t('Actual') + ' ' + shortNum(v, 2)}` +
+                (p == null ? '' : `\n${t('Typical profile')} ${shortNum(p, 2)}`) +
+                (dev == null ? '' : `\n${dev > 0 ? '+' : ''}${dev.toFixed(0)}%`);
+            }), 30 - 6.25, 12.5)}
           </svg>`,
     };
   }
@@ -973,16 +1917,23 @@
     if (!known.length) {
       return `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">${t('No history yet')}</div>`;
     }
-    const min = Math.min(...known);
-    const span = (Math.max(...known) - min) || 1;
+    // Shade the positive range only, so a negative hour is not confused with a
+    // quiet one — it gets its own amber tint instead of the palest blue
+    const pos = known.filter((v) => v >= 0);
+    const min = pos.length ? Math.min(...pos) : 0;
+    const span = (pos.length ? Math.max(...pos) - min : 0) || 1;
     const bgFor = v => {
       if (v == null) return 'var(--s3)';
+      if (v < 0) return 'color-mix(in srgb, var(--warn) 55%, var(--s3))';
       const f = (v - min) / span;
       return f >= 0.58 ? 'var(--btnP)' : (f >= 0.4 ? 'color-mix(in srgb, var(--btnP) 50%, var(--s3))' : 'var(--s3)');
     };
     const days = [t('Mon'), t('Tue'), t('Wed'), t('Thu'), t('Fri'), t('Sat'), t('Sun')];
     const rows = days.map((d, i) => {
-      const rowCells = cells[i].map(v => `<span style="display:block;aspect-ratio:1;border-radius:2px;background:${bgFor(v)}"></span>`).join('');
+      const rowCells = cells[i].map((v, h) => {
+        const tip = `${d} ${String(h).padStart(2, '0')}:00\n${v == null ? t('no data') : shortNum(v, 1) + ' kWh ' + t('avg')}`;
+        return `<span data-tip="${esc(tip)}" style="display:block;aspect-ratio:1;border-radius:2px;cursor:crosshair;background:${bgFor(v)}"></span>`;
+      }).join('');
       return `<div style="display:grid;grid-template-columns:30px repeat(24,1fr);gap:2px;margin-block-end:2px;align-items:center;direction:ltr"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3)">${d}</span>${rowCells}</div>`;
     }).join('');
     return rows + `<div style="display:flex;justify-content:space-between;margin-inline-start:32px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3);direction:ltr"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>`;
@@ -1166,16 +2117,58 @@
 
   /* ── LBM / Anomaly sub-view interactions (delegated — panel re-renders on data) ── */
   const rpContentEl = document.getElementById('rpContent');
+  bindChartTips(rpContentEl);
+  bindChartTips(vpOvp);
   if (rpContentEl) {
     rpContentEl.addEventListener('click', (e) => {
       const lbmRow = e.target.closest('[data-lbm-pmu]');
       const aPmu = e.target.closest('[data-anom-pmu]');
       const aDay = e.target.closest('[data-anom-day]');
-      if (!lbmRow && !aPmu && !aDay) return;
+      const eqBtn = e.target.closest('[data-eq]');
+      const eqBack = e.target.closest('[data-eq-back]');
+      const eqPt = e.target.closest('[data-eq-pt]');
+      const wmRow = e.target.closest('[data-wm]');
+      const cRange = e.target.closest('[data-cons-range]');
+      const cSvc = e.target.closest('[data-cons-svc]');
+      if (!lbmRow && !aPmu && !aDay && !eqBtn && !eqBack && !eqPt && !wmRow && !cRange && !cSvc) return;
+      if (cRange) consRange = parseInt(cRange.getAttribute('data-cons-range'), 10) || 7;
+      if (cSvc) {
+        const k = cSvc.getAttribute('data-cons-svc');
+        consSelected = consSelected === k ? null : k;   // click again to go back to total
+      }
       if (lbmRow) lbmSelectedPmu = lbmRow.getAttribute('data-lbm-pmu');
       if (aPmu) anomPmu = aPmu.getAttribute('data-anom-pmu');
       if (aDay) anomDayOffset = parseInt(aDay.getAttribute('data-anom-day'), 10) || 0;
+      if (wmRow) waterSelected = wmRow.getAttribute('data-wm');
+      if (eqPt) livesysPointId = eqPt.getAttribute('data-eq-pt');
+      if (eqBack) { livesysSelected = null; livesysPointId = null; }
+      if (eqBtn) {
+        livesysSelected = eqBtn.getAttribute('data-eq');
+        livesysPointId = null;
+        // Equipment rows on the Operations home panel jump into Live Systems
+        if (currentSubId !== 'livesys') {
+          currentSubId = 'livesys';
+          renderModuleOverview(currentModule, currentSubId);
+          $$('.sub-item').forEach((si) => si.classList.remove('active'));
+          document.querySelector('.sub-item[data-sub="livesys"]')?.classList.add('active');
+        }
+      }
       renderRightPanel(currentModule, currentSubId);
+    });
+
+    rpContentEl.addEventListener('change', (e) => {
+      if (e.target && e.target.id === 'histchSelect') {
+        histchPointId = e.target.value;
+        // force: the select still holds focus, which would otherwise defer this
+        renderRightPanel(currentModule, currentSubId, true);
+      }
+    });
+
+    // Catch up on any live tick that was held back while the picker was open
+    rpContentEl.addEventListener('focusout', () => {
+      setTimeout(() => {
+        if (rpRenderQueued) renderRightPanel(currentModule, currentSubId, true);
+      }, 0);
     });
   }
 
@@ -1225,6 +2218,7 @@
       renderModuleOverview(currentModule, currentSubId);
       renderRightPanel(currentModule, currentSubId);
       if (typeof updateTimelineLang === 'function') updateTimelineLang();
+      syncRpWidenBtn();   // its tooltip is translated
 
     });
   });
@@ -1421,23 +2415,66 @@
   // Each dot: left = % along timeline, top = matched y from SVG curve in *px* relative to timeline div
   // timeline div height = 56px (scrubbar height), chart SVG sits at top:2px, height:32px
   // So chart px within timeline = svgY / SVG_H * 32 + 2
+  // Timeline rule 4 (xlsx): events closer together than CLUSTER_PX collapse
+  // into one count bubble coloured by the worst severity inside, so a burst of
+  // alarms never turns the track into unreadable dot soup. Members are grouped
+  // against the first dot of the run, which bounds each cluster at CLUSTER_PX
+  // wide instead of letting evenly-spaced dots chain into one giant blob.
+  const CLUSTER_PX = 16;
+  const SEV_RANK = { info: 0, warn: 1, crit: 2 };
+  const sevColor = (s) => s === 'crit' ? 'var(--crit)' : (s === 'warn' ? 'var(--warn)' : 'var(--info)');
+  const sevSize  = (s) => s === 'crit' ? 14 : (s === 'warn' ? 11 : 8);
+
+  function clusterEvents() {
+    if (!EVENTS.length) return [];
+    const trackW = scrubTimeline ? scrubTimeline.getBoundingClientRect().width : 0;
+    // Before first layout there is no width to cluster against — show them all
+    const span = trackW > 0 ? CLUSTER_PX / trackW : 0;
+    const ordered = EVENTS
+      .map((ev, i) => ({ ev, i, frac: 1 - ev.age / TOTAL_HOURS }))
+      .sort((a, b) => a.frac - b.frac);
+    const groups = [];
+    ordered.forEach((it) => {
+      const g = groups[groups.length - 1];
+      if (g && it.frac - g.start <= span) g.items.push(it);
+      else groups.push({ start: it.frac, items: [it] });
+    });
+    return groups.map((g) => {
+      const worst = g.items.reduce((a, b) => SEV_RANK[b.ev.sev] > SEV_RANK[a.ev.sev] ? b : a).ev.sev;
+      // Newest member is the jump target: prev/next then walks the rest
+      const newest = g.items.reduce((a, b) => b.frac > a.frac ? b : a);
+      const frac = g.items.reduce((s, it) => s + it.frac, 0) / g.items.length;
+      return { frac, worst, newest, items: g.items };
+    });
+  }
+
   function renderEventDots() {
     if (!scrubEventsEl) return;
     scrubEventsEl.innerHTML = '';
-    EVENTS.forEach((ev, i) => {
-      const frac = 1 - (ev.age / TOTAL_HOURS); // 0=left(old), 1=right(now)
-      const svgY = seriesY(frac);               // y within viewBox (2..32)
-      const pxTop = (svgY / SVG_H) * 32 + 2;   // convert to px within 32px chart, then +2 for chart top offset
-      const xPct  = (frac * 100).toFixed(2) + '%';
-      const color = ev.sev === 'crit' ? 'var(--crit)' : (ev.sev === 'warn' ? 'var(--warn)' : 'var(--info)');
-      const size  = ev.sev === 'crit' ? 14 : (ev.sev === 'warn' ? 11 : 8);
+    clusterEvents().forEach((g) => {
+      const n     = g.items.length;
+      const svgY  = seriesY(g.frac);            // y within viewBox (2..32)
+      const pxTop = (svgY / SVG_H) * 32 + 2;   // px within the 32px chart, +2 for chart top offset
+      const xPct  = (g.frac * 100).toFixed(2) + '%';
+      const color = sevColor(g.worst);
+      const size  = n > 1 ? 18 : sevSize(g.worst);
+      const tip   = n > 1
+        ? `${n} ${t('events')}\n` + g.items.slice(0, 6).map((it) => it.ev.tip).join('\n') +
+          (n > 6 ? `\n+${n - 6} ${t('more')}` : '')
+        : g.items[0].ev.tip;
 
       const dot = document.createElement('button');
-      dot.setAttribute('aria-label', ev.tip);
-      dot.setAttribute('data-ev-idx', i);
-      dot.title = ev.tip;
-      dot.style.cssText = `position:absolute;left:${xPct};top:${pxTop.toFixed(1)}px;width:${size}px;height:${size}px;margin-left:${-size / 2}px;margin-top:${-size / 2}px;padding:0;border-radius:50%;background:${color};border:1.5px solid var(--s1);cursor:pointer;z-index:3;pointer-events:auto;`;
-      dot.addEventListener('click', () => jumpToEvent(i));
+      dot.setAttribute('aria-label', tip);
+      dot.setAttribute('data-ev-idx', g.newest.i);
+      if (n > 1) dot.setAttribute('data-ev-count', n);
+      dot.title = tip;
+      dot.style.cssText = `position:absolute;left:${xPct};top:${pxTop.toFixed(1)}px;width:${size}px;height:${size}px;` +
+        `margin-left:${-size / 2}px;margin-top:${-size / 2}px;padding:0;border-radius:50%;background:${color};` +
+        `border:1.5px solid var(--s1);cursor:pointer;z-index:3;pointer-events:auto;` +
+        (n > 1 ? `display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;` +
+                 `font-size:9px;font-weight:600;color:var(--s1);line-height:1;` : '');
+      if (n > 1) dot.textContent = String(n);
+      dot.addEventListener('click', () => jumpToEvent(g.newest.i));
       scrubEventsEl.appendChild(dot);
     });
   }
@@ -1607,6 +2644,31 @@
   if (scrubNextBtn) scrubNextBtn.addEventListener('click', stepNext);
   if (histBannerBack) histBannerBack.addEventListener('click', e => { e.preventDefault(); goLive(); });
 
+  // Timeline rule 5 (xlsx): "keyboard arrows nudge by 15 minutes; Home earliest,
+  // End live". Shift+arrow steps a whole hour. Bound on the document because the
+  // scrubber is a persistent chrome control rather than a focusable widget.
+  const NUDGE_H = 0.25;
+  function nudgeCursor(deltaH) {
+    const next = (isLive ? 0 : cursorAge) + deltaH;
+    if (next <= 0) { goLive(); return; }
+    setCursorAge(next);
+    enterHistory(ageToLabel(cursorAge));
+    updateStepBtns();
+  }
+  document.addEventListener('keydown', (e) => {
+    const el = e.target;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ||
+               el.tagName === 'SELECT' || el.isContentEditable)) return;
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    // Don't hijack arrows while a modal owns the screen
+    if (ekoModal && ekoModal.style.display !== 'none') return;
+    const step = e.shiftKey ? 1 : NUDGE_H;
+    if (e.key === 'ArrowLeft')       { e.preventDefault(); nudgeCursor(step); }        // older
+    else if (e.key === 'ArrowRight') { e.preventDefault(); nudgeCursor(-step); }       // newer
+    else if (e.key === 'Home')       { e.preventDefault(); setCursorAge(TOTAL_HOURS); enterHistory(ageToLabel(cursorAge)); updateStepBtns(); }
+    else if (e.key === 'End')        { e.preventDefault(); goLive(); }
+  });
+
   // ── Init ─────────────────────────────────────────────────────────────────
   function initScrubbar() {
     refreshTimelineData();
@@ -1726,6 +2788,44 @@
     rightPanel.style.setProperty('--rp-w', w + 'px');
   }
 
+  /* ── Widen / narrow by button ──
+     Steps through width presets. Dragging the inner edge still works and can
+     land anywhere between them; the button just moves to the next preset up,
+     then snaps back to normal once it is already at the widest. */
+  const rpWidenBtn = $('#rpWidenBtn');
+  const rpMaxWidth = () => Math.max(RP_NORMAL_W, Math.floor(window.innerWidth / 2));
+
+  function rpWidthSteps() {
+    const max = rpMaxWidth();
+    return [...new Set([RP_NORMAL_W, Math.round((RP_NORMAL_W + max) / 2), max])]
+      .sort((a, b) => a - b);
+  }
+
+  function rpCurrentWidth() {
+    return Math.round(rightPanel ? rightPanel.getBoundingClientRect().width : RP_NORMAL_W);
+  }
+
+  function syncRpWidenBtn() {
+    if (!rpWidenBtn || !rightPanel) return;
+    const atMax = rpCurrentWidth() >= rpMaxWidth() - 2;
+    rpWidenBtn.dataset.dir = atMax ? 'narrow' : 'widen';
+    const label = t(atMax ? 'Narrow panel' : 'Widen panel');
+    rpWidenBtn.title = label;
+    rpWidenBtn.setAttribute('aria-label', label);
+  }
+
+  if (rpWidenBtn && rightPanel) {
+    rpWidenBtn.addEventListener('click', () => {
+      // Widening a collapsed panel should open it first
+      if (rightPanel.classList.contains('collapsed')) expandRightPanel();
+      const w = rpCurrentWidth();
+      const next = rpWidthSteps().find((s) => s > w + 2);
+      setRightPanelWidth(next != null ? next : RP_NORMAL_W);
+      syncRpWidenBtn();
+    });
+    syncRpWidenBtn();
+  }
+
   if (rpResizer && rightPanel) {
     let dragStartX = 0, dragStartW = 0, dragRtl = false;
 
@@ -1740,6 +2840,7 @@
     const onResizeEnd = (e) => {
       rightPanel.classList.remove('resizing');
       document.body.classList.remove('rp-resizing');
+      syncRpWidenBtn();   // the drag may have reached (or left) the maximum
       rpResizer.removeEventListener('pointermove', onResizeMove);
       rpResizer.removeEventListener('pointerup', onResizeEnd);
       rpResizer.removeEventListener('pointercancel', onResizeEnd);
@@ -1764,12 +2865,16 @@
     });
 
     // Double-click the edge to snap back to the normal width
-    rpResizer.addEventListener('dblclick', () => setRightPanelWidth(RP_NORMAL_W));
+    rpResizer.addEventListener('dblclick', () => {
+      setRightPanelWidth(RP_NORMAL_W);
+      syncRpWidenBtn();
+    });
 
     // Keep the half-viewport cap when the window itself shrinks
     window.addEventListener('resize', () => {
-      const maxW = Math.max(RP_NORMAL_W, Math.floor(window.innerWidth / 2));
+      const maxW = rpMaxWidth();
       if (rightPanel.getBoundingClientRect().width > maxW) setRightPanelWidth(maxW);
+      syncRpWidenBtn();
     });
   }
 

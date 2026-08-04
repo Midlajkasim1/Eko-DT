@@ -42,6 +42,11 @@
     getEquipment() { return this._json('/api/fin/equip-live'); }
     getAlarms() { return this._json('/api/fin/alarms'); }
     getMeters() { return this._json('/api/fin/pmu-live'); }
+    getHisPoints() { return this._json('/api/fin/his-points'); }
+    getPointHistory(id, days) {
+      return this._json(`/api/fin/point-history?id=${encodeURIComponent(id)}&days=${days || 7}`);
+    }
+    getAlarmHistory(days) { return this._json(`/api/fin/alarm-history?days=${days || 30}`); }
     async evalQuery(expr) {
       try {
         const res = await fetch('/api/fin/eval?expr=' + encodeURIComponent(expr));
@@ -59,6 +64,9 @@
     async getEquipment() { return null; }
     async getAlarms() { return null; }
     async getMeters() { return null; }
+    async getHisPoints() { return null; }
+    async getPointHistory() { return null; }
+    async getAlarmHistory() { return null; }
     async evalQuery() { return null; }
   }
 
@@ -125,6 +133,9 @@
     start,
     stop,
     evalQuery(expr) { return state.provider ? state.provider.evalQuery(expr) : Promise.resolve(null); },
+    getHisPoints() { return state.provider ? state.provider.getHisPoints() : Promise.resolve(null); },
+    getPointHistory(id, days) { return state.provider ? state.provider.getPointHistory(id, days) : Promise.resolve(null); },
+    getAlarmHistory(days) { return state.provider ? state.provider.getAlarmHistory(days) : Promise.resolve(null); },
     get config() { return state.config; },
     get connected() { return state.connected; },
     get power() { return state.power; },

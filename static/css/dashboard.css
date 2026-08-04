@@ -803,11 +803,29 @@
 .app-shell[dir="rtl"] #rpCollapseBtn svg {
   transform: scaleX(-1);
 }
+
+/* Widen button: the chevrons point the way the panel edge will move, so they
+   flip once the panel is at its widest (next click narrows it back) and again
+   in RTL, where the panel sits on the opposite side */
+#rpWidenBtn svg { transition: transform .15s ease; }
+#rpWidenBtn[data-dir="narrow"] svg { transform: scaleX(-1); }
+.app-shell[dir="rtl"] #rpWidenBtn svg { transform: scaleX(-1); }
+.app-shell[dir="rtl"] #rpWidenBtn[data-dir="narrow"] svg { transform: none; }
 .rptab:hover { color: var(--t1); background: var(--s2); }
 .rptab-text {
   writing-mode: vertical-rl;
   font-family: var(--fH), sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 2px;
 }
+
+/* ── Scroll columns ──
+   #rpContent and .vp-ovp-scroll are flex columns, so their cards inherit
+   flex-shrink:1 and get squashed to fit instead of overflowing — which means
+   the scrollbar never appears and tall content (tables, heatmaps) is cut off.
+   Pin every child to its natural height so the container scrolls instead. */
+#rpContent > *, .vp-ovp-scroll > * { flex: 0 0 auto; }
+#rpContent { min-height: 0; overflow-x: hidden; }
+/* Long point names and FIN ids must wrap rather than widen the panel */
+#rpContent { overflow-wrap: anywhere; }
 
 /* Right Panel Resize — drag handle on the inner edge (logical props flip it for RTL) */
 .rp-resizer {

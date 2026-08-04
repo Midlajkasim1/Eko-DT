@@ -342,12 +342,12 @@
         </button>
         <div class="nav-subs hidden" data-parent="energy">
           <button class="sub-item" data-sub="waste"><span class="sub-label" data-i18n="wasteprevention">Waste Prevention</span></button>
-          <button class="sub-item" data-sub="bench"><span class="sub-label" data-i18n="portfoliobenchmarking">Portfolio Benchmarking</span></button>
+          <!-- <button class="sub-item" data-sub="bench"><span class="sub-label" data-i18n="portfoliobenchmarking">Portfolio Benchmarking</span></button> -->
           <button class="sub-item" data-sub="lbm"><span class="sub-label" data-i18n="locationbasedmetering">Location Based Metering</span></button>
           <button class="sub-item" data-sub="anom"><span class="sub-label" data-i18n="flowandtrendanomaly">Flow and Trend Anomaly</span></button>
-          <button class="sub-item" data-sub="budget"><span class="sub-label" data-i18n="budgetoverrun">Budget Overrun</span></button>
+          <!-- <button class="sub-item" data-sub="budget"><span class="sub-label" data-i18n="budgetoverrun">Budget Overrun</span></button> -->
           <button class="sub-item" data-sub="cons"><span class="sub-label" data-i18n="consumption">Consumption</span></button>
-          <button class="sub-item" data-sub="fcst"><span class="sub-label" data-i18n="forecasting">Forecasting</span></button>
+          <!-- <button class="sub-item" data-sub="fcst"><span class="sub-label" data-i18n="forecasting">Forecasting</span></button> -->
         </div>
 
         <button class="nav-item" data-module="esg">
@@ -659,6 +659,10 @@
                   </div>
                   <div class="rp-subtitle" style="font-size: 11px; color: var(--t3); margin-block-start: 2px; display: none;">Module highlights</div>
                 </div>
+                <!-- Widen / narrow button -->
+                <button id="rpWidenBtn" data-dir="widen" title="Widen panel" aria-label="Widen panel" style="flex:none;width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--bd1);border-radius:4px;color:var(--t2);cursor:pointer;margin-top:1px;transition:background 0.15s,color 0.15s" onmouseover="this.style.background='var(--s3)';this.style.color='var(--t1)'" onmouseout="this.style.background='transparent';this.style.color='var(--t2)'">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5"></path><path d="m18 17-5-5 5-5"></path></svg>
+                </button>
                 <!-- Collapse button -->
                 <button id="rpCollapseBtn" title="Collapse panel" style="flex:none;width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--bd1);border-radius:4px;color:var(--t2);cursor:pointer;margin-top:1px;transition:background 0.15s,color 0.15s" onmouseover="this.style.background='var(--s3)';this.style.color='var(--t1)'" onmouseout="this.style.background='transparent';this.style.color='var(--t2)'">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 17 5-5-5-5"></path><path d="m6 17 5-5-5-5"></path></svg>

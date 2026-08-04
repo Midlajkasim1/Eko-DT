@@ -23,7 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
-
+backend/__pycache__/
 /docs
 /Project
 /unrealaddnoc

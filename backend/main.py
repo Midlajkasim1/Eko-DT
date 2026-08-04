@@ -10,7 +10,7 @@ import json
 import os
 import re
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from urllib.parse import quote
 
@@ -20,7 +20,13 @@ from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from fin_client import FinScramClient, safe_get
+from fin_client import (
+    FinScramClient,
+    aggregate_and_restructure,
+    parse_custom_response,
+    parse_zinc_csv,
+    safe_get,
+)
 
 # ─── Load Config ─────────────────────────────────────────────────────────────
 
@@ -171,9 +177,30 @@ def _extract_meters(realtime: dict, profile: dict) -> dict:
     return meters
 
 
+def severity_for(priority, bands: dict) -> str:
+    """Map a FIN alarm priority onto critical/warning/info.
+
+    Sites disagree on which direction priority runs. Haystack treats a low
+    number as most urgent; Marsa is the opposite — 250 is control-engine FD&D
+    output and 50-150 is connector chatter — so `severity_bands.order` declares
+    the direction rather than the code assuming one.
+    """
+    if not isinstance(priority, (int, float)):
+        return "info"
+    crit = bands.get("critical", 250)
+    warn = bands.get("warning", 150)
+    if str(bands.get("order", "desc")).lower() == "asc":
+        # low number = most urgent; thresholds are inclusive upper bounds
+        if priority <= crit:
+            return "critical"
+        return "warning" if priority <= warn else "info"
+    # high number = most urgent; thresholds are inclusive lower bounds
+    if priority >= crit:
+        return "critical"
+    return "warning" if priority >= warn else "info"
+
+
 def _flatten_alarms(rows: list, bands: dict) -> dict:
-    critical_max = bands.get("critical", 250)
-    warning_max = bands.get("warning", 400)
     alarms = []
     counts = {"critical": 0, "warning": 0, "info": 0}
 
@@ -181,19 +208,19 @@ def _flatten_alarms(rows: list, bands: dict) -> dict:
         if row.get("alarm") is not True or row.get("active") is not True:
             continue
         priority = row.get("priority") if isinstance(row.get("priority"), (int, float)) else None
-        if priority is not None and priority <= critical_max:
-            severity = "critical"
-        elif priority is not None and priority <= warning_max:
-            severity = "warning"
-        else:
-            severity = "info"
+        severity = severity_for(priority, bands)
         counts[severity] += 1
         source = row.get("sourceRef")
+        # "CONTROL" = an FD&D rule tripped and diagnosed a fault; "CONNECTOR" =
+        # a point-level limit or comms transition. Only the former is actionable.
+        dispatcher = str(row.get("dispatcher") or "").strip().upper() or None
         alarms.append({
             "source": safe_get(source, "dis") or safe_get(source, "val") or "",
             "message": row.get("message", ""),
             "priority": priority,
             "severity": severity,
+            "dispatcher": dispatcher,
+            "diagnosed": dispatcher == "CONTROL",
             "occurred": row.get("occurred") or row.get("created"),
             "state": row.get("state"),
         })
@@ -208,6 +235,8 @@ def _flatten_alarms(rows: list, bands: dict) -> dict:
 
 def _flatten_equip(realtime: dict) -> list[dict]:
     """Flatten floor-wise equipment into a single list for the frontend."""
+    classes = CONFIG.get("equipment_classes", {})
+    system_tags = set(classes.get("system_tags") or [])
     equip_list = []
     for floor_name, floor_data in realtime.items():
         for category, items in floor_data.items():
@@ -218,10 +247,14 @@ def _flatten_equip(realtime: dict) -> list[dict]:
                 if any(x in eq_name.upper() for x in ["ENERGY", "USAGE", "CALC"]):
                     continue
                 alarms = eq.get("alarms", [])
+                tags = eq.get("tags") or []
                 equip_list.append({
                     "name": eq_name,
                     "floor": floor_name,
                     "category": category,
+                    "type": _equip_type(tags, classes.get("type_priority") or []),
+                    "tags": tags,
+                    "isSystem": bool(system_tags & set(tags)) if system_tags else True,
                     "inAlarm": len(alarms) > 0,
                     "alarms": alarms,
                     "bimId": eq.get("bimId", ""),
@@ -260,13 +293,31 @@ def _compute_sensor_averages(realtime: dict):
         cached_sensor_avg["co2"] = round(sum(co2_vals) / len(co2_vals), 2)
 
 
+def _equip_type(tags: list, priority: list) -> str:
+    """First matching marker tag, in configured priority order."""
+    for t in priority:
+        if t in (tags or []):
+            return t
+    return "other"
+
+
 def _compute_facility_services(realtime: dict) -> dict:
-    """Calculate facility services metrics from realtime equipment data."""
+    """Calculate facility services metrics from realtime equipment data.
+
+    'Systems alive' counts plant equipment only (AHU/FCU/pumps per the KPI sheet),
+    not meters, panels, lifts or KPI-calculation records.
+    """
+    classes = CONFIG.get("equipment_classes", {})
+    system_tags = set(classes.get("system_tags") or [])
+    priority = classes.get("type_priority") or []
+
     total_alarms = 0
     total_faults = 0
     total_maintenance = 0
     total_equipment = 0
     online_equipment = 0
+    all_equipment = 0
+    by_type: dict[str, int] = {}
 
     for floor_name, floor_data in realtime.items():
         if not isinstance(floor_data, dict):
@@ -275,11 +326,19 @@ def _compute_facility_services(realtime: dict) -> dict:
         for equipment in hvac_list:
             if not isinstance(equipment, dict):
                 continue
-            
-            total_equipment += 1
+
+            all_equipment += 1
+            tags = equipment.get('tags') or []
+            etype = _equip_type(tags, priority)
+            by_type[etype] = by_type.get(etype, 0) + 1
+            is_system = bool(system_tags & set(tags)) if system_tags else True
+            if is_system:
+                total_equipment += 1
             points = equipment.get('points', [])
             equipment_alarms = equipment.get('alarms', [])
-            has_connectivity = len(points) > 0
+            # Alive = at least one point actually reporting a value. Historized
+            # points with no current value are kept for charts but are not liveness.
+            has_connectivity = any(p.get('reporting') for p in points if isinstance(p, dict))
             is_faulty = False
             
             if isinstance(equipment_alarms, list) and len(equipment_alarms) > 0:
@@ -290,7 +349,8 @@ def _compute_facility_services(realtime: dict) -> dict:
                     continue
                 p_name = str(point.get('navName', '')).lower()
                 p_val = str(point.get('currentValue', '')).lower()
-                p_status = str(point.get('status', '')).lower()
+                # No status tag means no fault reported — do not treat it as faulty
+                p_status = str(point.get('status') or 'ok').lower()
                 
                 is_ticket = any(k in p_val for k in ['alarm', 'failure', 'broken', 'stuck', 'slippage', 'seizure', 'fault', 'error'])
                 if is_ticket:
@@ -301,30 +361,32 @@ def _compute_facility_services(realtime: dict) -> dict:
                 if is_ticket:
                     is_issue = False
 
+                # A single point in fault is a point-quality issue, not a dead
+                # system — liveness is "is anything reporting", per the KPI sheet.
                 if is_issue:
                     total_faults += 1
-                    if p_status != 'ok':
-                        is_faulty = True
-                
+
+
                 if ('maintenance' in p_val or 'maint' in p_name or 'manual' in p_val) and 'maintaining setpoint' not in p_val:
                     total_maintenance += 1
             
-            if has_connectivity and not is_faulty:
+            if is_system and has_connectivity and not is_faulty:
                 online_equipment += 1
-            elif 'online' in str(equipment.get('equipStatus', '')).lower():
-                online_equipment += 1
-    
+
     uptime = 99.8
     if total_equipment > 0:
         uptime = (online_equipment / total_equipment) * 100
-        
+
+
     return {
         'openTickets': total_alarms,
         'openIssues': total_faults,
         'maintenance': total_maintenance,
         'avgUptime': round(uptime, 1),
-        'totalEquipment': total_equipment,
-        'onlineEquipment': online_equipment
+        'totalEquipment': total_equipment,      # systems only (AHU/FCU/pumps)
+        'onlineEquipment': online_equipment,
+        'allEquipment': all_equipment,          # every equip record in the project
+        'byType': by_type,
     }
 
 
@@ -486,6 +548,99 @@ async def eval_read(expr: str):
     if text is None:
         raise HTTPException(status_code=502, detail="FIN request failed")
     return PlainTextResponse(text, media_type="text/zinc")
+
+
+POINT_ID_RE = re.compile(r"^[A-Za-z0-9_:.\-]+$")
+
+
+def _require_client():
+    if not client or not client.is_authenticated:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+
+@app.get("/api/fin/his-points")
+async def get_his_points():
+    """Catalogue of historized points for the History Charts picker."""
+    _require_client()
+    out = []
+    for row in client.last_point_rows or []:
+        if row.get("his") is not True:
+            continue
+        pid = safe_get(row.get("id"), "val")
+        if not pid:
+            continue
+        out.append({
+            "id": str(pid).lstrip("@"),
+            "dis": safe_get(row.get("id"), "dis") or str(row.get("navName") or ""),
+            "navName": str(row.get("navName") or ""),
+            "equip": safe_get(row.get("equipRef"), "dis") or "",
+            "unit": row.get("unit") or "",
+        })
+    out.sort(key=lambda p: (p["equip"], p["dis"]))
+    return {"timestamp": datetime.now().isoformat(), "points": out}
+
+
+@app.get("/api/fin/point-history")
+async def get_point_history(id: str, days: int = 7):
+    """hisRead one point and return the same nested shape as power_history."""
+    _require_client()
+    pid = id.lstrip("@")
+    if not POINT_ID_RE.match(pid):
+        raise HTTPException(status_code=400, detail="Invalid point id")
+    days = max(1, min(int(days), 365))
+    start = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+    expr = f"hisRead(@{pid},{start}..today(),{{-limit}})"
+    text = await client.fetch_api(
+        f"/api/{client.project_name}/eval?expr={quote(expr, safe='')}", is_text=True
+    )
+    if text is None:
+        raise HTTPException(status_code=502, detail="FIN request failed")
+    parsed = parse_custom_response(text)
+    return {
+        "id": pid,
+        "days": days,
+        "unit": parsed.get("unit", ""),
+        "curVal": parsed.get("curVal"),
+        "samples": len(parsed.get("rows") or []),
+        "history": aggregate_and_restructure(parsed.get("rows") or []),
+    }
+
+
+@app.get("/api/fin/alarm-history")
+async def get_alarm_history(days: int = 30):
+    """Alarm counts by day and severity. Empty when FIN retains no history.
+
+    Defaults to 30 days: at Marsa a 7-day window catches 4 of 343 retained
+    alarms and hides the 6 July cooling-valve event (196 alarms) entirely.
+    """
+    _require_client()
+    days = max(1, min(int(days), 90))
+    start = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+    expr = f"readAll(equip or point).alarms({start}..today())"
+    text = await client.fetch_api(
+        f"/api/{client.project_name}/eval?expr={quote(expr, safe='')}", is_text=True
+    )
+    if text is None:
+        raise HTTPException(status_code=502, detail="FIN request failed")
+
+    bands = CONFIG.get("severity_bands", {})
+    by_day: dict[str, dict] = {}
+
+    for row in parse_zinc_csv(text):
+        if row.get("alarm") is not True:
+            continue
+        stamp = str(row.get("occurred") or row.get("created") or "")[:10]
+        if not stamp:
+            continue
+        priority = row.get("priority") if isinstance(row.get("priority"), (int, float)) else None
+        day = by_day.setdefault(stamp, {"critical": 0, "warning": 0, "info": 0})
+        day[severity_for(priority, bands)] += 1
+
+    return {
+        "days": days,
+        "retained": bool(by_day),
+        "byDay": [{"date": d, **counts} for d, counts in sorted(by_day.items())],
+    }
 
 
 @app.get("/api/fin/building-info")
