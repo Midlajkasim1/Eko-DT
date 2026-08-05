@@ -5,6 +5,31 @@ import { useModelStore } from '@/store/useModelStore'
 import type { FragmentsEngine } from '@/lib/fragmentsEngine'
 import type { MaterialOverride } from '@/types'
 
+const textureLoader = new THREE.TextureLoader()
+const decodedTextures = new Map<string, Promise<THREE.Texture>>()
+
+/** Decode each distinct texture once. Callers clone the result, so every material
+ *  gets its own repeat while sharing a single GPU upload. */
+function decodeTexture(dataUrl: string): Promise<THREE.Texture> {
+  let decoding = decodedTextures.get(dataUrl)
+  if (!decoding) {
+    decoding = textureLoader.loadAsync(dataUrl)
+    decodedTextures.set(dataUrl, decoding)
+  }
+  return decoding
+}
+
+function releaseOverrideMap(mat: { map?: THREE.Texture | null }) {
+  if (mat.map?.userData?.isOverrideTexture) mat.map.dispose()
+}
+
+function disposeDecodedTextures() {
+  for (const decoding of decodedTextures.values()) {
+    decoding.then(tex => tex.dispose()).catch(() => { /* never decoded */ })
+  }
+  decodedTextures.clear()
+}
+
 export function useMaterialOverrides(engineRef: React.MutableRefObject<FragmentsEngine | null>) {
   const currentProject = useProjectStore(s => s.currentProject)
   const models = useModelStore(s => s.models)
@@ -430,15 +455,19 @@ export function useMaterialOverrides(engineRef: React.MutableRefObject<Fragments
           mat.transparent = override.transparent || override.opacity < 1.0
         }
         if (override.textureDataUrl && 'map' in mat) {
-          new THREE.TextureLoader().load(override.textureDataUrl, (tex) => {
+          const scale = override.textureScale !== undefined ? override.textureScale : 0.001
+          decodeTexture(override.textureDataUrl).then(decoded => {
+            const tex = decoded.clone()
+            tex.userData.isOverrideTexture = true
             tex.wrapS = THREE.RepeatWrapping
             tex.wrapT = THREE.RepeatWrapping
-            const scale = override.textureScale !== undefined ? override.textureScale : 0.001
             tex.repeat.set(scale, scale)
+            releaseOverrideMap(mat)
             mat.map = tex
             mat.needsUpdate = true
           })
         } else if (override.textureDataUrl === '' && 'map' in mat) {
+           releaseOverrideMap(mat)
            mat.map = null
         }
         mat.needsUpdate = true
@@ -464,6 +493,7 @@ export function useMaterialOverrides(engineRef: React.MutableRefObject<Fragments
             if (old.mesh.geometry) old.mesh.geometry.dispose();
             delete isolatedMeshesRef.current[overrideId];
         }
+        disposeDecodedTextures();
         return;
     }
     
