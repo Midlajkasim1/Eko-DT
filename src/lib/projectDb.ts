@@ -302,15 +302,54 @@ export async function saveThumbnailToProject(handle: FileSystemDirectoryHandle, 
   await writeBinary(handle, 'thumbnail.webp', buf)
 }
 
+/** Read every model listed in `meta` that still has a file on disk */
+async function readBundledModels(handle: FileSystemDirectoryHandle, meta: ProjectMeta) {
+  const modelsDir = await handle.getDirectoryHandle('models', { create: true })
+  const bundled: { modelId: string; fileName: string; bytes: ArrayBuffer }[] = []
+  for (const entry of meta.models) {
+    const ext = entry.type === 'glb' ? 'glb' : 'frag'
+    const fileName = `${entry.modelId}.${ext}`
+    const bytes = await readBinary(modelsDir, fileName)
+    if (bytes) bundled.push({ modelId: entry.modelId, fileName, bytes })
+  }
+  return bundled
+}
+
+/** Narrow a meta to the models that were actually bundled, so the export never
+ *  declares a model it does not ship or carries a texture for one */
+function metaForBundledModels(meta: ProjectMeta, bundled: Set<string>): ProjectMeta {
+  const droppedModels = meta.models.filter(m => !bundled.has(m.modelId)).map(m => m.modelId)
+  if (droppedModels.length) {
+    console.warn(`[export] omitting ${droppedModels.length} model(s) with no file on disk: ${droppedModels.join(', ')}`)
+  }
+
+  const narrowed: ProjectMeta = { ...meta, models: meta.models.filter(m => bundled.has(m.modelId)) }
+
+  if (meta.materialOverrides) {
+    const kept = Object.entries(meta.materialOverrides).filter(([, o]) => bundled.has(o.modelId))
+    const droppedCount = Object.keys(meta.materialOverrides).length - kept.length
+    if (droppedCount) {
+      console.warn(`[export] omitting ${droppedCount} material override(s) targeting omitted models`)
+    }
+    narrowed.materialOverrides = Object.fromEntries(kept)
+  }
+
+  return narrowed
+}
+
 /** Export entire project as a ZIP blob */
 export async function exportProjectAsZip(handle: FileSystemDirectoryHandle, meta: ProjectMeta): Promise<Blob> {
   const JSZip = (await import('jszip')).default
   const zip = new JSZip()
 
+  // Models — placed inside backend/models/ so FastAPI /models/{filename} route serves them
+  const models = await readBundledModels(handle, meta)
+  const bundledMeta = metaForBundledModels(meta, new Set(models.map(m => m.modelId)))
+
   // Project metadata and models go inside backend/ so FastAPI can serve them.
   // Force finDirectMode off — this bundle ships the FastAPI backend, so the viewer
   // must proxy through it instead of calling FIN straight from the browser.
-  const backendMeta = { ...meta, apiSettings: { ...(meta.apiSettings || {}), finDirectMode: false } }
+  const backendMeta = { ...bundledMeta, apiSettings: { ...(bundledMeta.apiSettings || {}), finDirectMode: false } }
   zip.file('backend/project.json', JSON.stringify(backendMeta, null, 2))
 
   // Thumbnail
@@ -320,14 +359,9 @@ export async function exportProjectAsZip(handle: FileSystemDirectoryHandle, meta
     zip.file('backend/thumbnail.webp', await thumbFile.arrayBuffer())
   } catch { /* no thumbnail yet */ }
 
-  // Models — placed inside backend/models/ so FastAPI /models/{filename} route serves them
-  const modelsDir = await handle.getDirectoryHandle('models', { create: true })
   const backendModelsFolder = zip.folder('backend/models')!
-  for (const entry of meta.models) {
-    const ext = entry.type === 'glb' ? 'glb' : 'frag'
-    const fileName = `${entry.modelId}.${ext}`
-    const bytes = await readBinary(modelsDir, fileName)
-    if (bytes) backendModelsFolder.file(fileName, bytes)
+  for (const model of models) {
+    backendModelsFolder.file(model.fileName, model.bytes)
   }
 
   // Include Built Viewer App + Backend
@@ -419,8 +453,11 @@ export async function exportFinProjectAsZip(handle: FileSystemDirectoryHandle, m
   const zip = new JSZip()
 
   // 1. Add project config and models at the root
+  const models = await readBundledModels(handle, meta)
+  const bundledMeta = metaForBundledModels(meta, new Set(models.map(m => m.modelId)))
+
   // Force finDirectMode to true for the FIN standalone viewer since there is no backend
-  const finMeta = { ...meta, apiSettings: { ...(meta.apiSettings || {}), finDirectMode: true } }
+  const finMeta = { ...bundledMeta, apiSettings: { ...(bundledMeta.apiSettings || {}), finDirectMode: true } }
   zip.file('project.json', JSON.stringify(finMeta, null, 2))
 
   // Also include api-config.json for standalone FIN dashboard (direct API mode)
@@ -444,13 +481,9 @@ export async function exportFinProjectAsZip(handle: FileSystemDirectoryHandle, m
   }
   zip.file('api-config.json', JSON.stringify(apiConfig, null, 2))
 
-  const modelsDir = await handle.getDirectoryHandle('models', { create: true })
   const zipModelsFolder = zip.folder('models')!
-  for (const entry of meta.models) {
-    const ext = entry.type === 'glb' ? 'glb' : 'frag'
-    const fileName = `${entry.modelId}.${ext}`
-    const bytes = await readBinary(modelsDir, fileName)
-    if (bytes) zipModelsFolder.file(fileName, bytes)
+  for (const model of models) {
+    zipModelsFolder.file(model.fileName, model.bytes)
   }
 
   try {
