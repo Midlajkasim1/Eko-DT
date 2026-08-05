@@ -145,9 +145,15 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   openRecentProject: async (handle: FileSystemDirectoryHandle) => {
     const ok = await verifyHandlePermission(handle)
-    if (!ok) return null
+    if (!ok) {
+      alert("Permission to read this project folder was denied. Grant access and try again.")
+      return null
+    }
     const meta = await loadProjectFromHandle(handle)
-    if (!meta) return null
+    if (!meta) {
+      alert("Could not read project.json in this folder. It may have been moved, renamed or deleted.")
+      return null
+    }
 
     await cacheHandle(meta.projectId, handle, meta, (meta as any).thumbnail)
 
