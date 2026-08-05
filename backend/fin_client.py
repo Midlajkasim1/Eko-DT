@@ -715,14 +715,19 @@ class FinScramClient:
 
     async def fetch_power_histories(self, endpoints: dict[str, str]) -> dict:
         """Fetch all power history endpoints and aggregate."""
-        power_histories: dict[str, dict] = {}
-        for key, endpoint_template in endpoints.items():
-            endpoint = self._resolve_endpoint(endpoint_template)
-            text = await self.fetch_api(endpoint, is_text=True)
-            power_histories[key] = await asyncio.to_thread(
-                lambda t=text: aggregate_and_restructure(parse_custom_response(t)["rows"])
+        in_flight = asyncio.Semaphore(8)
+
+        async def fetch_one(endpoint_template: str) -> dict:
+            async with in_flight:
+                text = await self.fetch_api(
+                    self._resolve_endpoint(endpoint_template), is_text=True
+                )
+            return await asyncio.to_thread(
+                lambda: aggregate_and_restructure(parse_custom_response(text)["rows"])
             )
-        return power_histories
+
+        histories = await asyncio.gather(*(fetch_one(t) for t in endpoints.values()))
+        return dict(zip(endpoints, histories))
 
     async def close(self):
         await self.client.aclose()
