@@ -516,10 +516,6 @@ export function useMaterialOverrides(engineRef: React.MutableRefObject<Fragments
       applyForModel(modelId)
     }
 
-    const handleUpdate = (e: any) => {
-      const override = e.detail as MaterialOverride
-      applyOverride(override.modelId, override)
-    }
     const handleRemoved = (e: any) => {
       const { modelId, targetId, targetType, overrideId } = e.detail
       const override = { id: overrideId, modelId, targetId, targetType } as MaterialOverride
@@ -527,12 +523,10 @@ export function useMaterialOverrides(engineRef: React.MutableRefObject<Fragments
     }
 
     window.addEventListener('model-loaded', handleModelLoaded)
-    window.addEventListener('material-override-updated', handleUpdate)
     window.addEventListener('material-override-removed', handleRemoved)
-    
+
     return () => {
       window.removeEventListener('model-loaded', handleModelLoaded)
-      window.removeEventListener('material-override-updated', handleUpdate)
       window.removeEventListener('material-override-removed', handleRemoved)
     }
   }, [currentProject?.materialOverrides, applyOverride])

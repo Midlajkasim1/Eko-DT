@@ -115,10 +115,6 @@ export function MaterialPanel({ engineRef }: MaterialPanelProps) {
     }
 
     await setMaterialOverride(selectedElement.modelId, override)
-    
-    // The actual application to Three.js will be handled by a global effect or utility that watches for overrides
-    // but for immediate feedback, we trigger a global event or store flag (or just let the loader hook handle it).
-    window.dispatchEvent(new CustomEvent('material-override-updated', { detail: override }))
   }
 
   const handleReset = async () => {
