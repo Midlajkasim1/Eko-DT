@@ -16,6 +16,7 @@ from urllib.parse import quote
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -119,7 +120,6 @@ async def live_loop():
                 "avg_hum": cached_sensor_avg.get("humidity"),
                 "avg_co2": cached_sensor_avg.get("co2"),
                 "unit": "kWh",
-                "power_history": cached_power_history,
                 "fdd": cached_fdd_summary,
                 "facilityServices": cached_facility,
             }
@@ -425,6 +425,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Only the JSON API and the viewer's own text assets. Never /project.json or
+# /models/*: those are already-compressed or huge, and deflating them costs
+# seconds of the single uvicorn worker for a few percent.
+COMPRESSIBLE_PREFIXES = ("/api/", "/assets/")
+
+
+class PathScopedGZipMiddleware(GZipMiddleware):
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or not scope["path"].startswith(COMPRESSIBLE_PREFIXES):
+            await self.app(scope, receive, send)
+            return
+        await super().__call__(scope, receive, send)
+
+
+app.add_middleware(PathScopedGZipMiddleware, minimum_size=1024)
+
 
 # ─── Request/Response Models ────────────────────────────────────────────────
 
@@ -505,6 +521,14 @@ async def get_power_live():
     if not client or not client.is_authenticated:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return cached_power_data or {}
+
+
+@app.get("/api/fin/power-history")
+async def get_power_history():
+    """Get the historian series. Refreshed once per realtime cycle, not per live poll."""
+    if not client or not client.is_authenticated:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return cached_power_history or {}
 
 
 @app.get("/api/fin/pmu-live")

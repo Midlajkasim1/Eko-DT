@@ -39,6 +39,7 @@
     }
     getStatus() { return this._json('/api/fin/status'); }
     getLiveValues() { return this._json('/api/fin/power-live'); }
+    getPowerHistory() { return this._json('/api/fin/power-history'); }
     getEquipment() { return this._json('/api/fin/equip-live'); }
     getAlarms() { return this._json('/api/fin/alarms'); }
     getMeters() { return this._json('/api/fin/pmu-live'); }
@@ -61,6 +62,7 @@
   class DirectProvider {
     async getStatus() { return { connected: false }; }
     async getLiveValues() { return null; }
+    async getPowerHistory() { return null; }
     async getEquipment() { return null; }
     async getAlarms() { return null; }
     async getMeters() { return null; }
@@ -75,6 +77,7 @@
     provider: null,
     connected: false,
     power: null,
+    powerHistory: null,
     equipment: null,
     alarms: null,
     meters: null,
@@ -95,21 +98,35 @@
     return !!data && !data.unauthorized;
   }
 
+  // Consumers read power_history off the live payload, so it is spliced back in
+  // here rather than re-sent with every 5 s poll
+  function withHistory(live) {
+    return state.powerHistory ? { ...live, power_history: state.powerHistory } : live;
+  }
+
   async function pollLive() {
     const data = await state.provider.getLiveValues();
     if (usable(data)) {
-      state.power = data;
-      emit('power', data);
+      state.power = withHistory(data);
+      emit('power', state.power);
     }
     setConnected(usable(data));
   }
 
   async function pollRealtime() {
-    const [equipment, alarms, meters] = await Promise.all([
+    const [equipment, alarms, meters, history] = await Promise.all([
       state.provider.getEquipment(),
       state.provider.getAlarms(),
       state.provider.getMeters(),
+      state.provider.getPowerHistory(),
     ]);
+    if (usable(history)) {
+      state.powerHistory = history;
+      if (state.power) {
+        state.power = withHistory(state.power);
+        emit('power', state.power);
+      }
+    }
     if (usable(equipment)) { state.equipment = equipment; emit('equipment', equipment); }
     if (usable(alarms)) { state.alarms = alarms; emit('alarms', alarms); }
     if (usable(meters)) { state.meters = meters; emit('meters', meters); }
