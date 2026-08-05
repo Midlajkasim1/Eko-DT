@@ -161,7 +161,7 @@ export default function ViewerApp() {
         let res: Response | null = null
         for (let i = 0; i < 3; i++) {
           try {
-            res = await fetch('project.json?t=' + Date.now(), { cache: 'no-store' })
+            res = await fetch('project.json')
             if (res.ok) break
           } catch (e) {
             if (i === 2) throw e

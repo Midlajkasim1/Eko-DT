@@ -720,15 +720,23 @@ async def serve_login():
 
 
 @app.get("/project.json")
-async def serve_project_json():
+async def serve_project_json(request: Request):
     """Serve the project.json for the standalone viewer.
 
     Deliberately ungated: the viewer starts streaming models while the operator
     is still on the sign-in overlay. Live FIN data stays behind the session.
     """
-    if os.path.exists(PROJECT_JSON):
-        return FileResponse(PROJECT_JSON, media_type="application/json")
-    raise HTTPException(status_code=404, detail="project.json not found")
+    if not os.path.exists(PROJECT_JSON):
+        raise HTTPException(status_code=404, detail="project.json not found")
+    stat = os.stat(PROJECT_JSON)
+    etag = f'"{stat.st_mtime_ns:x}-{stat.st_size:x}"'
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=304, headers={"ETag": etag})
+    return FileResponse(
+        PROJECT_JSON,
+        media_type="application/json",
+        headers={"ETag": etag, "Cache-Control": "private, no-cache"},
+    )
 
 
 @app.get("/thumbnail.webp")
