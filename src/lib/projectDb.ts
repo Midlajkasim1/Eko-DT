@@ -385,84 +385,79 @@ export async function exportProjectAsZip(handle: FileSystemDirectoryHandle, meta
   }
 
   // Include Built Viewer App + Backend
-  try {
-    const res = await fetch('/viewer-assets.json?t=' + Date.now(), { cache: 'no-store' })
-    if (res.ok) {
-      const files: { path: string, content: string }[] = await res.json()
-      for (const f of files) {
-        if (f.path === 'index.html') continue // Skip the studio app entry
-        // Place all viewer static assets inside backend/static/ so FastAPI can serve them
-        zip.file(`backend/static/${f.path}`, f.content, { base64: true })
-      }
-    } else {
-      console.warn("Viewer assets not bundled. You must run `npm run build` in the studio first.")
-    }
-
-    // Bundle backend Python files
-    const backendFiles = [
-      { name: 'main.py', url: '/backend/main.py' },
-      { name: 'fin_client.py', url: '/backend/fin_client.py' },
-      { name: 'requirements.txt', url: '/backend/requirements.txt' },
-      { name: 'login.html', url: '/backend/login.html' },
-    ]
-    for (const bf of backendFiles) {
-      try {
-        const r = await fetch(bf.url + '?t=' + Date.now(), { cache: 'no-store' })
-        if (r.ok) {
-          const text = await r.text()
-          zip.file(`backend/${bf.name}`, text)
-        }
-      } catch { /* skip if not available */ }
-    }
-
-    // config.json — start from the repo file and overlay only the connection fields
-    // the settings modal owns. Point maps are deliberately left alone: config.json
-    // holds equipment_classes / meter_profile / realtime_endpoints and an audited
-    // live_point_ids set that the modal does not model, so overwriting them from
-    // apiSettings would drop backend-only mappings and revive retired point IDs.
-    try {
-      const r = await fetch('/backend/config.json?t=' + Date.now(), { cache: 'no-store' })
-      if (r.ok) {
-        const cfg = await r.json()
-        const s = meta.apiSettings || {}
-        if (s.finProjectName) cfg.project_name = s.finProjectName
-        if (s.finBaseUrl) cfg.fin_server_url = s.finBaseUrl
-        if (s.finInterval) cfg.polling = { ...(cfg.polling || {}), live_ms: s.finInterval }
-        zip.file('backend/config.json', JSON.stringify(cfg, null, 2))
-      }
-    } catch { /* skip if not available */ }
-
-    // Launch script: installs deps and starts the FastAPI backend (serves viewer + API)
-    const winBat = [
-      '@echo off',
-      'echo ============================================',
-      'echo   EKO Digital Twin Viewer + FIN Backend',
-      'echo ============================================',
-      'echo.',
-      'echo Checking Python...',
-      'python --version >nul 2>&1 || (echo Python not found. Please install Python 3.10+ && pause && exit /b 1)',
-      'echo.',
-      'echo Installing backend dependencies...',
-      'cd /d "%~dp0backend"',
-      'pip install -r requirements.txt --quiet',
-      'echo.',
-      'echo Starting server on port 8000.',
-      'echo   This device:    http://127.0.0.1:8000/',
-      'echo   Other devices:  http://[this-machine-ip]:8000/',
-      'echo.',
-      'echo Sign in with your server credentials when the page opens.',
-      'echo Press Ctrl+C to stop.',
-      'echo.',
-      'start http://127.0.0.1:8000/',
-      // Bind all interfaces so other machines on the LAN can reach the viewer.
-      'python -m uvicorn main:app --host 0.0.0.0 --port 8000',
-      'pause',
-    ].join('\r\n')
-
-    zip.file('Start_Viewer_Windows.bat', winBat)
-  } catch (err) {
-    console.error("Failed to include viewer assets in zip", err)
+  const res = await fetch('/viewer-assets.json?t=' + Date.now(), { cache: 'no-store' })
+  if (!res.ok) {
+    throw new Error('Viewer assets not bundled. Run `npm run build` in the studio first.')
   }
+  const files: { path: string, content: string }[] = await res.json()
+  for (const f of files) {
+    if (f.path === 'index.html') continue // Skip the studio app entry
+    // Place all viewer static assets inside backend/static/ so FastAPI can serve them
+    zip.file(`backend/static/${f.path}`, f.content, { base64: true })
+  }
+
+  // Bundle backend Python files. These are served by a dev-server middleware, so a
+  // studio running from a built dist/ cannot reach them — fail loudly rather than
+  // ship a bundle with no backend.
+  const backendFiles = [
+    { name: 'main.py', url: '/backend/main.py' },
+    { name: 'fin_client.py', url: '/backend/fin_client.py' },
+    { name: 'requirements.txt', url: '/backend/requirements.txt' },
+    { name: 'login.html', url: '/backend/login.html' },
+  ]
+  for (const bf of backendFiles) {
+    const r = await fetch(bf.url + '?t=' + Date.now(), { cache: 'no-store' })
+    if (!r.ok) {
+      throw new Error(`Could not read ${bf.url} (HTTP ${r.status}). Export the project from \`npm run dev\`.`)
+    }
+    zip.file(`backend/${bf.name}`, await r.text())
+  }
+
+  // config.json — start from the repo file and overlay only the connection fields
+  // the settings modal owns. Point maps are deliberately left alone: config.json
+  // holds equipment_classes / meter_profile / realtime_endpoints and an audited
+  // live_point_ids set that the modal does not model, so overwriting them from
+  // apiSettings would drop backend-only mappings and revive retired point IDs.
+  try {
+    const r = await fetch('/backend/config.json?t=' + Date.now(), { cache: 'no-store' })
+    if (r.ok) {
+      const cfg = await r.json()
+      const s = meta.apiSettings || {}
+      if (s.finProjectName) cfg.project_name = s.finProjectName
+      if (s.finBaseUrl) cfg.fin_server_url = s.finBaseUrl
+      if (s.finInterval) cfg.polling = { ...(cfg.polling || {}), live_ms: s.finInterval }
+      zip.file('backend/config.json', JSON.stringify(cfg, null, 2))
+    }
+  } catch { /* skip if not available */ }
+
+  // Launch script: installs deps and starts the FastAPI backend (serves viewer + API)
+  const winBat = [
+    '@echo off',
+    'echo ============================================',
+    'echo   EKO Digital Twin Viewer + FIN Backend',
+    'echo ============================================',
+    'echo.',
+    'echo Checking Python...',
+    'python --version >nul 2>&1 || (echo Python not found. Please install Python 3.10+ && pause && exit /b 1)',
+    'echo.',
+    'echo Installing backend dependencies...',
+    'cd /d "%~dp0backend"',
+    'pip install -r requirements.txt --quiet',
+    'echo.',
+    'echo Starting server on port 8000.',
+    'echo   This device:    http://127.0.0.1:8000/',
+    'echo   Other devices:  http://[this-machine-ip]:8000/',
+    'echo.',
+    'echo Sign in with your server credentials when the page opens.',
+    'echo Press Ctrl+C to stop.',
+    'echo.',
+    'start http://127.0.0.1:8000/',
+    // Bind all interfaces so other machines on the LAN can reach the viewer.
+    'python -m uvicorn main:app --host 0.0.0.0 --port 8000',
+    'pause',
+  ].join('\r\n')
+
+  zip.file('Start_Viewer_Windows.bat', winBat)
 
   return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 3 } })
 }
