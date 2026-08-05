@@ -9,7 +9,6 @@ export interface ModelLoadProgress {
   bytesRead: number
   phase: LoadPhase
   readMs?: number
-  indexMs?: number
   parseMs?: number
   error?: string
 }

@@ -1,6 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import * as THREE from 'three'
-import * as OBC from '@thatopen/components'
 import * as OBF from '@thatopen/components-front'
 import { useFragmentsEngine } from '@/hooks/useFragmentsEngine'
 import { useModelLoader } from '@/hooks/useModelLoader'
@@ -356,43 +355,7 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
     let fragHitDistance = Infinity;
 
     try {
-      // 0. Try OBC.Raycasters natively with EXPLICIT position!
-      const casters = engine.components.get(OBC.Raycasters);
-      const caster = casters.get(engine.world);
-      if (caster) {
-        try {
-          const result = await caster.castRay({ position: ndc });
-          if (result && result.object) {
-            // we got a hit natively!
-            hitPoint = result.point;
-            let modelId = result.object.userData?.modelId;
-            let curr: any = result.object;
-            while (!modelId && curr.parent) {
-              curr = curr.parent;
-              modelId = curr.userData?.modelId;
-            }
-            if (!modelId) {
-              for (const [id, model] of engine.fragments.models.list.entries()) {
-                const m = model as any;
-                if (m === result.object || m.object === result.object || m === curr || m.object === curr) {
-                  modelId = id; break;
-                }
-              }
-            }
-            if (modelId) {
-              hitModelId = modelId;
-              hitExpressId = (result as any).localId?.toString() || result.instanceId?.toString() || (result as any).batchId?.toString() || '0';
-            }
-          } else {
-             // Let's try with window pixel position as a sanity check for native castRay
-             const pixelResult = await caster.castRay({ position: rawPx });
-          }
-        } catch (nativeErr) {
-          console.error('[ViewerCanvas] Native castRay threw:', nativeErr);
-        }
-      }
-
-      // 1. Native Fragment Raycast (Robust fallback logic)
+      // 1. Native Fragment Raycast
       if (canvas) {
         for (const [modelId, m] of engine.fragments.models.list.entries()) {
           try {

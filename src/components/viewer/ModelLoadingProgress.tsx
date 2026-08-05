@@ -20,7 +20,7 @@ function statusLabel(e: ModelLoadProgress, source: 'disk' | 'server' | null) {
       return size ? `${readVerb} ${Math.min(100, Math.round((e.bytesRead / size) * 100))}%` : readVerb
     }
     case 'parsing': return 'parsing…'
-    case 'done': return `done · ${fmtMs((e.readMs ?? 0) + (e.indexMs ?? 0) + (e.parseMs ?? 0))}`
+    case 'done': return `done · ${fmtMs((e.readMs ?? 0) + (e.parseMs ?? 0))}`
     case 'error': return 'failed'
   }
 }
@@ -58,7 +58,6 @@ export function ModelLoadingProgress() {
       model: e.name,
       size: fmtMB(e.sizeBytes || e.bytesRead),
       [source === 'server' ? 'download' : 'disk read']: fmtMs(e.readMs),
-      'picking index': fmtMs(e.indexMs),
       'engine parse': fmtMs(e.parseMs),
       status: e.phase === 'error' ? `error: ${e.error}` : 'ok',
     })))

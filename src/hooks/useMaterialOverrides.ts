@@ -1,6 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react'
 import * as THREE from 'three'
-import * as OBC from '@thatopen/components'
 import { useProjectStore } from '@/store/useProjectStore'
 import { useModelStore } from '@/store/useModelStore'
 import type { FragmentsEngine } from '@/lib/fragmentsEngine'
@@ -274,10 +273,6 @@ export function useMaterialOverrides(engineRef: React.MutableRefObject<Fragments
                            if (typeof fragModel.getItemsGeometry === 'function') {
                               if (typeof fragModel.setVisible === 'function') {
                                  fragModel.setVisible(items, false);
-                              } else {
-                                 const hider = engine.components.get(OBC.Hider);
-                                 const modelIdMap = { [modelId]: new Set(items) };
-                                 hider.set(false, modelIdMap);
                               }
                            } else {
                              const rootObj = fragModel.object || fragModel;

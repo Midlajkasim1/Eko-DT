@@ -24,7 +24,6 @@ import { N8AOPass } from 'n8ao'
 
 export interface FragmentsEngine {
   fragments: FRAGS.FragmentsModels
-  obcFragments: OBC.FragmentsManager
   world: any
   components: OBC.Components
   dispose: () => Promise<void>
@@ -667,9 +666,6 @@ export async function initFragmentsEngine(
   const workerUrl = await FRAGS.FragmentsModels.getWorker()
   const fragments = new FRAGS.FragmentsModels(workerUrl)
 
-  const obcFragments = components.get(OBC.FragmentsManager)
-  obcFragments.init(workerUrl)
-
   world.camera.controls.addEventListener('update', () => fragments.update())
 
   fragments.models.materials.list.onItemSet.add(({ value: material }: any) => {
@@ -790,5 +786,5 @@ export async function initFragmentsEngine(
     components.dispose()
   }
 
-  return { fragments, obcFragments, world, components, dispose, setLightingParams }
+  return { fragments, world, components, dispose, setLightingParams }
 }

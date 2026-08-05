@@ -78,16 +78,6 @@ export function useModelLoader(engineRef: React.MutableRefObject<FragmentsEngine
         const existing = engine.fragments.models.list.get(modelId)
         if (existing) await engine.fragments.disposeModel(modelId)
 
-        // Also register model in OBC FragmentsManager so picking tools can find it
-        const indexStart = performance.now()
-        try {
-          const obcBuffer = fragBytes.slice(0); // clone to avoid transfer issues
-          await (engine.obcFragments as any).core?.load?.(obcBuffer, { modelId });
-        } catch (e) {
-          console.warn('OBC.FragmentsManager load failed:', e);
-        }
-        progress.updateEntry(modelId, { indexMs: performance.now() - indexStart })
-
         const parseStart = performance.now()
         const model = await engine.fragments.load(fragBytes, { modelId })
         model.useCamera(engine.world.camera.three)
