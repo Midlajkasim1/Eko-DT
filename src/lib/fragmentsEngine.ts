@@ -122,6 +122,7 @@ export async function initFragmentsEngine(
   let bloomPass: UnrealBloomPass
   let currentCloudSpeed = 1.0
   let bokehPass: any
+  let renderPass: RenderPass
   let ssaoPass: any
   let ssrPass: any
   let colorGradePass: any
@@ -157,6 +158,8 @@ export async function initFragmentsEngine(
     
     if (ssaoPass) {
       ssaoPass.enabled = params.realisticMode && params.ambientOcclusion !== false
+      // N8AO renders the scene itself, so RenderPass would only be overwritten
+      renderPass.enabled = !ssaoPass.enabled
       if (params.aoRadius !== undefined) ssaoPass.configuration.aoRadius = params.aoRadius
       if (params.aoIntensity !== undefined) ssaoPass.configuration.intensity = params.aoIntensity
     }
@@ -447,7 +450,7 @@ export async function initFragmentsEngine(
   composer.renderTarget2.depthTexture = new THREE.DepthTexture(window.innerWidth, window.innerHeight)
   composer.renderTarget2.depthBuffer = true
   
-  const renderPass = new RenderPass(world.scene.three, world.camera.three)
+  renderPass = new RenderPass(world.scene.three, world.camera.three)
   composer.addPass(renderPass)
 
   // Ambient Occlusion (N8AO) - MUST be immediately after RenderPass to avoid overwriting other effects
@@ -462,6 +465,7 @@ export async function initFragmentsEngine(
   // @ts-ignore - explicitly disable double gamma correction if the property exists
   if (ssaoPass.configuration.gammaCorrection !== undefined) ssaoPass.configuration.gammaCorrection = false
   ssaoPass.enabled = false
+  renderPass.enabled = !ssaoPass.enabled
   composer.addPass(ssaoPass)
 
   // Bloom Pass
@@ -538,6 +542,7 @@ export async function initFragmentsEngine(
   composer.addPass(bokehPass)
 
   const clock = new THREE.Clock()
+  const depthMaterial = new THREE.MeshDepthMaterial()
   const defaultUpdate = world.renderer.update.bind(world.renderer)
   world.renderer.update = () => {
     const delta = clock.getDelta()
@@ -622,12 +627,16 @@ export async function initFragmentsEngine(
           }
         })
 
-        world.scene.three.overrideMaterial = new THREE.MeshDepthMaterial()
+        // The depth material ignores lighting, so the shadow map cannot affect this pass
+        const shadowAutoUpdate = world.renderer.three.shadowMap.autoUpdate
+        world.renderer.three.shadowMap.autoUpdate = false
+        world.scene.three.overrideMaterial = depthMaterial
         world.renderer.three.setRenderTarget(sceneDepthRT)
         world.renderer.three.clear()
         world.renderer.three.render(world.scene.three, world.camera.three)
         world.renderer.three.setRenderTarget(null)
         world.scene.three.overrideMaterial = null
+        world.renderer.three.shadowMap.autoUpdate = shadowAutoUpdate
 
         sky.visible = skyVisible
         cloudsDome.visible = cloudsVisible
@@ -783,6 +792,7 @@ export async function initFragmentsEngine(
   const dispose = async () => {
     const ids = [...fragments.models.list.values()].map((m: any) => m.modelId)
     await Promise.all(ids.map((id: string) => fragments.disposeModel(id)))
+    depthMaterial.dispose()
     components.dispose()
   }
 
