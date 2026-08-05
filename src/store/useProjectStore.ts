@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { ProjectMeta, ProjectModelEntry, LoadedModel } from '@/types'
+import type { ProjectMeta, ProjectModelEntry, LoadedModel, RecentProjectCard } from '@/types'
 import {
   createProjectInFolder,
   openProjectFolder,
@@ -14,12 +14,16 @@ import {
   verifyHandlePermission,
   removeCachedHandle,
   cacheHandle,
+  cardFromMeta,
 } from '@/lib/projectDb'
 
 interface RecentProject {
-  meta: ProjectMeta
+  card: RecentProjectCard
   handle: FileSystemDirectoryHandle
 }
+
+const refreshCard = (recent: RecentProject[], meta: ProjectMeta): RecentProject[] =>
+  recent.map(r => (r.card.projectId === meta.projectId ? { ...r, card: cardFromMeta(meta) } : r))
 
 const PROJECT_COUNT_KEY = 'eko:recent-project-count'
 /** Never counted before (fresh install / cleared storage) — assume none rather than
@@ -86,30 +90,17 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     const valid: RecentProject[] = []
     const seenIds = new Set<string>()
 
-    for (const { projectId, handle, meta: cachedMeta, thumbnail: cachedThumb } of cached) {
-      try {
-        let meta = await loadProjectFromHandle(handle)
-        
-        if (!meta && cachedMeta) {
-          meta = cachedMeta
-          if (cachedThumb) (meta as any).thumbnail = cachedThumb
-        }
-
-        if (meta) {
-          if (seenIds.has(meta.projectId) || meta.projectId !== projectId) {
-            await removeCachedHandle(projectId)
-          }
-
-          if (!seenIds.has(meta.projectId)) {
-            seenIds.add(meta.projectId)
-            valid.push({ meta, handle })
-          }
-        }
-      } catch {
+    for (const { projectId, handle, card } of cached) {
+      if (!card || seenIds.has(card.projectId) || card.projectId !== projectId) {
         await removeCachedHandle(projectId)
+        if (!card) continue
+      }
+      if (!seenIds.has(card.projectId)) {
+        seenIds.add(card.projectId)
+        valid.push({ card, handle })
       }
     }
-    valid.sort((a, b) => b.meta.updatedAt - a.meta.updatedAt)
+    valid.sort((a, b) => b.card.updatedAt - a.card.updatedAt)
     writeKnownProjectCount(valid.length)
     set({ recentProjects: valid, isLoading: false, knownProjectCount: valid.length })
   },
@@ -120,7 +111,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     const { meta, handle } = result
 
     // Refresh recent list
-    const recent = [{ meta, handle }, ...get().recentProjects]
+    const recent = [{ card: cardFromMeta(meta), handle }, ...get().recentProjects]
     writeKnownProjectCount(recent.length)
     set({
       currentProject: meta,
@@ -138,8 +129,8 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     const { meta, handle } = result
 
     const recent = [
-      { meta, handle },
-      ...get().recentProjects.filter(r => r.meta.projectId !== meta.projectId),
+      { card: cardFromMeta(meta), handle },
+      ...get().recentProjects.filter(r => r.card.projectId !== meta.projectId),
     ]
     writeKnownProjectCount(recent.length)
     set({
@@ -160,12 +151,12 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
     await cacheHandle(meta.projectId, handle, meta, (meta as any).thumbnail)
 
-    const recent = get().recentProjects.filter(r => r.meta.projectId !== meta.projectId)
+    const recent = get().recentProjects.filter(r => r.card.projectId !== meta.projectId)
     set({
       currentProject: meta,
       folderHandle: handle,
       isDirty: false,
-      recentProjects: [{ meta, handle }, ...recent],
+      recentProjects: [{ card: cardFromMeta(meta), handle }, ...recent],
     })
     return meta
   },
@@ -192,15 +183,13 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       return;
     }
 
-    const recent = get().recentProjects.map(r =>
-      r.meta.projectId === updated.projectId ? { ...r, meta: updated } : r
-    )
+    const recent = refreshCard(get().recentProjects, updated)
     set({ currentProject: updated, isDirty: false, recentProjects: recent })
   },
 
   deleteRecentProject: async (projectId: string) => {
     await removeCachedHandle(projectId)
-    const recent = get().recentProjects.filter(r => r.meta.projectId !== projectId)
+    const recent = get().recentProjects.filter(r => r.card.projectId !== projectId)
     writeKnownProjectCount(recent.length)
     set({ recentProjects: recent, knownProjectCount: recent.length })
   },
@@ -270,9 +259,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       throw err; // rethrow so the caller (like useIfcConverter) knows it failed
     }
 
-    const recent = get().recentProjects.map(r =>
-      r.meta.projectId === updated.projectId ? { ...r, meta: updated } : r
-    )
+    const recent = refreshCard(get().recentProjects, updated)
     set({ currentProject: updated, isDirty: false, recentProjects: recent })
 
     return entry
@@ -301,9 +288,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       return;
     }
 
-    const recent = get().recentProjects.map(r =>
-      r.meta.projectId === updated.projectId ? { ...r, meta: updated } : r
-    )
+    const recent = refreshCard(get().recentProjects, updated)
     set({ currentProject: updated, isDirty: false, recentProjects: recent })
   },
 
@@ -313,9 +298,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     await saveThumbnailToProject(folderHandle, dataUrl)
     const updated = { ...currentProject, thumbnail: dataUrl }
     
-    const updatedRecent = recentProjects.map(r => 
-      r.meta.projectId === updated.projectId ? { ...r, meta: updated } : r
-    )
+    const updatedRecent = refreshCard(recentProjects, updated)
     
     set({ currentProject: updated, recentProjects: updatedRecent })
   },
@@ -338,9 +321,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       return;
     }
     
-    const updatedRecent = recentProjects.map(r => 
-      r.meta.projectId === updated.projectId ? { ...r, meta: updated } : r
-    )
+    const updatedRecent = refreshCard(recentProjects, updated)
     
     set({ currentProject: updated, recentProjects: updatedRecent })
   },
@@ -369,9 +350,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       return;
     }
 
-    const recent = get().recentProjects.map(r =>
-      r.meta.projectId === updated.projectId ? { ...r, meta: updated } : r
-    )
+    const recent = refreshCard(get().recentProjects, updated)
     set({ currentProject: updated, isDirty: false, recentProjects: recent })
   },
 
@@ -400,9 +379,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       return;
     }
 
-    const recent = get().recentProjects.map(r =>
-      r.meta.projectId === updated.projectId ? { ...r, meta: updated } : r
-    )
+    const recent = refreshCard(get().recentProjects, updated)
     set({ currentProject: updated, isDirty: false, recentProjects: recent })
   },
 
@@ -431,9 +408,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       return;
     }
 
-    const recent = get().recentProjects.map(r =>
-      r.meta.projectId === updated.projectId ? { ...r, meta: updated } : r
-    )
+    const recent = refreshCard(get().recentProjects, updated)
     set({ currentProject: updated, isDirty: false, recentProjects: recent })
   },
 

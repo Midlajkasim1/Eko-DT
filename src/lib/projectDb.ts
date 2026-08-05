@@ -1,5 +1,5 @@
 import { get, set, del, keys, createStore } from 'idb-keyval'
-import type { ProjectMeta, ProjectModel } from '@/types'
+import type { ProjectMeta, ProjectModel, RecentProjectCard } from '@/types'
 
 // Only used to CACHE folder handles for "recent projects" — no actual data stored here
 const handleStore = createStore('ifcviewer-handles', 'folder-handles')
@@ -13,23 +13,39 @@ export interface FolderProject {
 
 // ─── Handle Cache (recent projects) ──────────────────────────────────────────
 
-export async function cacheHandle(projectId: string, handle: FileSystemDirectoryHandle, meta: ProjectMeta, thumbnail?: string) {
-  await set(projectId, { handle, meta, thumbnail }, handleStore)
+export function cardFromMeta(meta: ProjectMeta, thumbnail?: string): RecentProjectCard {
+  return {
+    projectId: meta.projectId,
+    name: meta.name,
+    modelCount: meta.models.length,
+    updatedAt: meta.updatedAt,
+    isFinProject: meta.isFinProject,
+    thumbnail: thumbnail ?? (meta as any).thumbnail,
+  }
 }
 
-export async function getCachedHandles(): Promise<{ projectId: string; handle: FileSystemDirectoryHandle; meta?: ProjectMeta; thumbnail?: string }[]> {
+export async function cacheHandle(projectId: string, handle: FileSystemDirectoryHandle, meta: ProjectMeta, thumbnail?: string) {
+  await set(projectId, { handle, card: cardFromMeta(meta, thumbnail) }, handleStore)
+}
+
+export async function getCachedHandles(): Promise<{ projectId: string; handle: FileSystemDirectoryHandle; card?: RecentProjectCard }[]> {
   const allKeys = await keys(handleStore)
-  const results: { projectId: string; handle: FileSystemDirectoryHandle; meta?: ProjectMeta; thumbnail?: string }[] = []
+  const results: { projectId: string; handle: FileSystemDirectoryHandle; card?: RecentProjectCard }[] = []
   for (const key of allKeys) {
     const val = await get<any>(key, handleStore)
-    if (val) {
-      if (val.kind === 'directory') {
-        // legacy format: just the handle
-        results.push({ projectId: String(key), handle: val })
-      } else if (val.handle) {
-        // new format: { handle, meta, thumbnail }
-        results.push({ projectId: String(key), handle: val.handle, meta: val.meta, thumbnail: val.thumbnail })
-      }
+    if (!val) continue
+    if (val.kind === 'directory') {
+      // legacy format: just the handle
+      results.push({ projectId: String(key), handle: val })
+    } else if (val.card) {
+      results.push({ projectId: String(key), handle: val.handle, card: val.card })
+    } else if (val.handle && val.meta) {
+      // legacy format: the whole meta, which is what made this store enormous
+      const card = cardFromMeta(val.meta, val.thumbnail)
+      await set(key, { handle: val.handle, card }, handleStore)
+      results.push({ projectId: String(key), handle: val.handle, card })
+    } else if (val.handle) {
+      results.push({ projectId: String(key), handle: val.handle })
     }
   }
   return results

@@ -115,6 +115,16 @@ export interface ProjectMeta {
   materialOverrides?: Record<string, MaterialOverride>
 }
 
+/** Everything the project list renders, so opening it never parses project.json */
+export interface RecentProjectCard {
+  projectId: string
+  name: string
+  modelCount: number
+  updatedAt: number
+  isFinProject?: boolean
+  thumbnail?: string
+}
+
 export interface ProjectApiSettings {
   finBaseUrl?: string
   finProjectName?: string

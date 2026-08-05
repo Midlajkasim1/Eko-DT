@@ -5,7 +5,7 @@ import { useModelStore } from '@/store/useModelStore'
 import { useLoadingProgressStore } from '@/store/useLoadingProgressStore'
 import { loadModelsFromProject } from '@/lib/projectDb'
 import { ProjectListSkeleton } from '@/components/project/ProjectListSkeleton'
-import type { ProjectMeta } from '@/types'
+import type { ProjectMeta, RecentProjectCard } from '@/types'
 import type { FragmentsEngine } from '@/lib/fragmentsEngine'
 import * as THREE from 'three'
 
@@ -59,8 +59,8 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
     }
   }
 
-  const handleOpenRecent = async (meta: ProjectMeta, handle: FileSystemDirectoryHandle) => {
-    setOpeningId(meta.projectId)
+  const handleOpenRecent = async (card: RecentProjectCard, handle: FileSystemDirectoryHandle) => {
+    setOpeningId(card.projectId)
     try {
       const openedMeta = await openRecentProject(handle)
       if (openedMeta) {
@@ -140,7 +140,7 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
     return <ProjectListSkeleton cardCount={knownProjectCount} />
   }
 
-  const sortedProjects = [...recentProjects].sort((a, b) => (b.meta.updatedAt || 0) - (a.meta.updatedAt || 0));
+  const sortedProjects = [...recentProjects].sort((a, b) => (b.card.updatedAt || 0) - (a.card.updatedAt || 0));
 
   return (
     <div className="project-list-page">
@@ -213,15 +213,15 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
         </div>
       ) : (
         <div className="project-grid">
-          {sortedProjects.map(({ meta, handle }) => (
+          {sortedProjects.map(({ card, handle }) => (
             <ProjectCard
-              key={meta.projectId}
-              project={meta}
-              isOpening={openingId === meta.projectId}
-              isDeleting={deletingId === meta.projectId}
-              onOpen={() => handleOpenRecent(meta, handle)}
-              onRemoveRecent={() => setDeletingId(meta.projectId)}
-              onConfirmRemove={() => handleDeleteRecent(meta.projectId)}
+              key={card.projectId}
+              project={card}
+              isOpening={openingId === card.projectId}
+              isDeleting={deletingId === card.projectId}
+              onOpen={() => handleOpenRecent(card, handle)}
+              onRemoveRecent={() => setDeletingId(card.projectId)}
+              onConfirmRemove={() => handleDeleteRecent(card.projectId)}
               onCancelRemove={() => setDeletingId(null)}
               formatDate={formatDate}
             />
@@ -233,7 +233,7 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
 }
 
 interface ProjectCardProps {
-  project: ProjectMeta
+  project: RecentProjectCard
   isOpening: boolean
   isDeleting: boolean
   onOpen: () => void
@@ -248,10 +248,7 @@ function ProjectCard({
   onOpen, onRemoveRecent, onConfirmRemove, onCancelRemove,
   formatDate
 }: ProjectCardProps) {
-  // NOTE: For File System API, we don't have the thumbnail dataURL directly inside project.json usually, 
-  // but if we store a lightweight thumbnail dataURL in the meta, it works. 
-  // Let's assume we read it from meta if present.
-  const thumbnail = (project as any).thumbnail
+  const thumbnail = project.thumbnail
 
   return (
     <div className={`project-card ${isOpening ? 'opening' : ''}`}>
@@ -279,7 +276,7 @@ function ProjectCard({
       <div className="project-card-body">
         <h3 className="project-card-name" title={project.name}>{project.name}</h3>
         <div className="project-card-meta">
-          <span style={{ fontFamily: 'var(--font-mono)' }}>{project.models?.length || 0}</span> model{(project.models?.length !== 1) ? 's' : ''}
+          <span style={{ fontFamily: 'var(--font-mono)' }}>{project.modelCount}</span> model{project.modelCount !== 1 ? 's' : ''}
           <span className="project-card-meta-sep">·</span>
           {formatDate(project.updatedAt)}
           {project.isFinProject && (
