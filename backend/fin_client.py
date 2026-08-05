@@ -35,30 +35,49 @@ def safe_get(obj: Any, key: str, default: Any = None) -> Any:
     return default
 
 
+def collapse_metadata_blocks(text: str) -> str:
+    """Replace each << ... >> metadata block with a single quoted placeholder.
+
+    A nested << emits its own placeholder and an unterminated one drops the rest
+    of the text, matching the character-at-a-time scanner this replaced.
+    """
+    if "<<" not in text:
+        return text
+
+    out: list[str] = []
+    depth = 0
+    i = 0
+    n = len(text)
+    while i < n:
+        open_at = text.find("<<", i)
+        if depth == 0:
+            if open_at == -1:
+                out.append(text[i:])
+                break
+            out.append(text[i:open_at])
+            out.append('"[METADATA_BLOCK]"')
+            depth += 1
+            i = open_at + 2
+            continue
+        close_at = text.find(">>", i)
+        if open_at == -1 and close_at == -1:
+            break
+        if close_at == -1 or (open_at != -1 and open_at < close_at):
+            out.append('"[METADATA_BLOCK]"')
+            depth += 1
+            i = open_at + 2
+        else:
+            depth -= 1
+            i = close_at + 2
+    return "".join(out)
+
+
 def parse_zinc_csv(text: str) -> list[dict]:
     """Parse Zinc/CSV formatted response from FIN server into list of dicts."""
     if not text:
         return []
 
-    # Pre-process: collapse << ... >> metadata blocks
-    processed_text = ""
-    in_block = 0
-    i = 0
-    while i < len(text):
-        if text[i:i+2] == "<<":
-            in_block += 1
-            processed_text += '"[METADATA_BLOCK]"'
-            i += 2
-            continue
-        elif text[i:i+2] == ">>" and in_block > 0:
-            in_block -= 1
-            i += 2
-            continue
-        if in_block == 0:
-            processed_text += text[i]
-        i += 1
-
-    lines = processed_text.strip().split('\n')
+    lines = collapse_metadata_blocks(text).strip().split('\n')
 
     # Find header line
     header_idx = -1
