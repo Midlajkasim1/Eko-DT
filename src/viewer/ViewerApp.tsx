@@ -16,18 +16,33 @@ async function readBodyWithProgress(
   if (!res.body) return res.arrayBuffer()
   const total = Number(res.headers.get('content-length')) || 0
   const reader = res.body.getReader()
-  const chunks: Uint8Array[] = []
+  // Fill the final buffer directly. Anything content-length did not account for spills
+  // into chunks, which keeps a wrong content-length from corrupting the result.
+  const declared = total > 0 ? new Uint8Array(total) : null
+  const spill: Uint8Array[] = []
+  let filled = 0
   let read = 0
   for (;;) {
     const { done, value } = await reader.read()
     if (done) break
-    chunks.push(value)
+    if (declared && spill.length === 0 && filled + value.length <= total) {
+      declared.set(value, filled)
+      filled += value.length
+    } else {
+      spill.push(value)
+    }
     read += value.length
     onBytes(read, total)
   }
+
+  if (declared && spill.length === 0) {
+    return read === total ? declared.buffer : declared.buffer.slice(0, read)
+  }
+
   const out = new Uint8Array(read)
-  let offset = 0
-  for (const c of chunks) {
+  if (declared) out.set(declared.subarray(0, filled))
+  let offset = filled
+  for (const c of spill) {
     out.set(c, offset)
     offset += c.length
   }
