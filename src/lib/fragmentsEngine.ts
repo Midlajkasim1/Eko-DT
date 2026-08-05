@@ -672,8 +672,9 @@ export async function initFragmentsEngine(
   const grid = grids.create(world)
   grid.visible = false
 
-  const workerUrl = await FRAGS.FragmentsModels.getWorker()
-  const fragments = new FRAGS.FragmentsModels(workerUrl)
+  // No workerURL: the library then resolves the worker bundled with the package,
+  // instead of FragmentsModels.getWorker() fetching it from unpkg.com
+  const fragments = new FRAGS.FragmentsModels()
 
   world.camera.controls.addEventListener('update', () => fragments.update())
 
