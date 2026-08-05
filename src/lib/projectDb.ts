@@ -114,6 +114,30 @@ export async function readBinary(dir: FileSystemDirectoryHandle, filename: strin
   }
 }
 
+export async function readBinaryStreaming(
+  dir: FileSystemDirectoryHandle,
+  filename: string,
+  onBytes?: (bytesRead: number, totalBytes: number) => void
+): Promise<ArrayBuffer | null> {
+  try {
+    const fh = await dir.getFileHandle(filename)
+    const file = await fh.getFile()
+    const reader = file.stream().getReader()
+    const buf = new Uint8Array(file.size)
+    let offset = 0
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buf.set(value, offset)
+      offset += value.length
+      onBytes?.(offset, file.size)
+    }
+    return buf.buffer
+  } catch {
+    return null
+  }
+}
+
 export async function deleteFile(dir: FileSystemDirectoryHandle, filename: string) {
   try {
     await dir.removeEntry(filename)
@@ -232,7 +256,8 @@ export async function saveModelToProject(
 export async function loadModelsFromProject(
   handle: FileSystemDirectoryHandle,
   meta: ProjectMeta,
-  onModel?: (model: ProjectModel) => void
+  onModel?: (model: ProjectModel, readMs: number) => void,
+  onBytes?: (modelId: string, bytesRead: number, totalBytes: number) => void
 ): Promise<ProjectModel[]> {
   const modelsDir = await handle.getDirectoryHandle('models', { create: true })
   const results: ProjectModel[] = []
@@ -240,13 +265,14 @@ export async function loadModelsFromProject(
   for (const entry of meta.models) {
     const ext = entry.type === 'glb' ? 'glb' : 'frag'
     const fileName = `${entry.modelId}.${ext}`
-    const bytes = await readBinary(modelsDir, fileName)
+    const readStart = performance.now()
+    const bytes = await readBinaryStreaming(modelsDir, fileName, (read, total) => onBytes?.(entry.modelId, read, total))
     if (bytes) {
       const model = { ...entry, fragBytes: bytes }
       results.push(model)
       // Hand each model over as soon as its bytes land so callers can show it
       // immediately instead of waiting for the whole (potentially GB-sized) set
-      onModel?.(model)
+      onModel?.(model, performance.now() - readStart)
     }
   }
 
@@ -281,8 +307,11 @@ export async function exportProjectAsZip(handle: FileSystemDirectoryHandle, meta
   const JSZip = (await import('jszip')).default
   const zip = new JSZip()
 
-  // Project metadata and models go inside backend/ so FastAPI can serve them
-  zip.file('backend/project.json', JSON.stringify(meta, null, 2))
+  // Project metadata and models go inside backend/ so FastAPI can serve them.
+  // Force finDirectMode off — this bundle ships the FastAPI backend, so the viewer
+  // must proxy through it instead of calling FIN straight from the browser.
+  const backendMeta = { ...meta, apiSettings: { ...(meta.apiSettings || {}), finDirectMode: false } }
+  zip.file('backend/project.json', JSON.stringify(backendMeta, null, 2))
 
   // Thumbnail
   try {
@@ -319,8 +348,8 @@ export async function exportProjectAsZip(handle: FileSystemDirectoryHandle, meta
     const backendFiles = [
       { name: 'main.py', url: '/backend/main.py' },
       { name: 'fin_client.py', url: '/backend/fin_client.py' },
-      { name: 'config.json', url: '/backend/config.json' },
       { name: 'requirements.txt', url: '/backend/requirements.txt' },
+      { name: 'login.html', url: '/backend/login.html' },
     ]
     for (const bf of backendFiles) {
       try {
@@ -331,6 +360,23 @@ export async function exportProjectAsZip(handle: FileSystemDirectoryHandle, meta
         }
       } catch { /* skip if not available */ }
     }
+
+    // config.json — start from the repo file and overlay only the connection fields
+    // the settings modal owns. Point maps are deliberately left alone: config.json
+    // holds equipment_classes / meter_profile / realtime_endpoints and an audited
+    // live_point_ids set that the modal does not model, so overwriting them from
+    // apiSettings would drop backend-only mappings and revive retired point IDs.
+    try {
+      const r = await fetch('/backend/config.json?t=' + Date.now(), { cache: 'no-store' })
+      if (r.ok) {
+        const cfg = await r.json()
+        const s = meta.apiSettings || {}
+        if (s.finProjectName) cfg.project_name = s.finProjectName
+        if (s.finBaseUrl) cfg.fin_server_url = s.finBaseUrl
+        if (s.finInterval) cfg.polling = { ...(cfg.polling || {}), live_ms: s.finInterval }
+        zip.file('backend/config.json', JSON.stringify(cfg, null, 2))
+      }
+    } catch { /* skip if not available */ }
 
     // Launch script: installs deps and starts the FastAPI backend (serves viewer + API)
     const winBat = [
@@ -346,11 +392,16 @@ export async function exportProjectAsZip(handle: FileSystemDirectoryHandle, meta
       'cd /d "%~dp0backend"',
       'pip install -r requirements.txt --quiet',
       'echo.',
-      'echo Starting server on http://127.0.0.1:8000/viewer.html',
+      'echo Starting server on port 8000.',
+      'echo   This device:    http://127.0.0.1:8000/',
+      'echo   Other devices:  http://[this-machine-ip]:8000/',
+      'echo.',
+      'echo Sign in with your server credentials when the page opens.',
       'echo Press Ctrl+C to stop.',
       'echo.',
-      'start http://127.0.0.1:8000/viewer.html',
-      'python -m uvicorn main:app --host 127.0.0.1 --port 8000',
+      'start http://127.0.0.1:8000/',
+      // Bind all interfaces so other machines on the LAN can reach the viewer.
+      'python -m uvicorn main:app --host 0.0.0.0 --port 8000',
       'pause',
     ].join('\r\n')
 

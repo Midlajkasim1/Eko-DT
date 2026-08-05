@@ -504,7 +504,10 @@ class FinScramClient:
         tasks = [self.fetch_api(v, is_text=True) for v in resolved.values()]
         results = await asyncio.gather(*tasks)
 
-        points_text, equip_text, alarms_text = results
+        # CPU-bound zinc parsing — off the event loop so file serving stays responsive
+        return await asyncio.to_thread(self._build_realtime, *results)
+
+    def _build_realtime(self, points_text: str, equip_text: str, alarms_text: str) -> dict:
         points = parse_zinc_csv(points_text)
         equipment = parse_zinc_csv(equip_text)
         alarms = parse_zinc_csv(alarms_text)
@@ -697,7 +700,9 @@ class FinScramClient:
         for key, endpoint_template in endpoints.items():
             endpoint = self._resolve_endpoint(endpoint_template)
             text = await self.fetch_api(endpoint, is_text=True)
-            power_histories[key] = aggregate_and_restructure(parse_custom_response(text)["rows"])
+            power_histories[key] = await asyncio.to_thread(
+                lambda t=text: aggregate_and_restructure(parse_custom_response(t)["rows"])
+            )
         return power_histories
 
     async def close(self):

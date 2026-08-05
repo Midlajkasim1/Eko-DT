@@ -14,6 +14,8 @@ import { RenderPanel } from '@/components/viewer/RenderPanel'
 import { DashboardOverlay } from '@/components/viewer/DashboardOverlay'
 import { MaterialPanel } from '@/components/viewer/MaterialPanel'
 import { FocusModeWidget } from '@/components/viewer/FocusModeWidget'
+import { ModelLoadingProgress } from '@/components/viewer/ModelLoadingProgress'
+import { useLoadingProgressStore } from '@/store/useLoadingProgressStore'
 import type { FragmentsEngine } from '@/lib/fragmentsEngine'
 
 interface ViewerCanvasProps {
@@ -45,6 +47,7 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
 
   const { engineRef, isReady, error } = useFragmentsEngine(containerRef)
   const { loadModel, isLoading } = useModelLoader(engineRef)
+  const progressSessionActive = useLoadingProgressStore(s => s.sessionActive)
   
   // Initialize material overrides
   useMaterialOverrides(engineRef)
@@ -133,6 +136,7 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
         }
       }
       loadedIdsRef.current.clear()
+      useLoadingProgressStore.getState().endSession()
     }
     // Models stream in one at a time, so this effect re-runs while an earlier
     // pass is still going — keep engine loads strictly sequential
@@ -614,8 +618,9 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
         </div>
       )}
 
-      {/* Loading overlay */}
-      {isLoading && (
+      {/* Loading progress — per-model status with live percentage */}
+      <ModelLoadingProgress />
+      {isLoading && !progressSessionActive && (
         <div className="viewer-overlay">
           <div className="viewer-overlay-inner">
             <div className="viewer-spinner" />
@@ -637,8 +642,8 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
         </div>
       )}
 
-      {/* Empty state hint */}
-      {step !== 'viewing' && !error && isReady && (
+      {/* Empty state hint — studio only; the exported viewer has no upload flow */}
+      {step !== 'viewing' && !error && isReady && adminMode && (
         <div className="viewer-empty">
           <div className="viewer-empty-inner">
             <svg viewBox="0 0 64 64" fill="none" width="64" height="64" opacity="0.15">

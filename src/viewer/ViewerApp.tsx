@@ -4,8 +4,35 @@ import { useAppStore } from '@/store/useAppStore'
 import { useModelStore } from '@/store/useModelStore'
 import { loadProjectFromHandle, loadModelsFromProject } from '@/lib/projectDb'
 import { useProjectStore } from '@/store/useProjectStore'
+import { useLoadingProgressStore } from '@/store/useLoadingProgressStore'
+import { SignInOverlay, checkSession } from '@/viewer/SignInOverlay'
 import type { FragmentsEngine } from '@/lib/fragmentsEngine'
 import type { LoadedModel, ProjectMeta } from '@/types'
+
+async function readBodyWithProgress(
+  res: Response,
+  onBytes: (bytesRead: number, totalBytes: number) => void
+): Promise<ArrayBuffer> {
+  if (!res.body) return res.arrayBuffer()
+  const total = Number(res.headers.get('content-length')) || 0
+  const reader = res.body.getReader()
+  const chunks: Uint8Array[] = []
+  let read = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    chunks.push(value)
+    read += value.length
+    onBytes(read, total)
+  }
+  const out = new Uint8Array(read)
+  let offset = 0
+  for (const c of chunks) {
+    out.set(c, offset)
+    offset += c.length
+  }
+  return out.buffer
+}
 
 export default function ViewerApp() {
   const engineRef = useRef<FragmentsEngine | null>(null)
@@ -18,6 +45,23 @@ export default function ViewerApp() {
   const [projectMeta, setProjectMeta] = useState<ProjectMeta | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [standalone, setStandalone] = useState(false)
+  const [auth, setAuth] = useState<'checking' | 'required' | 'authed'>('checking')
+  const [sessionInfo, setSessionInfo] = useState<{ displayName?: string; serverUrl?: string }>({})
+  const progressActive = useLoadingProgressStore(s => s.sessionActive)
+
+  // Session gate runs in parallel with model loading — models stream in behind
+  // the sign-in overlay, so the scene is ready (or close to it) once the
+  // operator is authenticated
+  useEffect(() => {
+    let mounted = true
+    checkSession().then(s => {
+      if (!mounted) return
+      setSessionInfo({ displayName: s.displayName, serverUrl: s.serverUrl })
+      setAuth(s.reachable && !s.authenticated ? 'required' : 'authed')
+    })
+    return () => { mounted = false }
+  }, [])
 
   // Apply saved render settings from project.json
   const applyRenderSettings = useCallback((meta: ProjectMeta) => {
@@ -64,9 +108,16 @@ export default function ViewerApp() {
       useProjectStore.setState({ currentProject: meta })
       applyRenderSettings(meta)
 
-      const projectModels = await loadModelsFromProject(handle, meta)
-      for (const pm of projectModels) {
-        const model: LoadedModel = {
+      const { beginSession, updateEntry } = useLoadingProgressStore.getState()
+      beginSession(meta.models.map(m => ({
+        modelId: m.modelId,
+        name: m.originalFileName,
+        sizeBytes: m.convertedFileSizeBytes || m.originalFileSizeBytes || 0,
+      })), 'disk')
+
+      await loadModelsFromProject(handle, meta, (pm, readMs) => {
+        updateEntry(pm.modelId, { phase: 'pending', readMs, bytesRead: pm.fragBytes.byteLength, sizeBytes: pm.fragBytes.byteLength })
+        addModel({
           modelId: pm.modelId,
           originalFileName: pm.originalFileName,
           originalFileSizeBytes: pm.originalFileSizeBytes,
@@ -77,9 +128,10 @@ export default function ViewerApp() {
           position: pm.position,
           rotation: pm.rotation,
           scale: pm.scale,
-        }
-        addModel(model)
-      }
+        })
+      }, (modelId, bytesRead, totalBytes) => {
+        updateEntry(modelId, { phase: 'reading', bytesRead, sizeBytes: totalBytes })
+      })
       setStep('viewing')
       applyCameraPosition(meta)
     } catch (e: any) {
@@ -126,6 +178,7 @@ export default function ViewerApp() {
 
         const meta = (await res.json()) as ProjectMeta
         if (!mounted) return
+        setStandalone(true)
 
         if (meta.isFinProject && meta.apiSettings) {
           const s = meta.apiSettings
@@ -158,16 +211,36 @@ export default function ViewerApp() {
         useProjectStore.setState({ currentProject: meta })
         applyRenderSettings(meta)
 
+        const { beginSession, updateEntry } = useLoadingProgressStore.getState()
+        beginSession(meta.models.filter(m => m.fragFile).map(m => ({
+          modelId: m.modelId,
+          name: m.originalFileName,
+          sizeBytes: m.convertedFileSizeBytes || m.originalFileSizeBytes || 0,
+        })), 'server')
+
         // Load each model via HTTP (FastAPI serves /models/{filename})
         for (const m of meta.models) {
           if (!m.fragFile) continue
           try {
-            const modelRes = await fetch(m.fragFile + '?t=' + Date.now(), { cache: 'no-store' })
+            const readStart = performance.now()
+            updateEntry(m.modelId, { phase: 'reading' })
+            // Cacheable on purpose — model bytes never change for a given
+            // modelId, so revisits revalidate via ETag instead of re-downloading
+            const modelRes = await fetch(m.fragFile)
             if (!modelRes.ok) {
               console.warn(`Failed to fetch model ${m.fragFile}: ${modelRes.status}`)
+              updateEntry(m.modelId, { phase: 'error', error: `HTTP ${modelRes.status}` })
               continue
             }
-            const buffer = await modelRes.arrayBuffer()
+            const buffer = await readBodyWithProgress(modelRes, (bytesRead, totalBytes) => {
+              updateEntry(m.modelId, totalBytes ? { bytesRead, sizeBytes: totalBytes } : { bytesRead })
+            })
+            updateEntry(m.modelId, {
+              phase: 'pending',
+              readMs: performance.now() - readStart,
+              bytesRead: buffer.byteLength,
+              sizeBytes: buffer.byteLength,
+            })
             const model: LoadedModel = {
               modelId: m.modelId,
               originalFileName: m.originalFileName,
@@ -181,8 +254,9 @@ export default function ViewerApp() {
               scale: m.scale,
             }
             if (mounted) addModel(model)
-          } catch (modelErr) {
+          } catch (modelErr: any) {
             console.warn(`Could not load model ${m.fragFile}:`, modelErr)
+            updateEntry(m.modelId, { phase: 'error', error: modelErr?.message ?? 'fetch failed' })
           }
         }
 
@@ -212,8 +286,8 @@ export default function ViewerApp() {
           {/* adminMode=false hides RenderPanel + ModelPositionPanel */}
           <ViewerCanvas onEngineReady={handleEngineReady} adminMode={false} isFinProject={projectMeta?.isFinProject} />
 
-          {/* Open Project overlay — shown only when auto-load fails */}
-          {!hasModels && !isLoading && (
+          {/* Open Project overlay — dev fallback only, never in the exported viewer */}
+          {!standalone && !hasModels && !isLoading && (
             <div className="viewer-overlay" style={{ background: 'rgba(245,246,248,0.92)' }}>
               <div style={{
                 background: 'var(--bg-surface)',
@@ -261,14 +335,24 @@ export default function ViewerApp() {
             </div>
           )}
 
-          {/* Loading overlay */}
-          {isLoading && (
+          {/* Loading overlay — only until the per-model progress card takes over */}
+          {isLoading && !progressActive && (
             <div className="viewer-overlay" style={{ background: 'rgba(245,246,248,0.92)' }}>
               <div style={{ textAlign: 'center' }}>
                 <div className="conversion-spinner" style={{ width: 40, height: 40, borderWidth: 3, margin: '0 auto 16px' }} />
                 <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Loading project…</p>
               </div>
             </div>
+          )}
+
+          {/* Sign-in gate — models keep streaming in behind it */}
+          {auth !== 'authed' && (
+            <SignInOverlay
+              ready={auth === 'required'}
+              displayName={sessionInfo.displayName}
+              serverUrl={sessionInfo.serverUrl}
+              onSuccess={() => setAuth('authed')}
+            />
           )}
         </main>
       </div>

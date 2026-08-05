@@ -610,7 +610,8 @@
 .vp-ovp-header {
   flex: none; display: flex; align-items: center; gap: 8px; padding: 12px 16px 4px;
 }
-.ovp-title { font-family: var(--fH), sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.8px; color: #9aa6bb; }
+/* EKO-002: tokens, never hex literals — literals here were invisible in light mode. */
+.ovp-title { font-family: var(--fH), sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.8px; color: var(--t2); }
 .ovp-close-btn {
   width: 24px; height: 24px; display: grid; place-items: center;
   background: transparent; border: none; border-radius: 6px; color: var(--t1); opacity: 0.8; cursor: pointer; transition: opacity 0.2s, background 0.2s;
@@ -622,17 +623,17 @@
   flex: 1; overflow-y: auto; padding-block: 6px 84px; padding-inline: 16px 76px;
   display: flex; flex-direction: column; gap: 14px;
 }
-.kpi-label { font-family: var(--fH), sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.8px; color: #9aa6bb; margin-block-end: 6px; }
+.kpi-label { font-family: var(--fH), sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.8px; color: var(--t2); margin-block-end: 6px; }
 .kpi-value-row { display: flex; align-items: baseline; gap: 6px; }
-.kpi-val { font-family: var(--fM), monospace; font-size: 23px; font-weight: 600; font-variant-numeric: tabular-nums; color: #e4e9f1; }
-.kpi-val-lg { font-family: var(--fM), monospace; font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; color: #e4e9f1; }
-.kpi-unit { font-family: var(--fM), monospace; font-size: 12px; color: #9aa6bb; }
-.kpi-sub { font-size: 11px; color: #9aa6bb; margin-block-start: 3px; }
+.kpi-val { font-family: var(--fM), monospace; font-size: 23px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--t1); }
+.kpi-val-lg { font-family: var(--fM), monospace; font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--t1); }
+.kpi-unit { font-family: var(--fM), monospace; font-size: 12px; color: var(--t2); }
+.kpi-sub { font-size: 11px; color: var(--t2); margin-block-start: 3px; }
 .kpi-chart-placeholder { margin-block: 6px; }
 .font-mono { font-family: var(--fM), monospace; }
 
-.glance-section { border-block-start: 1px solid rgba(38,50,74,0.8); padding-block-start: 12px; }
-.glance-header { font-family: var(--fH), sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.8px; color: #9aa6bb; margin-block-end: 4px; }
+.glance-section { border-block-start: 1px solid var(--bd1); padding-block-start: 12px; }
+.glance-header { font-family: var(--fH), sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.8px; color: var(--t2); margin-block-end: 4px; }
 .glance-list { display: flex; flex-direction: column; gap: 1px; }
 .glance-item {
   display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 6px;
@@ -647,10 +648,11 @@
 .glance-item.active .glance-name { color: var(--t2) !important; }
 .glance-item.active .glance-val { color: var(--acc) !important; }
 .glance-item.active .glance-chevron { color: var(--acc) !important; }
-.glance-name { flex: 1; min-width: 0; font-size: 11px; color: #5f6c84; }
-.glance-val { flex: none; font-family: var(--fM), monospace; font-size: 12px; font-weight: 500; color: #e4e9f1; }
-.glance-icon { flex: none; color: #5f6c84; }
-.glance-chevron { flex: none; color: #5f6c84; transition: color 0.12s; }
+/* EKO-001: --t2, not --t3 — at 11px --t3 fails WCAG AA in both themes. */
+.glance-name { flex: 1; min-width: 0; font-size: 11px; color: var(--t2); }
+.glance-val { flex: none; font-family: var(--fM), monospace; font-size: 12px; font-weight: 500; color: var(--t1); }
+.glance-icon { flex: none; color: var(--t3); }
+.glance-chevron { flex: none; color: var(--t3); transition: color 0.12s; }
 
 /* Floating Toolbar */
 .vp-toolbar {
@@ -734,6 +736,17 @@
   color: var(--t1); min-width: 96px; text-align: end; white-space: nowrap;
 }
 
+.scrub-zoom-pill {
+  flex: none; height: 26px; padding-inline: 8px;
+  display: flex; align-items: center;
+  background: var(--accT); border: 1px solid var(--acc); border-radius: 4px;
+  font-family: var(--fM), monospace; font-size: 10px; font-weight: 500;
+  color: var(--acc); cursor: pointer; white-space: nowrap;
+  transition: background 0.12s;
+}
+.scrub-zoom-pill:hover { background: var(--acc8); }
+.scrub-zoom-pill[hidden] { display: none; }
+
 /* Right Panel & Ask EKO Bar */
 .ask-eko-bar button:hover:not(:last-child) {
   background: var(--s3) !important;
@@ -804,9 +817,7 @@
   transform: scaleX(-1);
 }
 
-/* Widen button: the chevrons point the way the panel edge will move, so they
-   flip once the panel is at its widest (next click narrows it back) and again
-   in RTL, where the panel sits on the opposite side */
+/* Chevrons point the way the edge will move, so they flip at max width and in RTL */
 #rpWidenBtn svg { transition: transform .15s ease; }
 #rpWidenBtn[data-dir="narrow"] svg { transform: scaleX(-1); }
 .app-shell[dir="rtl"] #rpWidenBtn svg { transform: scaleX(-1); }
@@ -817,11 +828,8 @@
   font-family: var(--fH), sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 2px;
 }
 
-/* ── Scroll columns ──
-   #rpContent and .vp-ovp-scroll are flex columns, so their cards inherit
-   flex-shrink:1 and get squashed to fit instead of overflowing — which means
-   the scrollbar never appears and tall content (tables, heatmaps) is cut off.
-   Pin every child to its natural height so the container scrolls instead. */
+/* ── Scroll columns ── */
+/* Pin children to natural height, or flex-shrink squashes them and nothing scrolls */
 #rpContent > *, .vp-ovp-scroll > * { flex: 0 0 auto; }
 #rpContent { min-height: 0; overflow-x: hidden; }
 /* Long point names and FIN ids must wrap rather than widen the panel */

@@ -183,6 +183,16 @@
     'Narrow panel': 'تضييق اللوحة',
     'events': 'أحداث',
     'more': 'أخرى',
+    'Building load': 'حمل المبنى',
+    'setpoint': 'نقطة الضبط',
+    'learned profile': 'النمط المكتسب',
+    'dashed': 'المتقطع',
+    'zoomed': 'مكبّر',
+    'History timeline': 'الخط الزمني للسجل',
+    'click to reset': 'انقر لإعادة الضبط',
+    'profile': 'النمط',
+    'SP': 'نقطة الضبط',
+    'vs': 'مقابل',
     'In design': 'قيد التصميم',
     'Requires portfolio': 'يتطلب محفظة عقارات',
     'Requires targets': 'يتطلب أهدافاً',
@@ -226,11 +236,52 @@
   }
 
   /* ── Live data access ── */
+  /* ── Time cursor — rule 6, "one clock" ── */
+  // null in LIVE, a Date in history. Instantaneous reads go null in history:
+  // a point without a historian has no knowable past value.
+  let timeCursor = null;
+  const isHistory = () => timeCursor != null;
+  const cursorMs = () => (timeCursor ? timeCursor.getTime() : null);
+
+  // Keys on the power payload that are not instantaneous readings
+  const POWER_PASSTHROUGH = new Set(['timestamp', 'unit', 'power_history', 'fdd', 'facilityServices']);
+  const histMemo = { srcPower: null, power: null, srcEquip: null, equip: null };
+
+  function powerAtCursor(p) {
+    if (!p) return p;
+    if (histMemo.srcPower === p) return histMemo.power;
+    const out = {};
+    Object.keys(p).forEach((k) => { out[k] = POWER_PASSTHROUGH.has(k) ? p[k] : null; });
+    histMemo.srcPower = p; histMemo.power = out;
+    return out;
+  }
+
+  // Blanks live values but keeps the tree, so liveness and alarms still render.
+  function equipAtCursor(eqPayload) {
+    if (!eqPayload || !Array.isArray(eqPayload.equipment)) return eqPayload;
+    if (histMemo.srcEquip === eqPayload) return histMemo.equip;
+    const out = {
+      ...eqPayload,
+      equipment: eqPayload.equipment.map((eq) => ({
+        ...eq,
+        points: (eq.points || []).map((p) => ({ ...p, currentValue: null })),
+      })),
+    };
+    histMemo.srcEquip = eqPayload; histMemo.equip = out;
+    return out;
+  }
+
   const live = {
-    get power() { return window.DashboardData ? window.DashboardData.power : null; },
-    get equipment() { return window.DashboardData ? window.DashboardData.equipment : null; },
+    get power() {
+      const p = window.DashboardData ? window.DashboardData.power : null;
+      return isHistory() ? powerAtCursor(p) : p;
+    },
+    get equipment() {
+      const e = window.DashboardData ? window.DashboardData.equipment : null;
+      return isHistory() ? equipAtCursor(e) : e;
+    },
     get alarms() { return window.DashboardData ? window.DashboardData.alarms : null; },
-    get meters() { return window.DashboardData ? window.DashboardData.meters : null; },
+    get meters() { return isHistory() ? null : (window.DashboardData ? window.DashboardData.meters : null); },
     get connected() { return !!(window.DashboardData && window.DashboardData.connected); },
   };
 
@@ -271,10 +322,18 @@
     return out.sort((a, b) => a.ts - b.ts);
   }
 
-  function historySeries(key) {
+  // Rule 6: the one clamp point for every historian series; track opts out via raw.
+  function clampToCursor(series) {
+    const at = cursorMs();
+    return at == null ? series : series.filter((p) => p.ts.getTime() <= at);
+  }
+
+  function historySeries(key, raw) {
     const power = live.power;
     const nested = power && power.power_history ? power.power_history[key] : null;
-    return nested ? flattenHistory(nested) : [];
+    if (!nested) return [];
+    const flat = flattenHistory(nested);
+    return raw ? flat : clampToCursor(flat);
   }
 
   function sumDay(series, dayDate, maxHour = 24) {
@@ -291,8 +350,7 @@
     return count ? { sum, count } : null;
   }
 
-  // Live building load from the individual PMU meters (fallback when the
-  // FIN total_power point is not reporting). Returns {sum, count} or null.
+  // Fallback for when the FIN total_power point is not reporting.
   function pmuLiveSum() {
     const meters = live.meters;
     if (!meters) return null;
@@ -351,10 +409,7 @@
     return out;
   }
 
-  // EOD projection from the intraday profile: scale today's partial sum by the
-  // typical full-day/partial-day ratio at this hour over the last 28 days.
-  // Days with gaps or bad (non-positive) sums are skipped so meter glitches
-  // never poison the forecast. Falls back to a flat projection.
+  // Scales today's partial sum by the typical full/partial ratio over 28 days.
   function eodForecast(series, now, today) {
     if (!today) return null;
     const hour = now.getHours();
@@ -373,8 +428,7 @@
     return today.count ? (today.sum / today.count) * 24 : null;
   }
 
-  // xlsx: "Wire to PMU sum" — when the building total historian has no data for a
-  // day, fall back to summing the per-PMU historians for that day.
+  // xlsx "Wire to PMU sum": falls back to the per-PMU historians for the day.
   function daySumWithPmuFallback(series, day) {
     const direct = sumDay(series, day);
     if (direct) return direct;
@@ -399,8 +453,7 @@
       momPct = ((today.sum - lastMonthSameHours.sum) / lastMonthSameHours.sum) * 100;
     }
 
-    // Live kW: FIN total → live PMU sum → Peak_Demand (the only kW point at
-    // Marsa whose historian is still collecting). Provenance is always labelled.
+    // FIN total → live PMU sum → Peak_Demand; loadSrc labels which one answered.
     const power = live.power;
     const finLoad = power ? power.total_power : null;
     const pmu = finLoad == null ? pmuLiveSum() : null;
@@ -411,9 +464,7 @@
       loadSrc = 'peak';
     }
 
-    // The sparkline falls back to a different point *and a different unit*
-    // (kWh/h → kW), so its source is reported alongside it rather than left
-    // to be guessed from an unlabelled squiggle.
+    // The fallback point changes the unit too (kWh/h → kW), so sparkSrc reports it.
     let spark = series.slice(-24);
     let sparkSrc = 'energy';
     if (!spark.length) {
@@ -608,14 +659,12 @@
   let livesysSelected = null;
   let livesysPointId = null;
   let histchPointId = null;
-  // A render replaces the panel's DOM. If it lands while a <select> is open the
-  // dropdown is torn out mid-choice, so the render is held until focus leaves.
-  // Declared here because renderRightPanel runs before the sub-view state below.
+  // Guards afterLoad() against touching the timeline before it is built.
+  let scrubReady = false;
+  // Holds a re-render while a <select> has focus, or the dropdown is torn out mid-choice.
   let rpRenderQueued = false;
 
-  // Water/gas channels. Labels come from the raw meter points behind each FIN
-  // aggregate: WM_FF_* are WATER_METER-ANC09-FF's WM_L1_KTCHN_* points, and the
-  // 3 gas keys are GM_GF_KITCH1-3 on the single GAS-METER-ANC09-GF.
+  // Labels come from the raw points behind each FIN aggregate (WM_L1_KTCHN_*, GM_GF_KITCH1-3).
   const WATER_CHANNELS = [
     { key: 'WM_BF_Cold_Wtr_his', label: 'Basement · cold water', kind: 'water' },
     { key: 'WM_FF_Sup_Cold_Wtr_his', label: 'L1 kitchen · supply cold', kind: 'water' },
@@ -630,7 +679,11 @@
   const async$ = { hisPoints: null, alarmHistory: null, pointHistory: {} };
   const pending$ = {};
 
-  function afterLoad() { renderRightPanel(currentModule, currentSubId); }
+  // The timeline needs this too, or a context selected before its history lands stays empty.
+  function afterLoad() {
+    renderRightPanel(currentModule, currentSubId);
+    if (scrubReady) refreshTimelineData();
+  }
 
   function ensureHisPoints() {
     if (async$.hisPoints || pending$.hisPoints || !window.DashboardData) return;
@@ -645,8 +698,7 @@
   function ensureAlarmHistory() {
     if (async$.alarmHistory || pending$.alarmHistory || !window.DashboardData) return;
     pending$.alarmHistory = true;
-    // 30 days, not 7: a week catches 4 of the 343 retained alarms at Marsa and
-    // hides the 6 July cooling-valve event (196 alarms) completely.
+    // 30, not 7: a week catches 4 of the 343 alarms Marsa retains.
     window.DashboardData.getAlarmHistory(30).then((d) => {
       pending$.alarmHistory = false;
       async$.alarmHistory = d || { retained: false, byDay: [] };
@@ -655,10 +707,13 @@
   }
 
   // Returns a flattened series, or null while still loading
-  function pointSeries(id, days = 7) {
+  function pointSeries(id, days = 7, raw) {
     if (!id || !window.DashboardData) return null;
     const key = `${id}|${days}`;
-    if (async$.pointHistory[key]) return async$.pointHistory[key].series;
+    if (async$.pointHistory[key]) {
+      const s = async$.pointHistory[key].series;
+      return raw ? s : clampToCursor(s);          // rule 6
+    }
     if (pending$[key]) return null;
     pending$[key] = true;
     window.DashboardData.getPointHistory(id, days).then((d) => {
@@ -680,9 +735,8 @@
     return `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">${msg}</div>`;
   }
 
-  /* ── Chart tooltips ──
-     Charts are re-rendered on every data tick, so hover is delegated: any mark
-     carrying data-tip shows the shared floating tooltip. */
+  /* ── Chart tooltips ── */
+  // Delegated, since charts are rebuilt on every data tick: any mark with data-tip.
   const chartTip = (() => {
     let el = null;
     function ensure() {
@@ -731,11 +785,8 @@
     }).join('');
   }
 
-  /* ── Signed vertical scale ──
-     A meter reset or a bad interval can push a daily sum below zero. Plotting the
-     absolute value would draw that as ordinary consumption, so the axis keeps zero
-     where it really is: when any value is negative the baseline floats up and those
-     bars and points are drawn below it. */
+  /* ── Signed vertical scale ── */
+  // Keeps zero where it really is, so a negative day (meter reset) hangs below it.
   function signedScale(values, top = 8, bottom = 100) {
     const known = (values || []).filter((v) => v != null && isFinite(v));
     let vmax = known.length ? Math.max(...known) : 1;
@@ -900,10 +951,8 @@
     const modLabel    = document.querySelector(`.nav-item[data-module="${modId}"] .nav-label`)?.textContent.trim() || modId;
     const subLabel    = document.querySelector(`.sub-item[data-sub="${subId}"] .sub-label`)?.textContent.trim() || subId || '';
 
-    // Update header
     if (rpTitle) rpTitle.textContent = hasSub ? subLabel : modLabel;
-    
-    // Update the collapsed tab text as well
+
     const rpTabText = document.getElementById('rpTabText');
     if (rpTabText) rpTabText.textContent = (hasSub ? subLabel : modLabel).toUpperCase();
 
@@ -924,7 +973,6 @@
     }
     if (rpBack) rpBack.style.display = hasSub ? 'flex' : 'none';
 
-    // Build content HTML
     let html = '';
 
     if (showEnergyHome) {
@@ -1023,8 +1071,7 @@
       const d = new Date(ms);
       return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
     };
-    // The scale follows the data, so negatives already plot below — but mark where
-    // zero actually falls whenever the series crosses it
+    // Mark where zero falls whenever the series crosses it
     const zeroLine = (vmin < 0 && vmax > 0) ? `
         <line x1="30" y1="${y(0).toFixed(1)}" x2="318" y2="${y(0).toFixed(1)}" stroke="var(--bd2)"/>
         <text x="24" y="${(y(0) + 3).toFixed(1)}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="8" fill="var(--t3)">0</text>` : '';
@@ -1070,8 +1117,7 @@
     return `${Math.round(hours / 24)}d`;
   }
 
-  // Meters may historize a rising totalizer or a per-interval rate — detect which,
-  // so we never report a totalizer's absolute reading as period consumption.
+  // Meters historize either a rising totalizer or a per-interval rate; detect which.
   function periodConsumption(series, hours) {
     if (!series || series.length < 2) return null;
     const cutoff = Date.now() - hours * 3600000;
@@ -1099,7 +1145,6 @@
     return eq && Array.isArray(eq.equipment) ? eq.equipment : [];
   }
 
-  // Point quality per the xlsx row: healthy vs faulted from the point status tag.
   // Staleness stays unreported until per-type thresholds are agreed.
   function pointQuality() {
     let total = 0, healthy = 0, faulted = 0, historized = 0;
@@ -1176,44 +1221,40 @@
       ${rows}`;
   }
 
-  // Header shows the floor only: eq.category is the backend's catch-all bucket
-  // ("hvac" for anything non-CCTV), not a real classification, and eq.bimId is
-  // an internal FIN guid — neither means anything to an operator.
-  function equipDetailHtml(eq) {
-    const points = eq.points || [];
-    const hisPoints = points.filter((p) => p.his && p.id);
-    if (livesysPointId && !hisPoints.some((p) => p.id === livesysPointId)) livesysPointId = null;
-    // Timeline rule 3 / xlsx: chart the key signal against its setpoint when one
-    // exists. Pair on the name — RA_Temp ↔ RA_Temp_SP — rather than taking the
-    // first point containing "sp", which on an AHU with several measured signals
-    // would happily chart RA_Temp against Zone_Temp_SP.
-    const isSetpoint = (n) => /[_\s-](sp|setpoint|set_point|stpt)$/i.test(String(n));
-    const baseName = (n) => String(n).replace(/[_\s-](sp|setpoint|set_point|stpt)$/i, '');
+  // Rule 3 "key signal": pair on the base name (RA_Temp ↔ RA_Temp_SP), never on
+  // the first point containing "sp" — that mismatches AHUs with several signals.
+  const isSetpoint = (n) => /[_\s-](sp|setpoint|set_point|stpt)$/i.test(String(n));
+  const baseName = (n) => String(n).replace(/[_\s-](sp|setpoint|set_point|stpt)$/i, '');
 
+  function resolveEquipSignal(eq) {
+    const hisPoints = (eq && eq.points ? eq.points : []).filter((p) => p.his && p.id);
+    if (livesysPointId && !hisPoints.some((p) => p.id === livesysPointId)) livesysPointId = null;
     if (!livesysPointId && hisPoints.length) {
       const zone = hisPoints.find((p) => /temp/i.test(p.navName) && !isSetpoint(p.navName));
       livesysPointId = (zone || hisPoints[0]).id;
     }
-
     const selected = hisPoints.find((p) => p.id === livesysPointId) || null;
     let mainPoint = selected, refPoint = null;
     if (selected) {
       const base = baseName(selected.navName);
       const pair = hisPoints.find((p) => p !== selected && baseName(p.navName) === base &&
         isSetpoint(p.navName) !== isSetpoint(selected.navName));
-      // Clicking either half of a pair shows the same chart: measured solid,
-      // setpoint dashed. A setpoint on its own still charts by itself.
+      // Either half of a pair gives the same chart: measured solid, setpoint dashed.
       if (pair) {
         mainPoint = isSetpoint(selected.navName) ? pair : selected;
         refPoint = isSetpoint(selected.navName) ? selected : pair;
       }
     }
+    return { hisPoints, mainPoint, refPoint };
+  }
+
+  function equipDetailHtml(eq) {
+    const points = eq.points || [];
+    const { hisPoints, mainPoint, refPoint } = resolveEquipSignal(eq);
     const series = mainPoint ? pointSeries(mainPoint.id) : [];
     const refSeries = refPoint ? pointSeries(refPoint.id) : null;
 
-    // A setpoint that has a measured partner gets no chip of its own: both chips
-    // drew the identical measured-vs-setpoint chart, so the second was redundant.
-    // Orphan setpoints (no measurement to pair with) still get one.
+    // A paired setpoint gets no chip; it would draw the identical chart. Orphans do.
     const partnerOf = (p) => hisPoints.find((q) => q !== p && baseName(q.navName) === baseName(p.navName) &&
       isSetpoint(q.navName) !== isSetpoint(p.navName));
     const chipPoints = hisPoints.filter((p) => !(isSetpoint(p.navName) && partnerOf(p)));
@@ -1249,10 +1290,7 @@
           ${esc(a.alarm || '')}${a.priority ? `<span style="float:inline-end;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3)">P${esc(a.priority)}</span>` : ''}
         </div>`).join('')}` : '';
 
-    // Point names and FDD messages are long ("Sensor No Response - Possible
-    // Faults : Check the SA Temp Sensor, …"). Truncating them hid the very text
-    // that says what is wrong, so nothing is clipped: short values sit inline on
-    // the right, long ones drop onto their own wrapped lines under the name.
+    // FDD messages run long and must not be clipped, so long values stack and wrap.
     const pointRows = points.length ? points.map((p) => {
       const ok = String(p.status || 'ok').toLowerCase() === 'ok';
       const val = String(p.currentValue == null ? '—' : p.currentValue);
@@ -1291,11 +1329,7 @@
     const cfgOpts = cfgKeys.map((k) =>
       `<option value="cfg:${esc(k)}"${histchPointId === 'cfg:' + k ? ' selected' : ''}>${esc(k.replace(/_his$/i, '').replace(/_/g, ' '))}</option>`);
 
-    // FIN's point dis is already "<equip> <point>", so prefixing the equipRef
-    // repeated it — "ILIANA KPI_CALCULATION · ILIANA KPI_CALCULATION Peak_Demand" —
-    // and a native dropdown sizes itself to its widest option, which is why it
-    // spilled out of the panel. Strip the prefix; one optgroup per equipment
-    // carries the name once.
+    // FIN's point dis already starts with the equip name; strip it, the optgroup carries it.
     const pointLabel = (p) => {
       const d = String(p.dis || p.navName || '').trim();
       const e = String(p.equip || '').trim();
@@ -1405,11 +1439,8 @@
       ${chart}`;
   }
 
-  /* ── Consumption: total and per-service over time (xlsx row 13) ──
-     Per-service = the FIN hourly energy calcs per distribution board. This is
-     the reference view, so it deliberately does not repeat the overview KPIs. */
-  // Each "service" is an electrical distribution board, metered by one PMU.
-  // Panel and meter names verified against the FIN equipment list.
+  /* ── Consumption: total and per-service over time (xlsx row 13) ── */
+  // One "service" = one distribution board, metered by one PMU, per the FIN equipment list.
   const SERVICE_CHANNELS = [
     { key: 'Hourly_EC_MCC1_his', label: 'MCC 1', panel: 'MCC-01', meter: 'PMU09_MCC_01', desc: 'Motor control centre 01 · basement' },
     { key: 'Hourly_EC_MCC2_his', label: 'MCC 2', panel: 'MCC-02', meter: 'PMU04_MCC_02', desc: 'Motor control centre 02 · basement' },
@@ -1419,8 +1450,7 @@
     { key: 'Hourly_EC_SP_his', label: 'Sump pump', panel: 'SUMP PUMP', meter: 'PMU08_SWPS02_CONTROLPANEL', desc: 'Sump / sewage pump station 02 control panel' },
   ];
 
-  // Daily bars over an arbitrary range (weeklyChartHtml is fixed at 7 days, which
-  // renders empty whenever the historian stopped collecting more than a week ago).
+  // Arbitrary range, unlike weeklyChartHtml, which is fixed at 7 days.
   function dailyBarsHtml(series, days) {
     const now = new Date();
     const bars = [];
@@ -1488,8 +1518,7 @@
 
     const totalRange = rangeSum(total, consRange);
     const svcRows = services.map((s) => ({ ...s, range: rangeSum(s.series, consRange), last: lastReading(s.series) }));
-    // Share is of the metered services, so the column sums to 100%. Dividing by
-    // the building total gave >100% wherever the two do not reconcile.
+    // Share is of the metered services, not the building total, so it sums to 100%.
     const denom = svcRows.reduce((a, s) => a + Math.max(0, s.range ? s.range.sum : 0), 0);
     const svcTotal = svcRows.reduce((a, s) => a + (s.range ? s.range.sum : 0), 0);
     const mismatch = totalRange && totalRange.sum > 0 && svcTotal > 0 &&
@@ -1839,8 +1868,7 @@
       </div>`;
   }
 
-  // One day's hourly curve vs the typical profile (same weekday, last 4 weeks).
-  // Hours deviating >30% from a positive profile are flagged as anomalies.
+  // Profile = same weekday, last 4 weeks; hours >30% off it are flagged.
   function anomChartHtml(series, dayDate) {
     const actual = hourValues(series, dayDate);
     const refDays = [1, 2, 3, 4].map((w) =>
@@ -1917,8 +1945,7 @@
     if (!known.length) {
       return `<div style="padding:14px;border:1px dashed var(--bd1);border-radius:8px;text-align:center;font-size:12px;color:var(--t3)">${t('No history yet')}</div>`;
     }
-    // Shade the positive range only, so a negative hour is not confused with a
-    // quiet one — it gets its own amber tint instead of the palest blue
+    // Shade the positive range only; a negative hour gets amber, not the palest blue
     const pos = known.filter((v) => v >= 0);
     const min = pos.length ? Math.min(...pos) : 0;
     const span = (pos.length ? Math.max(...pos) - min : 0) || 1;
@@ -2001,7 +2028,6 @@
 
     const chevronIcon = btn.querySelector('.chevron-icon');
 
-    // Click on chevron only toggles subs
     if (chevron) {
       chevron.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -2051,21 +2077,16 @@
     btn.addEventListener('click', (e) => {
       if (chevron && chevron.contains(e.target)) return;
 
-      // Remove active from all nav items AND sub-items
       $$('.nav-item.active').forEach((el) => el.classList.remove('active'));
       $$('.sub-item.active').forEach((el) => el.classList.remove('active'));
 
       btn.classList.add('active');
-
-      // Accordion: collapse all other sections
       collapseAllSubsExcept(subsPanel);
 
-      // Expand this module's subs
       subsPanel.classList.remove('hidden');
       if (chevronIcon) chevronIcon.classList.add('open');
     });
 
-    // Initialize: if active, ensure chevron is open
     if (btn.classList.contains('active') && chevronIcon) {
       chevronIcon.classList.add('open');
     }
@@ -2085,32 +2106,26 @@
       const glanceBtn = e.target.closest('.glance-item');
       if (!glanceBtn) return;
 
-      // Find the index of this glance item in the list
       const allItems = vpOvp.querySelectorAll('.glance-item');
       const idx = [...allItems].indexOf(glanceBtn);
 
-      // Get l2 list for current module to resolve subId
       const data = modDefs[currentModule];
       if (!data || !data.l2[idx]) return;
       const subId = data.l2[idx].id;
       const subLabel = data.l2[idx].name;
 
-      // Re-render with this subId highlighted
       currentSubId = subId;
       renderModuleOverview(currentModule, subId);
 
-      // Also highlight matching sidebar sub-item
       $$('.sub-item').forEach(si => si.classList.remove('active'));
       const matchingSub = document.querySelector(`.sub-item[data-sub="${subId}"]`);
       if (matchingSub) matchingSub.classList.add('active');
 
-      // Update breadcrumb
       const parentLabel = document.querySelector(`.nav-item[data-module="${currentModule}"] .nav-label`)?.textContent.trim() || '';
       if (crumbModule) {
         crumbModule.innerHTML = `<span style="color: var(--t2);">${parentLabel}</span><span style="color: var(--t3); margin: 0 4px;">/</span><span style="color: var(--t2);">${subLabel}</span>`;
       }
-      
-      // Update Right Panel via renderRightPanel
+
       renderRightPanel(currentModule, subId);
     });
   }
@@ -2154,6 +2169,8 @@
         }
       }
       renderRightPanel(currentModule, currentSubId);
+      // Rule 3: the timeline track follows the selected unit and point.
+      if (eqBtn || eqBack || eqPt) refreshTimelineData();
     });
 
     rpContentEl.addEventListener('change', (e) => {
@@ -2181,14 +2198,12 @@
       propMenu.classList.toggle('open', !isOpen);
       propSwitcher.setAttribute('aria-expanded', !isOpen);
     });
-    // Close on outside click
     document.addEventListener('click', (e) => {
       if (!propSwitcher.contains(e.target) && !propMenu.contains(e.target)) {
         propMenu.classList.remove('open');
         propSwitcher.setAttribute('aria-expanded', 'false');
       }
     });
-    // Property item selection
     $$('.dropdown-item[data-key]', propMenu).forEach((item) => {
       item.addEventListener('click', () => {
         $$('.dropdown-item.active', propMenu).forEach((el) => el.classList.remove('active'));
@@ -2291,60 +2306,130 @@
   const vpCaption       = $('.vp-caption');
 
   // ── Timeline data model ──────────────────────────────────────────────────
-  // SVG viewBox is 480×34. x=0 is 48h ago, x=480 is now.
-  // y range: 2..32 (line stays 2px from top, 2px from bottom of 34px box)
-  const TOTAL_HOURS = 48;
+  // x maps time, not sample index: historian spacing is irregular and rule 11 zooms.
+  const DEFAULT_SPAN_H = 48;      // rule 7: 48h default
+  const MIN_SPAN_H = 1;           // rule 11: zoom down to one hour
   const SVG_W = 480, SVG_H = 34;
-  const CHART_TOP = 2, CHART_BTM = 32; // line lives between y=2 and y=32
+  const CHART_TOP = 2, CHART_BTM = 32;
 
-  // Curve: last 48h of the building load historian; dots: today's active alarms
-  let SERIES = [];
+  // Visible window, in hours-ago. viewStartAge is the older (left) edge.
+  let viewStartAge = DEFAULT_SPAN_H;
+  let viewEndAge   = 0;
+  const viewSpan   = () => Math.max(0.01, viewStartAge - viewEndAge);
+  const isZoomed   = () => viewStartAge !== DEFAULT_SPAN_H || viewEndAge !== 0;
+  const ageToFrac  = (age) => (viewStartAge - age) / viewSpan();
+  const fracToAge  = (f)   => viewStartAge - f * viewSpan();
+
+  let SERIES = [];        // [{t: ms, v: number}] — the signal on the track
+  let REF = [];           // [{t, v}] — reference line (rule 9)
+  let REF_KIND = null;    // 'setpoint' | 'profile' | null
+  let TRACK = null;       // {label, unit, equip} — null = building load
   let VMIN = 0, VMAX = 1;
   let EVENTS = [];
 
-  // Given a fractional position f (0=left/oldest, 1=right/now), return SVG y
+  const valY = (v) => CHART_TOP + (CHART_BTM - CHART_TOP) * (1 - (v - VMIN) / (VMAX - VMIN));
+
+  // Given a fractional position f (0=left/oldest, 1=right/newest), return SVG y
   function seriesY(f) {
     if (SERIES.length < 2) return (CHART_TOP + CHART_BTM) / 2;
-    const idx = Math.round(f * (SERIES.length - 1));
-    const v   = SERIES[Math.max(0, Math.min(SERIES.length - 1, idx))];
-    return CHART_TOP + (CHART_BTM - CHART_TOP) * (1 - (v - VMIN) / (VMAX - VMIN));
+    const at = Date.now() - fracToAge(f) * 3600000;
+    let best = SERIES[0];
+    for (const p of SERIES) { if (p.t <= at) best = p; else break; }
+    return valY(best.v);
   }
 
-  // Build SVG M…L path string
-  function buildSvgPath() {
-    if (SERIES.length < 2) return '';
-    const pts = SERIES.map((v, i) => {
-      const x = (i / (SERIES.length - 1)) * SVG_W;
-      const y = CHART_TOP + (CHART_BTM - CHART_TOP) * (1 - (v - VMIN) / (VMAX - VMIN));
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
+  function pathFor(pts) {
+    const span = viewSpan() * 3600000;
+    const now = Date.now();
+    const left = now - viewStartAge * 3600000;
+    const inView = pts.filter((p) => p.t >= left - span * 0.02 && p.t <= now - viewEndAge * 3600000 + span * 0.02);
+    if (inView.length < 2) return '';
+    return 'M' + inView.map((p) => {
+      const x = ((p.t - left) / span) * SVG_W;
+      return `${x.toFixed(1)},${valY(p.v).toFixed(1)}`;
+    }).join(' L');
+  }
+
+  const buildSvgPath = () => pathFor(SERIES);
+
+  // Rule 9 profile: expected value per hour-of-weekday. Not a flat baseline —
+  // for energy that would flag every normal daily peak.
+  function learnedProfile(full, sampleTimes) {
+    const buckets = new Map();
+    full.forEach((p) => {
+      const k = p.ts.getDay() * 24 + p.ts.getHours();
+      const b = buckets.get(k) || { sum: 0, n: 0 };
+      b.sum += p.val; b.n++; buckets.set(k, b);
     });
-    return 'M' + pts.join(' L');
+    if (buckets.size < 4) return [];
+    return sampleTimes.map((t) => {
+      const d = new Date(t);
+      const b = buckets.get(d.getDay() * 24 + d.getHours());
+      return b && b.n >= 2 ? { t, v: b.sum / b.n } : null;
+    }).filter(Boolean);
+  }
+
+  // Rule 3: null = building load; otherwise the selected unit's key signal.
+  function timelineContext() {
+    if (!livesysSelected) return null;
+    const list = (live.equipment && live.equipment.equipment) || [];
+    const eq = list.find((e) => e.name === livesysSelected);
+    if (!eq) return null;
+    const { mainPoint, refPoint } = resolveEquipSignal(eq);
+    if (!mainPoint) return null;
+    return { eq, mainPoint, refPoint };
   }
 
   function refreshTimelineData() {
-    const cutoff = Date.now() - TOTAL_HOURS * 3600000;
-    SERIES = historySeries('Total_Power_Consumption_his')
-      .filter(p => p.ts.getTime() >= cutoff)
-      .map(p => p.val);
-    const liveLoad = liveLoadKw();
-    if (liveLoad != null) SERIES.push(liveLoad);
-    if (SERIES.length >= 2) {
-      VMIN = Math.min(...SERIES);
-      VMAX = Math.max(...SERIES);
+    const now = Date.now();
+    const ctx = timelineContext();
+    REF = []; REF_KIND = null;
+
+    if (ctx) {
+      // raw:true — the track draws the whole window; the cursor marks it, not truncates it.
+      const main = pointSeries(ctx.mainPoint.id, 7, true) || [];
+      SERIES = main.map((p) => ({ t: p.ts.getTime(), v: p.val }));
+      TRACK = { label: ctx.mainPoint.navName, unit: ctx.mainPoint.unit || '', equip: ctx.eq.name };
+      if (ctx.refPoint) {
+        const r = pointSeries(ctx.refPoint.id, 7, true) || [];
+        REF = r.map((p) => ({ t: p.ts.getTime(), v: p.val }));
+        if (REF.length >= 2) REF_KIND = 'setpoint';
+      }
+    } else {
+      const full = historySeries('Total_Power_Consumption_his', true);
+      SERIES = full.map((p) => ({ t: p.ts.getTime(), v: p.val }));
+      const liveLoad = liveLoadKw();
+      if (liveLoad != null) SERIES.push({ t: now, v: liveLoad });
+      TRACK = null;
+      const prof = learnedProfile(full, SERIES.map((p) => p.t));
+      if (prof.length >= 2) { REF = prof; REF_KIND = 'profile'; }
+    }
+
+    const all = SERIES.concat(REF).map((p) => p.v).filter((v) => v != null && isFinite(v));
+    if (all.length >= 2) {
+      VMIN = Math.min(...all);
+      VMAX = Math.max(...all);
       if (VMAX === VMIN) VMAX = VMIN + 1;
     }
+
+    const eqName = ctx ? String(ctx.eq.name) : null;
     EVENTS = ((live.alarms && live.alarms.alarms) || []).map((a) => {
       if (!a.occurred) return null;
       const ts = new Date(String(a.occurred).replace(/ [A-Za-z_\/]+$/, ''));
       if (isNaN(ts)) return null;
-      const age = (Date.now() - ts.getTime()) / 3600000;
-      if (age < 0 || age > TOTAL_HOURS) return null;
+      // Rules 3 + 12: in an equipment context only that equipment's events show
+      if (eqName && !String(a.source || '').includes(eqName)) return null;
+      const age = (now - ts.getTime()) / 3600000;
+      if (age < viewEndAge - 0.01 || age > viewStartAge + 0.01) return null;
       const sev = a.severity === 'critical' ? 'crit' : (a.severity === 'warning' ? 'warn' : 'info');
       return { age, sev, tip: `${a.source}: ${a.message}` };
     }).filter(Boolean);
+
     renderSvg();
+    renderTicks();
     renderEventDots();
     updateStepBtns();
+    updateTrackMeta();
   }
 
   let isLive    = true;
@@ -2354,6 +2439,7 @@
 
     function updateTimelineLang() {
       if (typeof renderTicks === 'function') renderTicks();
+      updateTrackMeta();
       if (isLive) {
         if (scrubStatusMode) scrubStatusMode.textContent = t('LIVE');
       } else {
@@ -2364,10 +2450,71 @@
     }
 
   // ── Render SVG paths ─────────────────────────────────────────────────────
+  // Rule 9's reference line is created on demand, so index.html needs no markup for it.
+  let scrubRefPath = null;
+  function ensureRefPath() {
+    if (scrubRefPath || !scrubSvgLine || !scrubSvgLine.parentNode) return scrubRefPath;
+    const p = document.createElementNS
+      ? document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      : document.createElement('path');
+    p.setAttribute('fill', 'none');
+    p.setAttribute('stroke', 'var(--posTx, var(--t3))');
+    p.setAttribute('stroke-width', '1');
+    p.setAttribute('stroke-dasharray', '5 3');
+    p.setAttribute('opacity', '0.75');
+    scrubSvgLine.parentNode.appendChild(p);
+    scrubRefPath = p;
+    return p;
+  }
+
   function renderSvg() {
     const tl = buildSvgPath();
     if (scrubSvgLine) scrubSvgLine.setAttribute('d', tl);
-    if (scrubSvgArea) scrubSvgArea.setAttribute('d', `${tl} L${SVG_W},${SVG_H} L0,${SVG_H} Z`);
+    if (scrubSvgArea) scrubSvgArea.setAttribute('d', tl ? `${tl} L${SVG_W},${SVG_H} L0,${SVG_H} Z` : '');
+    const rp = ensureRefPath();
+    if (rp) rp.setAttribute('d', REF_KIND ? pathFor(REF) : '');
+  }
+
+  let zoomPillEl = null;
+  function ensureZoomPill() {
+    const bar = scrubTimeline && scrubTimeline.parentNode;
+    const controls = bar && bar.querySelector ? bar.querySelector('.scrub-controls') : null;
+    if (zoomPillEl || !controls) return zoomPillEl;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.id = 'scrubZoomPill';
+    b.className = 'scrub-zoom-pill';
+    b.hidden = true;
+    b.addEventListener('click', resetZoom);
+    controls.appendChild(b);
+    zoomPillEl = b;
+    return b;
+  }
+
+  function updateTrackMeta() {
+    const refLbl = REF_KIND === 'setpoint' ? t('setpoint')
+                 : REF_KIND === 'profile'  ? t('learned profile') : null;
+    const base = TRACK
+      ? `${TRACK.equip} · ${TRACK.label}${TRACK.unit ? ` (${TRACK.unit})` : ''}`
+      : t('Building load');
+    const text = `${base}${refLbl ? ` — ${t('dashed')} = ${refLbl}` : ''}`;
+    if (scrubTimeline) {
+      scrubTimeline.setAttribute('aria-label', `${t('History timeline')} · ${text} · ${fmtSpan(viewSpan())}`);
+    }
+    const pill = ensureZoomPill();
+    if (!pill) return;
+    const zoomed = isZoomed();
+    pill.hidden = !zoomed;
+    if (!zoomed) return;
+    pill.textContent = `${fmtSpan(viewSpan())} ×`;
+    const tip = `${t('zoomed')} ${fmtSpan(viewSpan())} — ${t('click to reset')}`;
+    pill.title = tip;
+    pill.setAttribute('aria-label', tip);
+  }
+
+  function fmtSpan(h) {
+    if (h < 1) return `${Math.round(h * 60)}m`;
+    return h % 1 === 0 ? `${h}h` : `${h.toFixed(1)}h`;
   }
 
   // ── Render time ticks ────────────────────────────────────────────────────
@@ -2376,10 +2523,14 @@
     scrubTicksEl.innerHTML = '';
     const now = new Date();
     let prevDs = '';
-    for (let i = 0; i <= 8; i++) {
-      const ageH = 48 - 6 * i;            // i=0 → 48h ago, i=8 → now
+    // Rule 7 wants 6-hourly ticks at 48h; zoomed, a fixed step would show one or none.
+    const span = viewSpan();
+    const step = span > 30 ? 6 : span > 14 ? 3 : span > 7 ? 2 : span > 3 ? 1 : span > 1.5 ? 0.5 : 0.25;
+    const count = Math.min(12, Math.max(2, Math.round(span / step)));
+    for (let i = 0; i <= count; i++) {
+      const frac = i / count;              // 0=left(old), 1=right(new)
+      const ageH = fracToAge(frac);
       const dT   = new Date(now.getTime() - ageH * 3600000);
-      const frac = i / 8;                  // 0=left, 1=right
       const xPct = (frac * 100).toFixed(2) + '%';
       const ds   = dT.toDateString();
       const dayL = ds !== prevDs ? t(['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dT.getDay()]) : '';
@@ -2387,13 +2538,11 @@
       const hh = String(dT.getHours()).padStart(2,'0');
       const mm = String(dT.getMinutes()).padStart(2,'0');
 
-      // tick mark
       const tick = document.createElement('span');
       tick.setAttribute('aria-hidden','true');
       tick.style.cssText = `position:absolute;left:${xPct};bottom:20px;width:1px;height:4px;background:var(--bd2);transform:translateX(-50%);`;
       scrubTicksEl.appendChild(tick);
 
-      // time label
       const tlbl = document.createElement('span');
       tlbl.setAttribute('aria-hidden','true');
       tlbl.style.cssText = `position:absolute;left:${xPct};bottom:10px;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3);white-space:nowrap;`;
@@ -2412,14 +2561,8 @@
   }
 
   // ── Render event dots ────────────────────────────────────────────────────
-  // Each dot: left = % along timeline, top = matched y from SVG curve in *px* relative to timeline div
-  // timeline div height = 56px (scrubbar height), chart SVG sits at top:2px, height:32px
-  // So chart px within timeline = svgY / SVG_H * 32 + 2
-  // Timeline rule 4 (xlsx): events closer together than CLUSTER_PX collapse
-  // into one count bubble coloured by the worst severity inside, so a burst of
-  // alarms never turns the track into unreadable dot soup. Members are grouped
-  // against the first dot of the run, which bounds each cluster at CLUSTER_PX
-  // wide instead of letting evenly-spaced dots chain into one giant blob.
+  // Rule 4: dots closer than CLUSTER_PX collapse into one count bubble.
+  // Grouped against the first dot of a run, so a cluster can never exceed CLUSTER_PX.
   const CLUSTER_PX = 16;
   const SEV_RANK = { info: 0, warn: 1, crit: 2 };
   const sevColor = (s) => s === 'crit' ? 'var(--crit)' : (s === 'warn' ? 'var(--warn)' : 'var(--info)');
@@ -2431,7 +2574,7 @@
     // Before first layout there is no width to cluster against — show them all
     const span = trackW > 0 ? CLUSTER_PX / trackW : 0;
     const ordered = EVENTS
-      .map((ev, i) => ({ ev, i, frac: 1 - ev.age / TOTAL_HOURS }))
+      .map((ev, i) => ({ ev, i, frac: ageToFrac(ev.age) }))
       .sort((a, b) => a.frac - b.frac);
     const groups = [];
     ordered.forEach((it) => {
@@ -2494,8 +2637,8 @@
     if (scrubCursorLabel) { scrubCursorLabel.style.display = 'block'; scrubCursorLabel.style.left = pct + '%'; }
   }
   function setCursorAge(ageH) {
-    cursorAge = Math.max(0, Math.min(TOTAL_HOURS, ageH));
-    const pct  = ((1 - cursorAge / TOTAL_HOURS) * 100).toFixed(2);
+    cursorAge = Math.max(viewEndAge, Math.min(viewStartAge, ageH));
+    const pct  = (ageToFrac(cursorAge) * 100).toFixed(2);
     const label = ageToLabel(cursorAge);
     setCursorPct(pct);
     if (scrubCursorLabel) scrubCursorLabel.textContent = label;
@@ -2507,8 +2650,21 @@
     enterHistory(ageToLabel(EVENTS[idx].age));
   }
 
+  // Rule 6: the cursor moves the whole dashboard. Coalesced — a drag fires continuously.
+  let cursorRenderId = null;
+  function syncDashboardToCursor() {
+    if (cursorRenderId) return;
+    cursorRenderId = setTimeout(() => {
+      cursorRenderId = null;
+      renderModuleOverview(currentModule, currentSubId);
+      renderRightPanel(currentModule, currentSubId, true);
+    }, 60);
+  }
+
   function enterHistory(label) {
     isLive = false;
+    timeCursor = new Date(Date.now() - cursorAge * 3600000);
+    syncDashboardToCursor();
     html.dataset.time = 'history';
     if (scrubLiveBtn) scrubLiveBtn.classList.remove('active');
     if (scrubHistBtn) scrubHistBtn.classList.add('active');
@@ -2523,8 +2679,11 @@
   }
 
   function goLive() {
+    const wasHistory = isLive === false;
     isLive = true;
     cursorAge = 0;
+    timeCursor = null;                       // rule 6: LIVE snaps everything back at once
+    if (wasHistory) syncDashboardToCursor();
     html.dataset.time = 'live';
     if (scrubLiveBtn)     scrubLiveBtn.classList.add('active');
     if (scrubHistBtn)     scrubHistBtn.classList.remove('active');
@@ -2550,16 +2709,33 @@
   }
 
   // ── Prev / Next ───────────────────────────────────────────────────────────
+  // Rule 11: "Previous-event beyond the visible range extends the window."
+  function extendToOlderEvent() {
+    const raw = ((live.alarms && live.alarms.alarms) || []).map((a) => {
+      if (!a.occurred) return null;
+      const ts = new Date(String(a.occurred).replace(/ [A-Za-z_\/]+$/, ''));
+      if (isNaN(ts)) return null;
+      if (TRACK && !String(a.source || '').includes(TRACK.equip)) return null;
+      return (Date.now() - ts.getTime()) / 3600000;
+    }).filter((age) => age != null && age > viewStartAge + 0.01);
+    if (!raw.length) return false;
+    viewStartAge = Math.min(...raw) + Math.max(1, viewSpan() * 0.1);
+    refreshTimelineData();
+    return true;
+  }
+
   function stepPrev() {
-    if (!EVENTS.length) return;
     const older = EVENTS.filter(e => e.age > cursorAge + 0.01);
     const prev  = older.length ? older.reduce((a,b) => a.age < b.age ? a : b) : null;
     if (prev) {
       jumpToEvent(EVENTS.indexOf(prev));
-    } else if (isLive) {
+    } else if (isLive && EVENTS.length) {
       // From live jump to most recent event
       const newest = EVENTS.reduce((a,b) => a.age < b.age ? a : b);
       jumpToEvent(EVENTS.indexOf(newest));
+    } else if (extendToOlderEvent()) {
+      const older2 = EVENTS.filter(e => e.age > cursorAge + 0.01);
+      if (older2.length) jumpToEvent(EVENTS.indexOf(older2.reduce((a,b) => a.age < b.age ? a : b)));
     }
     updateStepBtns();
   }
@@ -2578,14 +2754,16 @@
 
   function updateStepBtns() {
     if (!scrubPrevBtn || !scrubNextBtn) return;
-    if (!EVENTS.length) {
-      scrubPrevBtn.disabled = true;
-      scrubNextBtn.disabled = isLive;
-      return;
-    }
-    const oldestAge = Math.max(...EVENTS.map(e => e.age));
-    scrubPrevBtn.disabled = !isLive && (cursorAge >= oldestAge - 0.05);
     scrubNextBtn.disabled = isLive;
+    // Enabled for any older alarm anywhere, not just in view: prev widens the window.
+    const anyOlder = ((live.alarms && live.alarms.alarms) || []).some((a) => {
+      if (!a.occurred) return false;
+      const ts = new Date(String(a.occurred).replace(/ [A-Za-z_\/]+$/, ''));
+      if (isNaN(ts)) return false;
+      if (TRACK && !String(a.source || '').includes(TRACK.equip)) return false;
+      return (Date.now() - ts.getTime()) / 3600000 > (isLive ? 0 : cursorAge) + 0.01;
+    });
+    scrubPrevBtn.disabled = !anyOlder;
   }
 
   // ── Mouse interactions on timeline ────────────────────────────────────────
@@ -2594,12 +2772,58 @@
     return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
   }
 
+  /* ── Rule 11: zoomable range ── */
+  // Drag is claimed by rule 5 (scrub), so region-select is Shift+drag; dblclick resets.
+  let zoomSel = null;      // {fromF, toF} while shift-dragging
+  let zoomBand = null;
+
+  function ensureZoomBand() {
+    if (zoomBand || !scrubTimeline) return zoomBand;
+    const d = document.createElement('div');
+    d.setAttribute('aria-hidden', 'true');
+    d.style.cssText = 'position:absolute;top:0;bottom:20px;display:none;background:var(--acc8);' +
+      'border-inline:1px solid var(--acc);pointer-events:none;z-index:4;';
+    scrubTimeline.appendChild(d);
+    zoomBand = d;
+    return d;
+  }
+
+  function paintZoomBand() {
+    const b = ensureZoomBand();
+    if (!b) return;
+    if (!zoomSel) { b.style.display = 'none'; return; }
+    const lo = Math.min(zoomSel.fromF, zoomSel.toF), hi = Math.max(zoomSel.fromF, zoomSel.toF);
+    b.style.display = 'block';
+    b.style.left  = (lo * 100).toFixed(2) + '%';
+    b.style.width = ((hi - lo) * 100).toFixed(2) + '%';
+  }
+
+  function applyZoom(fromF, toF) {
+    const lo = Math.min(fromF, toF), hi = Math.max(fromF, toF);
+    const newStart = fracToAge(lo);      // older edge
+    const newEnd   = fracToAge(hi);      // newer edge
+    if (newStart - newEnd < MIN_SPAN_H) return false;
+    viewStartAge = newStart;
+    viewEndAge = Math.max(0, newEnd);
+    refreshTimelineData();
+    if (!isLive) setCursorAge(cursorAge);
+    return true;
+  }
+
+  function resetZoom() {
+    if (!isZoomed()) return;
+    viewStartAge = DEFAULT_SPAN_H;
+    viewEndAge = 0;
+    refreshTimelineData();
+    if (!isLive) setCursorAge(cursorAge);
+  }
+
   if (scrubTimeline) {
     scrubTimeline.addEventListener('mousemove', e => {
       const f   = fractionFromEvent(e);
       const xPct = (f * 100).toFixed(2) + '%';
-      const age  = (1 - f) * TOTAL_HOURS;
-      const lbl  = age < 0.3 ? t('LIVE') : ageToLabel(age);
+      const age  = fracToAge(f);
+      const lbl  = (viewEndAge === 0 && age < 0.3) ? t('LIVE') : hoverReadout(age);
       if (scrubGhost)      { scrubGhost.style.display = 'block';      scrubGhost.style.left      = xPct; }
       if (scrubGhostLabel) { scrubGhostLabel.style.display = 'block'; scrubGhostLabel.style.left = xPct; scrubGhostLabel.textContent = lbl; }
     });
@@ -2608,30 +2832,69 @@
       if (scrubGhostLabel) scrubGhostLabel.style.display = 'none';
     });
 
-    // drag to scrub
     scrubTimeline.addEventListener('pointerdown', e => {
-      dragActive = true;
       try { scrubTimeline.setPointerCapture(e.pointerId); } catch(_) {}
+      if (e.shiftKey) {                       // rule 11: region select
+        const f = fractionFromEvent(e);
+        zoomSel = { fromF: f, toF: f };
+        paintZoomBand();
+        return;
+      }
+      dragActive = true;                      // rule 5: scrub
       handleScrubAt(e);
     });
     scrubTimeline.addEventListener('pointermove', e => {
+      if (zoomSel) { zoomSel.toF = fractionFromEvent(e); paintZoomBand(); return; }
       if (!dragActive) return;
       handleScrubAt(e);
     });
-    scrubTimeline.addEventListener('pointerup',  () => { dragActive = false; });
-    scrubTimeline.addEventListener('pointercancel', () => { dragActive = false; });
+    const endDrag = () => {
+      if (zoomSel) {
+        const { fromF, toF } = zoomSel;
+        zoomSel = null; paintZoomBand();
+        if (Math.abs(toF - fromF) > 0.01) applyZoom(fromF, toF);   // ignore a stray click
+      }
+      dragActive = false;
+    };
+    scrubTimeline.addEventListener('pointerup', endDrag);
+    scrubTimeline.addEventListener('pointercancel', endDrag);
 
     // click to jump
     scrubTimeline.addEventListener('click', e => {
       if (e.target.closest('[data-ev-idx]')) return;
+      if (e.shiftKey) return;                 // that was a zoom gesture
       handleScrubAt(e);
     });
+
+    scrubTimeline.addEventListener('dblclick', (e) => { e.preventDefault(); resetZoom(); });
+  }
+
+  // Rule 9: value, time and deviation. Deviation is omitted, never guessed.
+  function hoverReadout(age) {
+    const label = ageToLabel(age);
+    if (!SERIES.length) return label;
+    const at = Date.now() - age * 3600000;
+    const pick = (arr) => {
+      let best = null;
+      for (const p of arr) { if (p.t <= at) best = p; else break; }
+      return best;
+    };
+    const s = pick(SERIES);
+    if (!s) return label;
+    const unit = TRACK && TRACK.unit ? TRACK.unit : '';
+    let out = `${label} · ${shortNum(s.v, 1)}${unit}`;
+    const r = REF_KIND ? pick(REF) : null;
+    if (r && isFinite(r.v)) {
+      const d = s.v - r.v;
+      out += ` · ${d >= 0 ? '+' : ''}${shortNum(d, 1)}${unit} ${t('vs')} ${REF_KIND === 'setpoint' ? t('SP') : t('profile')}`;
+    }
+    return out;
   }
 
   function handleScrubAt(e) {
     const f   = fractionFromEvent(e);
-    const age = (1 - f) * TOTAL_HOURS;
-    if (age < 0.3) { goLive(); return; }
+    const age = fracToAge(f);
+    if (viewEndAge === 0 && age < 0.3) { goLive(); return; }
     const label = ageToLabel(age);
     setCursorAge(age);
     enterHistory(label);
@@ -2644,9 +2907,8 @@
   if (scrubNextBtn) scrubNextBtn.addEventListener('click', stepNext);
   if (histBannerBack) histBannerBack.addEventListener('click', e => { e.preventDefault(); goLive(); });
 
-  // Timeline rule 5 (xlsx): "keyboard arrows nudge by 15 minutes; Home earliest,
-  // End live". Shift+arrow steps a whole hour. Bound on the document because the
-  // scrubber is a persistent chrome control rather than a focusable widget.
+  // Rule 5: arrows nudge 15 min (Shift: an hour), Home earliest, End live.
+  // Bound on document — the scrubber is chrome, not a focusable widget.
   const NUDGE_H = 0.25;
   function nudgeCursor(deltaH) {
     const next = (isLive ? 0 : cursorAge) + deltaH;
@@ -2665,12 +2927,13 @@
     const step = e.shiftKey ? 1 : NUDGE_H;
     if (e.key === 'ArrowLeft')       { e.preventDefault(); nudgeCursor(step); }        // older
     else if (e.key === 'ArrowRight') { e.preventDefault(); nudgeCursor(-step); }       // newer
-    else if (e.key === 'Home')       { e.preventDefault(); setCursorAge(TOTAL_HOURS); enterHistory(ageToLabel(cursorAge)); updateStepBtns(); }
+    else if (e.key === 'Home')       { e.preventDefault(); setCursorAge(viewStartAge); enterHistory(ageToLabel(cursorAge)); updateStepBtns(); }
     else if (e.key === 'End')        { e.preventDefault(); goLive(); }
   });
 
   // ── Init ─────────────────────────────────────────────────────────────────
   function initScrubbar() {
+    scrubReady = true;
     refreshTimelineData();
     renderTicks();
     goLive();
@@ -2737,7 +3000,6 @@
 
   if (rpBackBtn) {
     rpBackBtn.addEventListener('click', () => {
-      // Return to current active main module
       const activeNav = $('.nav-item.active');
       if (activeNav) {
         activeNav.click();
@@ -2745,7 +3007,6 @@
         const opsNav = $('.nav-item[data-module="operations"]');
         if (opsNav) opsNav.click();
       }
-      // Remove sub-item active highlights
       $$('.sub-item.active').forEach(el => el.classList.remove('active'));
     });
   }
@@ -2788,10 +3049,8 @@
     rightPanel.style.setProperty('--rp-w', w + 'px');
   }
 
-  /* ── Widen / narrow by button ──
-     Steps through width presets. Dragging the inner edge still works and can
-     land anywhere between them; the button just moves to the next preset up,
-     then snaps back to normal once it is already at the widest. */
+  /* ── Widen / narrow by button ── */
+  // Steps through presets, then wraps to normal; the drag handle is free-form.
   const rpWidenBtn = $('#rpWidenBtn');
   const rpMaxWidth = () => Math.max(RP_NORMAL_W, Math.floor(window.innerWidth / 2));
 
@@ -2898,9 +3157,7 @@
       if (!vpCaption) return;
       const c = capLang();
       const floorLabel = currentFloor === 'ALL' ? c.all : currentFloor;
-      // Longest variant first; drop the site, then the model, when the viewer
-      // is too narrow (e.g. right panel dragged wide) to avoid covering the
-      // overview panel
+      // Longest first; drops the site, then the model, as the viewer narrows
       const variants = [
         c.site + ' &middot; ' + c.model + ' &middot; ' + floorLabel,
         c.model + ' &middot; ' + floorLabel,
@@ -2916,8 +3173,7 @@
       }
     }
 
-    // Re-fit the caption when the viewer resizes (panel drag, window resize)
-    // or the overview panel collapses/expands
+    // Re-fit on viewer resize and on overview panel collapse/expand
     const vpWrapEl = vpCaption && vpCaption.closest('.vp-wrapper');
     if (vpWrapEl && window.ResizeObserver) {
       new ResizeObserver(() => updateVpCaption()).observe(vpWrapEl);
@@ -3050,8 +3306,7 @@
       if (sub) $(`.sub-item[data-sub="${sub}"]`)?.click();
     }
 
-    // Same demo dataset as the EKO Frame reference: recents + quick actions
-    // when empty, entity groups while typing
+    // Demo dataset from the EKO Frame reference, not live search.
     function palData() {
       const ar = palAr();
       const q = palInput.value.trim().toLowerCase();
@@ -3263,14 +3518,12 @@
     clearInterval(ekoStreamTimer); // clear any active stream
     ekoModal.style.display = 'flex';
 
-    // User Bubble
     const userMsgHtml = `
       <div dir="auto" style="align-self: flex-end; background: var(--s3); border: 1px solid var(--bd2); color: var(--t1); padding: 8px 14px; border-radius: 16px 16px 4px 16px; font-size: 12.5px; max-width: 85%; line-height: 1.4;">
         ${userText}
       </div>
     `;
 
-    // AI Bubble Wrapper
     const aiWrapper = document.createElement('div');
     aiWrapper.style.cssText = "align-self: flex-start; display: flex; gap: 10px; max-width: 95%;";
     

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useProjectStore } from '@/store/useProjectStore'
 import { useAppStore } from '@/store/useAppStore'
 import { useModelStore } from '@/store/useModelStore'
+import { useLoadingProgressStore } from '@/store/useLoadingProgressStore'
 import { loadModelsFromProject } from '@/lib/projectDb'
 import { ProjectListSkeleton } from '@/components/project/ProjectListSkeleton'
 import type { ProjectMeta } from '@/types'
@@ -86,9 +87,17 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
 
     useModelStore.getState().setActiveModelId(null)
 
+    const { beginSession, updateEntry } = useLoadingProgressStore.getState()
+    beginSession(meta.models.map(m => ({
+      modelId: m.modelId,
+      name: m.originalFileName,
+      sizeBytes: m.convertedFileSizeBytes || m.originalFileSizeBytes || 0,
+    })), 'disk')
+
     // Each model is added the moment its bytes are read, so the sidebar list
     // fills in one by one rather than staying empty until the last file lands
-    await loadModelsFromProject(folderHandle, meta, (pm) => {
+    const loaded = await loadModelsFromProject(folderHandle, meta, (pm, readMs) => {
+      updateEntry(pm.modelId, { phase: 'pending', readMs, bytesRead: pm.fragBytes.byteLength, sizeBytes: pm.fragBytes.byteLength })
       addModel({
         modelId: pm.modelId,
         originalFileName: pm.originalFileName,
@@ -101,7 +110,16 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
         rotation: pm.rotation,
         scale: pm.scale,
       })
+    }, (modelId, bytesRead, totalBytes) => {
+      updateEntry(modelId, { phase: 'reading', bytesRead, sizeBytes: totalBytes })
     })
+
+    const loadedIds = new Set(loaded.map(m => m.modelId))
+    for (const m of meta.models) {
+      if (!loadedIds.has(m.modelId)) {
+        updateEntry(m.modelId, { phase: 'error', error: 'model file not found on disk' })
+      }
+    }
   }
 
   const handleDeleteRecent = async (projectId: string) => {

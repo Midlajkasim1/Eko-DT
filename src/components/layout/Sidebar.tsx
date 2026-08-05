@@ -37,10 +37,10 @@ export function Sidebar({ onFiles, engineRef }: SidebarProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
 
-  const handleExport = async () => {
+  const handleExport = async (target: 'standalone' | 'backend') => {
     try {
       setIsExporting(true)
-      if (currentProject?.isFinProject) {
+      if (target === 'standalone') {
         await exportFinProjectAsZip()
       } else {
         await exportAsZip()
@@ -216,17 +216,31 @@ export function Sidebar({ onFiles, engineRef }: SidebarProps) {
                     Dashboard Settings
                   </button>
                 )}
-                <button 
-                  className="download-btn" 
-                  style={{ background: 'var(--text-primary)' }} 
-                  onClick={handleExport}
+                <button
+                  className="download-btn"
+                  style={{ background: 'var(--text-primary)', marginBottom: '8px' }}
+                  onClick={() => handleExport('standalone')}
                   disabled={isExporting}
+                  title="Static files only — no Python. The browser calls FIN directly."
                 >
                   <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
                     <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" />
                     <path fillRule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
                   </svg>
-                  {currentProject.isFinProject ? 'Export FIN Standalone Viewer' : 'Export Project as ZIP'}
+                  Export Standalone Viewer
+                </button>
+                <button
+                  className="download-btn"
+                  style={{ background: 'var(--bg-raised)', color: 'var(--text-primary)' }}
+                  onClick={() => handleExport('backend')}
+                  disabled={isExporting}
+                  title="Bundles the FastAPI backend and a start script. The backend proxies FIN."
+                >
+                  <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                    <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" />
+                    <path fillRule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
+                  </svg>
+                  Export with FIN Backend
                 </button>
               </>
             )}

@@ -14,9 +14,9 @@ from datetime import datetime, timedelta
 from typing import Optional
 from urllib.parse import quote
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -672,17 +672,60 @@ async def get_config():
     }
 
 
+# ─── Session ─────────────────────────────────────────────────────────────────
+# Vendor-neutral aliases used by the bundled sign-in page. The /api/fin/* routes
+# above are kept for the studio app, which already calls them.
+
+
+@app.get("/api/auth/status")
+async def auth_status():
+    """Session state for the sign-in page. Returns no credentials or point data."""
+    return {
+        "authenticated": client.is_authenticated if client else False,
+        "project": PROJECT_NAME,
+        "server_url": FIN_SERVER_URL,
+        "display_name": CONFIG.get("display_name", PROJECT_NAME),
+    }
+
+
+@app.post("/api/auth/login")
+async def auth_login(req: LoginRequest):
+    return await login(req)
+
+
+@app.post("/api/auth/logout")
+async def auth_logout():
+    return await logout()
+
+
 # ─── Static Viewer App ────────────────────────────────────────────────────────
 
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BACKEND_DIR, "static")
 MODELS_DIR = os.path.join(BACKEND_DIR, "models")
 PROJECT_JSON = os.path.join(BACKEND_DIR, "project.json")
+LOGIN_HTML = os.path.join(BACKEND_DIR, "login.html")
+
+
+@app.get("/login")
+async def serve_login():
+    """Serve the sign-in page. Never cached, so an updated page takes effect on reload."""
+    if os.path.exists(LOGIN_HTML):
+        return FileResponse(
+            LOGIN_HTML,
+            media_type="text/html",
+            headers={"Cache-Control": "no-store, must-revalidate"},
+        )
+    raise HTTPException(status_code=404, detail="login.html not found")
 
 
 @app.get("/project.json")
 async def serve_project_json():
-    """Serve the project.json for the standalone viewer."""
+    """Serve the project.json for the standalone viewer.
+
+    Deliberately ungated: the viewer starts streaming models while the operator
+    is still on the sign-in overlay. Live FIN data stays behind the session.
+    """
     if os.path.exists(PROJECT_JSON):
         return FileResponse(PROJECT_JSON, media_type="application/json")
     raise HTTPException(status_code=404, detail="project.json not found")
@@ -698,23 +741,32 @@ async def serve_thumbnail():
 
 
 @app.get("/models/{filename:path}")
-async def serve_model(filename: str):
-    """Serve model files (.frag / .glb) from the backend/models/ directory."""
+async def serve_model(filename: str, request: Request):
+    """Serve model files (.frag / .glb); ungated so they load during sign-in."""
     safe = os.path.normpath(filename)
     model_path = os.path.join(MODELS_DIR, safe)
     # Prevent path traversal
     if not model_path.startswith(MODELS_DIR):
         raise HTTPException(status_code=403, detail="Forbidden")
-    if os.path.exists(model_path):
-        media = "model/gltf-binary" if model_path.endswith(".glb") else "application/octet-stream"
-        return FileResponse(model_path, media_type=media)
-    raise HTTPException(status_code=404, detail=f"Model {filename} not found")
+    if not os.path.exists(model_path):
+        raise HTTPException(status_code=404, detail=f"Model {filename} not found")
+    stat = os.stat(model_path)
+    etag = f'"{stat.st_mtime_ns:x}-{stat.st_size:x}"'
+    # A matched ETag turns a 100+ MB transfer into a 304 on every revisit
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=304, headers={"ETag": etag})
+    media = "model/gltf-binary" if model_path.endswith(".glb") else "application/octet-stream"
+    return FileResponse(
+        model_path,
+        media_type=media,
+        headers={"ETag": etag, "Cache-Control": "private, no-cache"},
+    )
 
 
 @app.get("/")
 @app.get("/viewer.html")
 async def serve_viewer():
-    """Serve the viewer SPA entry point."""
+    """Serve the viewer SPA; it shows its own sign-in overlay until a session exists."""
     viewer_path = os.path.join(STATIC_DIR, "viewer.html")
     if os.path.exists(viewer_path):
         return FileResponse(viewer_path, media_type="text/html")

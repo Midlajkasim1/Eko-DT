@@ -3,6 +3,7 @@ import { Box3 } from 'three'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { useModelStore } from '@/store/useModelStore'
+import { useLoadingProgressStore } from '@/store/useLoadingProgressStore'
 import type { FragmentsEngine } from '@/lib/fragmentsEngine'
 import { applyModelTransform } from '@/lib/transformUtils'
 export function useModelLoader(engineRef: React.MutableRefObject<FragmentsEngine | null>) {
@@ -15,6 +16,8 @@ export function useModelLoader(engineRef: React.MutableRefObject<FragmentsEngine
 
     setIsLoading(true)
     setError(null)
+    const progress = useLoadingProgressStore.getState()
+    progress.updateEntry(modelId, { phase: 'parsing' })
 
     try {
       if (type === 'glb') {
@@ -24,9 +27,11 @@ export function useModelLoader(engineRef: React.MutableRefObject<FragmentsEngine
         }
 
         const loader = new GLTFLoader()
+        const parseStart = performance.now()
         const gltf = await new Promise<any>((resolve, reject) => {
           loader.parse(fragBytes, '', resolve, reject)
         })
+        progress.updateEntry(modelId, { parseMs: performance.now() - parseStart })
 
         gltf.scene.traverse((child: any) => {
           if (child.isMesh && child.material) {
@@ -74,13 +79,16 @@ export function useModelLoader(engineRef: React.MutableRefObject<FragmentsEngine
         if (existing) await engine.fragments.disposeModel(modelId)
 
         // Also register model in OBC FragmentsManager so picking tools can find it
+        const indexStart = performance.now()
         try {
           const obcBuffer = fragBytes.slice(0); // clone to avoid transfer issues
           await (engine.obcFragments as any).core?.load?.(obcBuffer, { modelId });
         } catch (e) {
           console.warn('OBC.FragmentsManager load failed:', e);
         }
+        progress.updateEntry(modelId, { indexMs: performance.now() - indexStart })
 
+        const parseStart = performance.now()
         const model = await engine.fragments.load(fragBytes, { modelId })
         model.useCamera(engine.world.camera.three)
 
@@ -103,6 +111,7 @@ export function useModelLoader(engineRef: React.MutableRefObject<FragmentsEngine
 
         engine.world.scene.three.add(model.object)
         await engine.fragments.update(true)
+        progress.updateEntry(modelId, { parseMs: performance.now() - parseStart })
         useModelStore.getState().markModelLoadedInEngine(modelId)
 
         // IFC spaces
@@ -132,8 +141,10 @@ export function useModelLoader(engineRef: React.MutableRefObject<FragmentsEngine
         // Notify that the model is fully loaded so overrides can be applied
         window.dispatchEvent(new CustomEvent('model-loaded', { detail: { modelId } }))
       }
+      progress.updateEntry(modelId, { phase: 'done' })
     } catch (err: any) {
       setError(err?.message ?? 'Failed to load model')
+      progress.updateEntry(modelId, { phase: 'error', error: err?.message ?? 'parse failed' })
     } finally {
       setIsLoading(false)
     }
