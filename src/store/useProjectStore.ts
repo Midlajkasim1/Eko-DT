@@ -16,6 +16,7 @@ import {
   cacheHandle,
   cardFromMeta,
 } from '@/lib/projectDb'
+import { ASSETS_VERSION } from '@/lib/textureAssets'
 
 interface RecentProject {
   card: RecentProjectCard
@@ -71,6 +72,7 @@ interface ProjectState {
   updateModelTransform: (modelId: string, transform: { position?: [number, number, number], rotation?: [number, number, number], scale?: [number, number, number] }) => Promise<void>
   updateThumbnail: (dataUrl: string) => Promise<void>
   saveViewAndSettings: (camera: import('@/types').ProjectCamera, renderSettings: import('@/types').ProjectRenderSettings) => Promise<void>
+  addTextureAsset: (asset: import('@/types').TextureAsset) => Promise<void>
   setMaterialOverride: (modelId: string, override: import('@/types').MaterialOverride) => Promise<void>
   removeMaterialOverride: (modelId: string, overrideId: string) => Promise<void>
   setDirty: (dirty: boolean) => void
@@ -275,12 +277,22 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     const { currentProject, folderHandle } = get()
     if (!currentProject || !folderHandle) return
 
+    // Overrides for the removed model are quarantined rather than dropped, so
+    // re-adding the model restores its materials
+    const orphanedAt = Date.now()
+    const overrides = Object.fromEntries(
+      Object.entries(currentProject.materialOverrides || {}).map(([id, o]) =>
+        o.modelId === modelId && !o.orphanedAt ? [id, { ...o, orphanedAt }] : [id, o]
+      )
+    )
+
     const updated: ProjectMeta = {
       ...currentProject,
       models: currentProject.models.filter(m => m.modelId !== modelId),
+      ...(currentProject.materialOverrides ? { materialOverrides: overrides } : {}),
       updatedAt: Date.now(),
     }
-    
+
     try {
       await deleteModelFromProject(folderHandle, modelId)
       await saveProjectMeta(folderHandle, updated)
@@ -358,6 +370,21 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
     const recent = refreshCard(get().recentProjects, updated)
     set({ currentProject: updated, isDirty: false, recentProjects: recent })
+  },
+
+  addTextureAsset: async (asset: import('@/types').TextureAsset) => {
+    const { currentProject, folderHandle } = get()
+    if (!currentProject || !folderHandle) return
+    if (currentProject.textures?.[asset.hash]) return
+
+    const updated: ProjectMeta = {
+      ...currentProject,
+      assetsVersion: ASSETS_VERSION,
+      textures: { ...(currentProject.textures || {}), [asset.hash]: asset },
+      updatedAt: Date.now(),
+    }
+    await saveProjectMeta(folderHandle, updated)
+    set({ currentProject: updated, recentProjects: refreshCard(get().recentProjects, updated) })
   },
 
   setMaterialOverride: async (modelId: string, override: import('@/types').MaterialOverride) => {

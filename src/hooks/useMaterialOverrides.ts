@@ -4,17 +4,28 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { useModelStore } from '@/store/useModelStore'
 import type { FragmentsEngine } from '@/lib/fragmentsEngine'
 import type { MaterialOverride } from '@/types'
+import { resolveTextureUrl } from '@/lib/textureAssets'
 
 const textureLoader = new THREE.TextureLoader()
 const decodedTextures = new Map<string, Promise<THREE.Texture>>()
 
 /** Decode each distinct texture once. Callers clone the result, so every material
  *  gets its own repeat while sharing a single GPU upload. */
-function decodeTexture(dataUrl: string): Promise<THREE.Texture> {
-  let decoding = decodedTextures.get(dataUrl)
+function decodeTexture(key: string, resolve: () => Promise<{ url: string; revoke: boolean } | null>): Promise<THREE.Texture> {
+  let decoding = decodedTextures.get(key)
   if (!decoding) {
-    decoding = textureLoader.loadAsync(dataUrl)
-    decodedTextures.set(dataUrl, decoding)
+    decoding = resolve().then(async source => {
+      if (!source) throw new Error(`texture ${key} is missing from the project`)
+      try {
+        const texture = await textureLoader.loadAsync(source.url)
+        texture.colorSpace = THREE.SRGBColorSpace
+        return texture
+      } finally {
+        if (source.revoke) URL.revokeObjectURL(source.url)
+      }
+    })
+    decoding.catch(() => decodedTextures.delete(key))
+    decodedTextures.set(key, decoding)
   }
   return decoding
 }
@@ -454,9 +465,15 @@ export function useMaterialOverrides(engineRef: React.MutableRefObject<Fragments
           mat.opacity = override.opacity
           mat.transparent = override.transparent || override.opacity < 1.0
         }
-        if (override.textureDataUrl && 'map' in mat) {
+        const textureKey = override.textureHash || override.textureDataUrl
+        if (textureKey && 'map' in mat) {
           const scale = override.textureScale !== undefined ? override.textureScale : 0.001
-          decodeTexture(override.textureDataUrl).then(decoded => {
+          decodeTexture(textureKey, () => {
+            const { currentProject, folderHandle } = useProjectStore.getState()
+            return currentProject
+              ? resolveTextureUrl(currentProject, override, folderHandle)
+              : Promise.resolve(null)
+          }).then(decoded => {
             const tex = decoded.clone()
             tex.userData.isOverrideTexture = true
             tex.wrapS = THREE.RepeatWrapping
@@ -465,8 +482,8 @@ export function useMaterialOverrides(engineRef: React.MutableRefObject<Fragments
             releaseOverrideMap(mat)
             mat.map = tex
             mat.needsUpdate = true
-          })
-        } else if (override.textureDataUrl === '' && 'map' in mat) {
+          }).catch(err => console.warn('[MaterialOverrides] Could not load texture:', err))
+        } else if (textureKey === '' && 'map' in mat) {
            releaseOverrideMap(mat)
            mat.map = null
         }

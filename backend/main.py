@@ -7,6 +7,7 @@ Also serves the compiled viewer app from the 'static/' directory.
 
 import asyncio
 import json
+import mimetypes
 import os
 import re
 from contextlib import asynccontextmanager
@@ -727,6 +728,7 @@ async def auth_logout():
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BACKEND_DIR, "static")
 MODELS_DIR = os.path.join(BACKEND_DIR, "models")
+TEXTURES_DIR = os.path.join(BACKEND_DIR, "textures")
 PROJECT_JSON = os.path.join(BACKEND_DIR, "project.json")
 LOGIN_HTML = os.path.join(BACKEND_DIR, "login.html")
 
@@ -772,14 +774,41 @@ async def serve_thumbnail():
     raise HTTPException(status_code=404, detail="thumbnail not found")
 
 
+def _resolve_within(base: str, filename: str) -> str:
+    """Resolve filename under base, refusing anything that escapes it.
+
+    Comparing the joined string against the base is not enough: on Windows
+    join(base, "..\\x") still starts with base while resolving outside it.
+    """
+    root = os.path.realpath(base)
+    target = os.path.realpath(os.path.join(root, filename))
+    try:
+        inside = os.path.commonpath([root, target]) == root
+    except ValueError:  # different drive
+        inside = False
+    if not inside:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return target
+
+
+@app.get("/textures/{filename:path}")
+async def serve_texture(filename: str):
+    """Serve a material texture. Names are content hashes, so these never change."""
+    texture_path = _resolve_within(TEXTURES_DIR, filename)
+    if not os.path.exists(texture_path):
+        raise HTTPException(status_code=404, detail=f"Texture {filename} not found")
+    media, _ = mimetypes.guess_type(texture_path)
+    return FileResponse(
+        texture_path,
+        media_type=media or "application/octet-stream",
+        headers={"Cache-Control": "public, max-age=31536000, immutable"},
+    )
+
+
 @app.get("/models/{filename:path}")
 async def serve_model(filename: str, request: Request):
     """Serve model files (.frag / .glb); ungated so they load during sign-in."""
-    safe = os.path.normpath(filename)
-    model_path = os.path.join(MODELS_DIR, safe)
-    # Prevent path traversal
-    if not model_path.startswith(MODELS_DIR):
-        raise HTTPException(status_code=403, detail="Forbidden")
+    model_path = _resolve_within(MODELS_DIR, filename)
     if not os.path.exists(model_path):
         raise HTTPException(status_code=404, detail=f"Model {filename} not found")
     stat = os.stat(model_path)

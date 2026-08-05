@@ -1,4 +1,6 @@
 import { get, set, del, keys, createStore } from 'idb-keyval'
+import type JSZip from 'jszip'
+import { collectGarbage, TEXTURES_DIR } from '@/lib/textureAssets'
 import type { ProjectMeta, ProjectModel, RecentProjectCard } from '@/types'
 
 // Only used to CACHE folder handles for "recent projects" — no actual data stored here
@@ -20,7 +22,7 @@ export function cardFromMeta(meta: ProjectMeta, thumbnail?: string): RecentProje
     modelCount: meta.models.length,
     updatedAt: meta.updatedAt,
     isFinProject: meta.isFinProject,
-    thumbnail: thumbnail ?? (meta as any).thumbnail,
+    thumbnail: thumbnail ?? meta.thumbnail,
   }
 }
 
@@ -346,15 +348,36 @@ function metaForBundledModels(meta: ProjectMeta, bundled: Set<string>): ProjectM
   const narrowed: ProjectMeta = { ...meta, models: meta.models.filter(m => bundled.has(m.modelId)) }
 
   if (meta.materialOverrides) {
-    const kept = Object.entries(meta.materialOverrides).filter(([, o]) => bundled.has(o.modelId))
+    const kept = Object.entries(meta.materialOverrides)
+      .filter(([, o]) => bundled.has(o.modelId) && !o.orphanedAt)
     const droppedCount = Object.keys(meta.materialOverrides).length - kept.length
     if (droppedCount) {
-      console.warn(`[export] omitting ${droppedCount} material override(s) targeting omitted models`)
+      console.warn(`[export] omitting ${droppedCount} material override(s) that are orphaned or target omitted models`)
     }
     narrowed.materialOverrides = Object.fromEntries(kept)
   }
 
+  if (meta.textures) narrowed.textures = collectGarbage(narrowed)
+
   return narrowed
+}
+
+/** Copy the textures the narrowed meta still references into the bundle */
+async function addTexturesToZip(
+  handle: FileSystemDirectoryHandle,
+  meta: ProjectMeta,
+  zip: JSZip,
+  prefix: string
+) {
+  const assets = Object.values(meta.textures || {})
+  if (!assets.length) return
+  const dir = await handle.getDirectoryHandle(TEXTURES_DIR, { create: true })
+  for (const asset of assets) {
+    const name = asset.src.slice(TEXTURES_DIR.length + 1)
+    const bytes = await readBinary(dir, name)
+    if (bytes) zip.file(`${prefix}${asset.src}`, bytes, STORED)
+    else console.warn(`[export] texture ${asset.src} is missing from disk`)
+  }
 }
 
 /** Export entire project as a ZIP blob */
@@ -383,6 +406,8 @@ export async function exportProjectAsZip(handle: FileSystemDirectoryHandle, meta
   for (const model of models) {
     backendModelsFolder.file(model.fileName, model.bytes, STORED)
   }
+
+  await addTexturesToZip(handle, bundledMeta, zip, 'backend/')
 
   // Include Built Viewer App + Backend
   const res = await fetch('/viewer-assets.json?t=' + Date.now(), { cache: 'no-store' })
@@ -500,6 +525,8 @@ export async function exportFinProjectAsZip(handle: FileSystemDirectoryHandle, m
   for (const model of models) {
     zipModelsFolder.file(model.fileName, model.bytes, STORED)
   }
+
+  await addTexturesToZip(handle, bundledMeta, zip, '')
 
   try {
     const thumbFh = await handle.getFileHandle('thumbnail.webp')

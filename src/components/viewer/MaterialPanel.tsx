@@ -5,6 +5,7 @@ import { useProjectStore } from '@/store/useProjectStore'
 import { useModelStore } from '@/store/useModelStore'
 import type { FragmentsEngine } from '@/lib/fragmentsEngine'
 import type { MaterialOverride } from '@/types'
+import { storeTexture } from '@/lib/textureAssets'
 
 interface MaterialPanelProps {
   engineRef: React.MutableRefObject<FragmentsEngine | null>
@@ -18,6 +19,7 @@ export function MaterialPanel({ engineRef }: MaterialPanelProps) {
   const currentProject = useProjectStore(s => s.currentProject)
   const setMaterialOverride = useProjectStore(s => s.setMaterialOverride)
   const removeMaterialOverride = useProjectStore(s => s.removeMaterialOverride)
+  const addTextureAsset = useProjectStore(s => s.addTextureAsset)
   const models = useModelStore(s => s.models)
 
   const copiedMaterial = useAppStore(s => s.copiedMaterial)
@@ -31,7 +33,8 @@ export function MaterialPanel({ engineRef }: MaterialPanelProps) {
   const [metalness, setMetalness] = useState('0.1')
   const [opacity, setOpacity] = useState('1.0')
   const [transparent, setTransparent] = useState(false)
-  const [textureDataUrl, setTextureDataUrl] = useState<string>('')
+  const [textureHash, setTextureHash] = useState<string>('')
+  const [texturePreview, setTexturePreview] = useState<string>('')
   const [textureScale, setTextureScale] = useState<string>('0.001')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -55,17 +58,17 @@ export function MaterialPanel({ engineRef }: MaterialPanelProps) {
         if (existing.opacity !== undefined) setOpacity(existing.opacity.toString())
         if (existing.transparent !== undefined) setTransparent(existing.transparent)
         
-        if (existing.roughness !== undefined || existing.metalness !== undefined || existing.textureDataUrl) {
+        if (existing.roughness !== undefined || existing.metalness !== undefined || existing.textureHash) {
           setMaterialMode('texture')
           if (existing.roughness !== undefined) setRoughness(existing.roughness.toString())
           if (existing.metalness !== undefined) setMetalness(existing.metalness.toString())
-          if (existing.textureDataUrl) setTextureDataUrl(existing.textureDataUrl)
+          if (existing.textureHash) setTextureHash(existing.textureHash)
           if (existing.textureScale !== undefined) setTextureScale(existing.textureScale.toString())
         } else {
           setMaterialMode('color')
           setRoughness('0.8')
           setMetalness('0.1')
-          setTextureDataUrl('')
+          setTextureHash('')
           setTextureScale('0.001')
         }
       } else {
@@ -76,22 +79,26 @@ export function MaterialPanel({ engineRef }: MaterialPanelProps) {
         setMaterialMode('color')
         setRoughness('0.8')
         setMetalness('0.1')
-        setTextureDataUrl('')
+        setTextureHash('')
+        setTexturePreview('')
         setTextureScale('0.001')
       }
     }
   }, [selectedElement, targetType, currentProject])
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        setTextureDataUrl(event.target.result.toString())
-      }
+    const { folderHandle } = useProjectStore.getState()
+    if (!folderHandle) return
+    try {
+      const asset = await storeTexture(folderHandle, file)
+      setTextureHash(asset.hash)
+      setTexturePreview(URL.createObjectURL(file))
+      await addTextureAsset(asset)
+    } catch (err) {
+      alert('Could not store the texture: ' + (err instanceof Error ? err.message : err))
     }
-    reader.readAsDataURL(file)
   }
 
   const handleApply = async () => {
@@ -110,7 +117,7 @@ export function MaterialPanel({ engineRef }: MaterialPanelProps) {
       transparent,
       roughness: materialMode === 'texture' ? parseFloat(roughness) : undefined,
       metalness: materialMode === 'texture' ? parseFloat(metalness) : undefined,
-      textureDataUrl: materialMode === 'texture' ? (textureDataUrl || undefined) : undefined,
+      textureHash: materialMode === 'texture' ? (textureHash || undefined) : undefined,
       textureScale: materialMode === 'texture' ? parseFloat(textureScale) : undefined
     }
 
@@ -256,15 +263,15 @@ export function MaterialPanel({ engineRef }: MaterialPanelProps) {
                     <button className="position-btn-sm" onClick={() => fileInputRef.current?.click()}>
                       Upload Image
                     </button>
-                    {textureDataUrl && (
-                      <button className="position-btn-sm muted" onClick={() => setTextureDataUrl('')}>
+                    {textureHash && (
+                      <button className="position-btn-sm muted" onClick={() => { setTextureHash(''); setTexturePreview('') }}>
                         Clear
                       </button>
                     )}
                   </div>
-                  {textureDataUrl && (
+                  {textureHash && (
                     <>
-                      <div style={{ marginTop: '8px', width: '100%', height: '60px', backgroundImage: `url(${textureDataUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '4px', border: '1px solid var(--border-soft)' }} />
+                      <div style={{ marginTop: '8px', width: '100%', height: '60px', backgroundImage: `url(${texturePreview})`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '4px', border: '1px solid var(--border-soft)' }} />
                       
                       <div className="position-field-group" style={{ marginTop: '12px' }}>
                         <label className="position-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -288,7 +295,7 @@ export function MaterialPanel({ engineRef }: MaterialPanelProps) {
 
             <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
               <button className="position-apply-btn" onClick={() => {
-                const matData = { materialMode, color, opacity, transparent, roughness, metalness, textureDataUrl, textureScale };
+                const matData = { materialMode, color, opacity, transparent, roughness, metalness, textureHash, textureScale };
                 setCopiedMaterial(matData);
               }} style={{ flex: 1, background: 'var(--bg)', border: '1px solid var(--border-soft)', color: 'var(--text)' }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14" style={{ marginRight: '4px', verticalAlign: 'text-bottom' }}>
@@ -306,7 +313,7 @@ export function MaterialPanel({ engineRef }: MaterialPanelProps) {
                   if (p.transparent !== undefined) setTransparent(p.transparent);
                   if (p.roughness) setRoughness(p.roughness);
                   if (p.metalness) setMetalness(p.metalness);
-                  if (p.textureDataUrl !== undefined) setTextureDataUrl(p.textureDataUrl);
+                  if (p.textureHash !== undefined) setTextureHash(p.textureHash);
                   if (p.textureScale) setTextureScale(p.textureScale);
                 }
               }} style={{ flex: 1, background: 'var(--bg)', border: '1px solid var(--border-soft)', color: 'var(--text)' }}>

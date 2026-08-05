@@ -48,8 +48,24 @@ export interface MaterialOverride {
   metalness?: number
   opacity?: number
   transparent?: boolean
+  /** assetsVersion 1 only — the image inlined as a base64 data URL */
   textureDataUrl?: string
+  textureHash?: string
   textureScale?: number
+  /** Set when the target model was removed; kept for recovery, excluded from exports */
+  orphanedAt?: number
+}
+
+/** A texture stored beside project.json at textures/<hash>.<ext> */
+export interface TextureAsset {
+  hash: string
+  src: string
+  mime: string
+  width: number
+  height: number
+  sourceWidth: number
+  sourceHeight: number
+  bytes: number
 }
 
 
@@ -96,6 +112,10 @@ export interface ProjectRenderSettings {
 
 export interface ProjectMeta {
   version: number
+  /** 2 once textures live in textures/ instead of inline data URLs. Emitted first
+   *  so the migration state can be read from a short prefix of the file. */
+  assetsVersion?: number
+  textures?: Record<string, TextureAsset>
   projectId: string
   name: string
   description?: string
@@ -113,6 +133,8 @@ export interface ProjectMeta {
   isFinProject?: boolean
   apiSettings?: ProjectApiSettings
   materialOverrides?: Record<string, MaterialOverride>
+  /** Attached from thumbnail.webp on open, and persisted back by saveProjectMeta */
+  thumbnail?: string
 }
 
 /** Everything the project list renders, so opening it never parses project.json */
