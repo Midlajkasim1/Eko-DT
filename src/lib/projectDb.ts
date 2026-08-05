@@ -302,6 +302,10 @@ export async function saveThumbnailToProject(handle: FileSystemDirectoryHandle, 
   await writeBinary(handle, 'thumbnail.webp', buf)
 }
 
+// .frag, .glb and .webp are already compressed; deflating them again costs
+// seconds of main-thread pako for a percent or two
+const STORED = { compression: 'STORE' } as const
+
 /** Read every model listed in `meta` that still has a file on disk */
 async function readBundledModels(handle: FileSystemDirectoryHandle, meta: ProjectMeta) {
   const modelsDir = await handle.getDirectoryHandle('models', { create: true })
@@ -356,12 +360,12 @@ export async function exportProjectAsZip(handle: FileSystemDirectoryHandle, meta
   try {
     const thumbFh = await handle.getFileHandle('thumbnail.webp')
     const thumbFile = await thumbFh.getFile()
-    zip.file('backend/thumbnail.webp', await thumbFile.arrayBuffer())
+    zip.file('backend/thumbnail.webp', await thumbFile.arrayBuffer(), STORED)
   } catch { /* no thumbnail yet */ }
 
   const backendModelsFolder = zip.folder('backend/models')!
   for (const model of models) {
-    backendModelsFolder.file(model.fileName, model.bytes)
+    backendModelsFolder.file(model.fileName, model.bytes, STORED)
   }
 
   // Include Built Viewer App + Backend
@@ -483,13 +487,13 @@ export async function exportFinProjectAsZip(handle: FileSystemDirectoryHandle, m
 
   const zipModelsFolder = zip.folder('models')!
   for (const model of models) {
-    zipModelsFolder.file(model.fileName, model.bytes)
+    zipModelsFolder.file(model.fileName, model.bytes, STORED)
   }
 
   try {
     const thumbFh = await handle.getFileHandle('thumbnail.webp')
     const thumbFile = await thumbFh.getFile()
-    zip.file('thumbnail.webp', await thumbFile.arrayBuffer())
+    zip.file('thumbnail.webp', await thumbFile.arrayBuffer(), STORED)
   } catch { /* no thumbnail yet */ }
 
   // 2. Add static Viewer App directly to root structure (No backend)
