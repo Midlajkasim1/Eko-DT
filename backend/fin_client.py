@@ -38,8 +38,8 @@ def safe_get(obj: Any, key: str, default: Any = None) -> Any:
 def collapse_metadata_blocks(text: str) -> str:
     """Replace each << ... >> metadata block with a single quoted placeholder.
 
-    A nested << emits its own placeholder and an unterminated one drops the rest
-    of the text, matching the character-at-a-time scanner this replaced.
+    A nested << emits its own placeholder, and an unterminated one drops the rest
+    of the text.
     """
     if "<<" not in text:
         return text

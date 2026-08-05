@@ -127,10 +127,10 @@ export function useModelLoader(engineRef: React.MutableRefObject<FragmentsEngine
           } catch {
           }
         }
-        
-        // Notify that the model is fully loaded so overrides can be applied
-        window.dispatchEvent(new CustomEvent('model-loaded', { detail: { modelId } }))
       }
+
+      // Notify that the model is fully loaded so overrides can be applied
+      window.dispatchEvent(new CustomEvent('model-loaded', { detail: { modelId } }))
       progress.updateEntry(modelId, { phase: 'done' })
     } catch (err: any) {
       setError(err?.message ?? 'Failed to load model')

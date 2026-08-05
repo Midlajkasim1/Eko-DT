@@ -320,8 +320,7 @@ export async function saveThumbnailToProject(handle: FileSystemDirectoryHandle, 
   await writeBinary(handle, 'thumbnail.webp', buf)
 }
 
-// .frag, .glb and .webp are already compressed; deflating them again costs
-// seconds of main-thread pako for a percent or two
+// .frag, .glb and .webp are already compressed; deflating them again is seconds of pako for ~9%
 const STORED = { compression: 'STORE' } as const
 
 /** Read every model listed in `meta` that still has a file on disk */
@@ -421,9 +420,7 @@ export async function exportProjectAsZip(handle: FileSystemDirectoryHandle, meta
     zip.file(`backend/static/${f.path}`, f.content, { base64: true })
   }
 
-  // Bundle backend Python files. These are served by a dev-server middleware, so a
-  // studio running from a built dist/ cannot reach them — fail loudly rather than
-  // ship a bundle with no backend.
+  // Served by a dev-server middleware only, so a studio running from dist/ cannot reach them
   const backendFiles = [
     { name: 'main.py', url: '/backend/main.py' },
     { name: 'fin_client.py', url: '/backend/fin_client.py' },

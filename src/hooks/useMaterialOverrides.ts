@@ -529,10 +529,8 @@ export function useMaterialOverrides(engineRef: React.MutableRefObject<Fragments
       }
     }
     
-    if (engineRef.current?.fragments.models.list.size) {
-      for (const modelId of engineRef.current.fragments.models.list.keys()) {
-        applyForModel(modelId as string)
-      }
+    for (const model of models) {
+      applyForModel(model.modelId)
     }
 
     const handleModelLoaded = (e: any) => {
@@ -576,5 +574,5 @@ export function useMaterialOverrides(engineRef: React.MutableRefObject<Fragments
       window.removeEventListener('model-loaded', handleModelLoaded)
       window.removeEventListener('material-override-removed', handleRemoved)
     }
-  }, [currentProject?.materialOverrides, applyOverride])
+  }, [currentProject?.materialOverrides, models, applyOverride])
 }

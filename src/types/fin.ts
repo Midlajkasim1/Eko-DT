@@ -69,7 +69,8 @@ export interface FinPowerLiveResponse {
   avg_hum: number
   avg_co2: number
   unit: string
-  power_history: Record<string, unknown>
+  /** Served by /api/fin/power-history and spliced in by data-provider, not by power-live */
+  power_history?: Record<string, unknown>
   fdd: FinFddRule[]
 }
 

@@ -92,10 +92,22 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     const valid: RecentProject[] = []
     const seenIds = new Set<string>()
 
-    for (const { projectId, handle, card } of cached) {
-      if (!card || seenIds.has(card.projectId) || card.projectId !== projectId) {
+    for (const { projectId, handle, card: cachedCard } of cached) {
+      // The oldest cache shape stored a bare handle, so its card has to be
+      // recovered from disk once before the list can render it
+      let card = cachedCard
+      if (!card) {
+        const meta = await loadProjectFromHandle(handle)
+        if (!meta) {
+          await removeCachedHandle(projectId)
+          continue
+        }
+        card = cardFromMeta(meta)
+        await cacheHandle(meta.projectId, handle, meta, meta.thumbnail)
+      }
+
+      if (seenIds.has(card.projectId) || card.projectId !== projectId) {
         await removeCachedHandle(projectId)
-        if (!card) continue
       }
       if (!seenIds.has(card.projectId)) {
         seenIds.add(card.projectId)
@@ -157,7 +169,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       return null
     }
 
-    await cacheHandle(meta.projectId, handle, meta, (meta as any).thumbnail)
+    await cacheHandle(meta.projectId, handle, meta, meta.thumbnail)
 
     const recent = get().recentProjects.filter(r => r.card.projectId !== meta.projectId)
     set({
@@ -180,7 +192,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     
     try {
       await saveProjectMeta(folderHandle, updated)
-      await cacheHandle(updated.projectId, folderHandle, updated, (updated as any).thumbnail)
+      await cacheHandle(updated.projectId, folderHandle, updated, updated.thumbnail)
     } catch (err: any) {
       console.error("Save Error Details:", err);
       if (err?.message?.includes('state cached in an interface object')) {
@@ -206,7 +218,13 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     const { currentProject, folderHandle } = get()
     if (!currentProject || !folderHandle) return
 
-    const blob = await exportProjectAsZip(folderHandle, currentProject)
+    let blob: Blob
+    try {
+      blob = await exportProjectAsZip(folderHandle, currentProject)
+    } catch (err) {
+      alert('Export failed: ' + (err instanceof Error ? err.message : err))
+      return
+    }
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -220,7 +238,13 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     if (!currentProject || !folderHandle) return
 
     const { exportFinProjectAsZip } = await import('@/lib/projectDb')
-    const blob = await exportFinProjectAsZip(folderHandle, currentProject)
+    let blob: Blob
+    try {
+      blob = await exportFinProjectAsZip(folderHandle, currentProject)
+    } catch (err) {
+      alert('Export failed: ' + (err instanceof Error ? err.message : err))
+      return
+    }
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -256,7 +280,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     try {
       await saveModelToProject(folderHandle, { ...entry, fragBytes: bytesCopy })
       await saveProjectMeta(folderHandle, updated)
-      await cacheHandle(updated.projectId, folderHandle, updated, (updated as any).thumbnail)
+      await cacheHandle(updated.projectId, folderHandle, updated, updated.thumbnail)
     } catch (err: any) {
       console.error("Save Error Details:", err);
       if (err?.message?.includes('state cached in an interface object')) {
@@ -296,6 +320,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     try {
       await deleteModelFromProject(folderHandle, modelId)
       await saveProjectMeta(folderHandle, updated)
+      await cacheHandle(updated.projectId, folderHandle, updated, updated.thumbnail)
     } catch (err: any) {
       console.error("Save Error Details:", err);
       if (err?.message?.includes('state cached in an interface object')) {
@@ -328,7 +353,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     
     try {
       await saveProjectMeta(folderHandle, updated)
-      await cacheHandle(updated.projectId, folderHandle, updated, (updated as any).thumbnail)
+      await cacheHandle(updated.projectId, folderHandle, updated, updated.thumbnail)
     } catch (err: any) {
       console.error("Save Error Details:", err);
       if (err?.message?.includes('state cached in an interface object')) {
@@ -358,6 +383,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     
     try {
       await saveProjectMeta(folderHandle, updated)
+      await cacheHandle(updated.projectId, folderHandle, updated, updated.thumbnail)
     } catch (err: any) {
       console.error("Save Error Details:", err);
       if (err?.message?.includes('state cached in an interface object')) {
@@ -384,6 +410,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       updatedAt: Date.now(),
     }
     await saveProjectMeta(folderHandle, updated)
+    await cacheHandle(updated.projectId, folderHandle, updated, updated.thumbnail)
     set({ currentProject: updated, recentProjects: refreshCard(get().recentProjects, updated) })
   },
 
@@ -402,6 +429,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     
     try {
       await saveProjectMeta(folderHandle, updated)
+      await cacheHandle(updated.projectId, folderHandle, updated, updated.thumbnail)
     } catch (err: any) {
       console.error("Save Error Details:", err);
       if (err?.message?.includes('state cached in an interface object')) {
@@ -431,6 +459,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     
     try {
       await saveProjectMeta(folderHandle, updated)
+      await cacheHandle(updated.projectId, folderHandle, updated, updated.thumbnail)
     } catch (err: any) {
       console.error("Save Error Details:", err);
       if (err?.message?.includes('state cached in an interface object')) {

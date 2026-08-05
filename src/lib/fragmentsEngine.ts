@@ -158,7 +158,7 @@ export async function initFragmentsEngine(
     
     if (ssaoPass) {
       ssaoPass.enabled = params.realisticMode && params.ambientOcclusion !== false
-      // N8AO renders the scene itself, so RenderPass would only be overwritten
+      // N8AO renders the scene itself; exactly one of these two must draw it
       renderPass.enabled = !ssaoPass.enabled
       if (params.aoRadius !== undefined) ssaoPass.configuration.aoRadius = params.aoRadius
       if (params.aoIntensity !== undefined) ssaoPass.configuration.intensity = params.aoIntensity
@@ -465,6 +465,7 @@ export async function initFragmentsEngine(
   // @ts-ignore - explicitly disable double gamma correction if the property exists
   if (ssaoPass.configuration.gammaCorrection !== undefined) ssaoPass.configuration.gammaCorrection = false
   ssaoPass.enabled = false
+  // N8AO renders the scene itself; exactly one of these two must draw it
   renderPass.enabled = !ssaoPass.enabled
   composer.addPass(ssaoPass)
 
@@ -672,8 +673,7 @@ export async function initFragmentsEngine(
   const grid = grids.create(world)
   grid.visible = false
 
-  // No workerURL: the library then resolves the worker bundled with the package,
-  // instead of FragmentsModels.getWorker() fetching it from unpkg.com
+  // No workerURL: the library resolves the worker bundled with the package
   const fragments = new FRAGS.FragmentsModels()
 
   world.camera.controls.addEventListener('update', () => fragments.update())
