@@ -4,6 +4,31 @@
 (function () {
   'use strict';
 
+  // Re-injecting this script leaves the previous generation's timers and
+  // dashboard-data listener alive; each stale listener writes into the one real
+  // right panel, so N generations rebuild it N times per poll
+  if (window.Dashboard && typeof window.Dashboard.destroy === 'function') {
+    window.Dashboard.destroy();
+  }
+
+  const ownedTimers = [];
+  const ownedListeners = [];
+
+  const own = (id) => { ownedTimers.push(id); return id; };
+  const listen = (target, type, handler) => {
+    target.addEventListener(type, handler);
+    ownedListeners.push({ target, type, handler });
+  };
+
+  window.Dashboard = {
+    destroy() {
+      ownedTimers.forEach(clearInterval);
+      ownedTimers.length = 0;
+      ownedListeners.forEach(({ target, type, handler }) => target.removeEventListener(type, handler));
+      ownedListeners.length = 0;
+    },
+  };
+
   const $ = (s, ctx = document) => ctx.querySelector(s);
   const $$ = (s, ctx = document) => [...ctx.querySelectorAll(s)];
 
@@ -1974,7 +1999,7 @@
     el.textContent = now.toLocaleTimeString('en-GB', { hour12: false });
   }
   tickClock();
-  setInterval(tickClock, 1000);
+  own(setInterval(tickClock, 1000));
 
   /* ── Theme Toggle ── */
   const html = document.querySelector('.app-shell') || document.documentElement;
@@ -2705,7 +2730,7 @@
       if (scrubStatusTime) scrubStatusTime.textContent = `${hh}:${mm}`;
     }
     tick();
-    liveTickId = setInterval(tick, 30000);
+    liveTickId = own(setInterval(tick, 30000));
   }
 
   // ── Prev / Next ───────────────────────────────────────────────────────────
@@ -2964,7 +2989,7 @@
   updateConnectionPill();
   updateNotifBadge();
 
-  window.addEventListener('dashboard-data', (e) => {
+  listen(window, 'dashboard-data', (e) => {
     const type = e.detail && e.detail.type;
     if (type === 'power' || type === 'equipment' || type === 'alarms' || type === 'meters') {
       renderModuleOverview(currentModule, currentSubId);
@@ -3546,13 +3571,13 @@
 
     // Stream effect
     let i = 0;
-    ekoStreamTimer = setInterval(() => {
+    ekoStreamTimer = own(setInterval(() => {
       i += 3;
       const done = i >= aiText.length;
       textBubble.innerHTML = aiText.slice(0, i);
       ekoMessages.scrollTop = ekoMessages.scrollHeight;
       if (done) clearInterval(ekoStreamTimer);
-    }, 14);
+    }, 14));
   }
 
   // Close & Clear actions using event delegation

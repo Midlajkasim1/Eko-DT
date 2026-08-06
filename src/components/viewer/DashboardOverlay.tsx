@@ -112,9 +112,10 @@ export function DashboardOverlay({ visible }: DashboardOverlayProps) {
       mounted = false
       window.removeEventListener('dashboard-event', handler)
       document.querySelectorAll('.dt-dashboard-injected').forEach(el => el.remove())
-      if ((window as any).Dashboard?.finInterval) {
-        clearInterval((window as any).Dashboard.finInterval)
-      }
+      // Script elements are inert once executed, so the scripts have to release
+      // their own timers and listeners
+      ;(window as any).DashboardData?.stop?.()
+      ;(window as any).Dashboard?.destroy?.()
       // Clean up injected config
       delete (window as any).INJECTED_PROJECT_CONFIG
     }

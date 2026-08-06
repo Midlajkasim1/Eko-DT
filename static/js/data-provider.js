@@ -1,6 +1,12 @@
 (function () {
   'use strict';
 
+  // Re-injecting this script would otherwise leave the previous closure's pollers
+  // running forever, unreachable once window.DashboardData is rebound
+  if (window.DashboardData && typeof window.DashboardData.stop === 'function') {
+    window.DashboardData.stop();
+  }
+
   const EVENT_NAME = 'dashboard-data';
 
   function normalizeConfig(raw) {
