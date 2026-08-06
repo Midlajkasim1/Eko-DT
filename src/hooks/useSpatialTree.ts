@@ -19,6 +19,8 @@ export function useSpatialTree(engineRef: React.MutableRefObject<FragmentsEngine
       return
     }
 
+    let cancelled = false
+
     const loadTree = async () => {
       setIsLoading(true)
       try {
@@ -28,68 +30,41 @@ export function useSpatialTree(engineRef: React.MutableRefObject<FragmentsEngine
         if (!model) return
 
         const structure = await model.getSpatialStructure()
-        
-        // Helper to recursively get item names if available
-        const enrichNode = async (node: SpatialTreeItem): Promise<SpatialTreeItem> => {
-          let name: string | undefined = undefined
-          if (node.localId !== null) {
-            try {
-              const m = model as any;
-              
-              if (typeof m.getItem === 'function') {
-                const item = m.getItem(node.localId)
-                if (item && typeof item.getAttributes === 'function') {
-                  const attrs = await item.getAttributes()
-                  if (attrs) {
-                    if (typeof attrs.get === 'function') {
-                      const nameEntry = attrs.get('Name') || attrs.get('LongName')
-                      if (nameEntry && nameEntry.value !== undefined && nameEntry.value !== null) {
-                        name = String(nameEntry.value)
-                      }
-                    } else if (attrs.object) {
-                      const nameVal = attrs.object.Name || attrs.object.LongName
-                      if (nameVal !== undefined && nameVal !== null) name = String(nameVal)
-                    }
-                  }
-                }
-              }
-              
-              if (!name && typeof m.getItems === 'function') {
-                const itemsMap: Map<number, any> = await m.getItems([node.localId])
-                const rawItem = itemsMap?.get(node.localId)
-                if (rawItem?.data) {
-                  const nameAttr = rawItem.data['Name'] || rawItem.data['LongName']
-                  if (nameAttr?.value !== undefined && nameAttr.value !== null && nameAttr.value !== '') {
-                    name = String(nameAttr.value)
-                  }
-                }
-              }
-            } catch (e) {
-            }
-          }
-          
-          let children: SpatialTreeItem[] | undefined
-          if (node.children && node.children.length > 0) {
-            children = await Promise.all(node.children.map(enrichNode))
-          }
-          
-          return {
-            ...node,
-            name,
-            children
-          }
+
+        const localIds: number[] = []
+        const collectIds = (node: SpatialTreeItem) => {
+          if (node.localId !== null) localIds.push(node.localId)
+          node.children?.forEach(collectIds)
         }
-        
-        const enrichedStructure = await enrichNode(structure)
-        setTreeData(enrichedStructure)
+        collectIds(structure)
+
+        // One worker round trip for the whole tree rather than one per node
+        const items = localIds.length ? await model.getItems(localIds) : new Map()
+        if (cancelled) return
+
+        const nameOf = (localId: number | null) => {
+          if (localId === null) return undefined
+          const data = items.get(localId)?.data
+          const value = (data?.Name ?? data?.LongName)?.value
+          return value === undefined || value === null || value === '' ? undefined : String(value)
+        }
+
+        const enrichNode = (node: SpatialTreeItem): SpatialTreeItem => ({
+          ...node,
+          name: nameOf(node.localId),
+          children: node.children?.map(enrichNode),
+        })
+
+        setTreeData(enrichNode(structure))
       } catch (err) {
         console.error('Failed to load spatial tree', err)
       } finally {
-        setIsLoading(false)
+        if (!cancelled) setIsLoading(false)
       }
     }
 
     loadTree()
+    return () => { cancelled = true }
   }, [engineRef, modelId, isLoadedInEngine])
 
   return { treeData, isLoading }
