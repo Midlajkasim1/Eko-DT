@@ -96,7 +96,7 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
 
     // Each model is added the moment its bytes are read, so the sidebar list
     // fills in one by one rather than staying empty until the last file lands
-    const loaded = await loadModelsFromProject(folderHandle, meta, (pm, readMs) => {
+    await loadModelsFromProject(folderHandle, meta, (pm, readMs) => {
       updateEntry(pm.modelId, { phase: 'pending', readMs, bytesRead: pm.fragBytes.byteLength, sizeBytes: pm.fragBytes.byteLength })
       addModel({
         modelId: pm.modelId,
@@ -112,14 +112,9 @@ export function ProjectListPage({ engineRef }: ProjectListPageProps) {
       })
     }, (modelId, bytesRead, totalBytes) => {
       updateEntry(modelId, { phase: 'reading', bytesRead, sizeBytes: totalBytes })
+    }, (modelId) => {
+      updateEntry(modelId, { phase: 'error', error: 'model file not found on disk' })
     })
-
-    const loadedIds = new Set(loaded.map(m => m.modelId))
-    for (const m of meta.models) {
-      if (!loadedIds.has(m.modelId)) {
-        updateEntry(m.modelId, { phase: 'error', error: 'model file not found on disk' })
-      }
-    }
   }
 
   const handleDeleteRecent = async (projectId: string) => {

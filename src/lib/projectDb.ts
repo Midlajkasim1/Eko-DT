@@ -275,7 +275,8 @@ export async function loadModelsFromProject(
   handle: FileSystemDirectoryHandle,
   meta: ProjectMeta,
   onModel?: (model: ProjectModel, readMs: number) => void,
-  onBytes?: (modelId: string, bytesRead: number, totalBytes: number) => void
+  onBytes?: (modelId: string, bytesRead: number, totalBytes: number) => void,
+  onMissing?: (modelId: string) => void
 ): Promise<ProjectModel[]> {
   const modelsDir = await handle.getDirectoryHandle('models', { create: true })
   const results: ProjectModel[] = []
@@ -291,6 +292,8 @@ export async function loadModelsFromProject(
       // Hand each model over as soon as its bytes land so callers can show it
       // immediately instead of waiting for the whole (potentially GB-sized) set
       onModel?.(model, performance.now() - readStart)
+    } else {
+      onMissing?.(entry.modelId)
     }
   }
 

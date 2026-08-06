@@ -65,7 +65,10 @@ export function ModelLoadingProgress() {
 
   if (!sessionActive || models.length === 0) return null
 
-  const active = models.find(e => e.phase !== 'done' && e.phase !== 'error') ?? models[models.length - 1]
+  const active =
+    models.find(e => e.phase === 'reading' || e.phase === 'parsing') ??
+    models.find(e => e.phase === 'pending') ??
+    models[models.length - 1]
 
   return (
     <div className="model-loading-veil">
