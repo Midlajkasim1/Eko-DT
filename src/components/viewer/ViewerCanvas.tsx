@@ -122,10 +122,11 @@ export function ViewerCanvas({ onEngineReady, adminMode = true, isFinProject = f
 
   useEffect(() => {
     if (!isReady) return
-    if (useModelStore.getState().models.length === 0) {
-      // The store was cleared (project closed). Drop the geometry from the scene
-      // too — otherwise it keeps rendering behind the project list and bleeds
-      // into whichever project is opened next.
+    // An empty store only means "project closed" once something was actually
+    // loaded; on first mount it is just the session that has not started yet
+    if (useModelStore.getState().models.length === 0 && loadedIdsRef.current.size > 0) {
+      // Drop the geometry from the scene too — otherwise it keeps rendering
+      // behind the project list and bleeds into whichever project is opened next.
       const engine = engineRef.current
       if (engine) {
         for (const id of loadedIdsRef.current) {
