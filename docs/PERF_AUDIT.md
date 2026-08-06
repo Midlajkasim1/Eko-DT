@@ -543,12 +543,13 @@ now resolve and compare real paths. Reachable only by a client that does not nor
   profiler was run, so the 10-18 % figure remains `[E]`, as the audit itself stated.
 - **0.14 is not runtime-verified in a browser.** Evidence is the library's documented fallback plus the
   emitted asset reference and MIME check.
-- **Phase 2 is one item of nine.** Only `readBodyWithProgress` preallocation landed: the response now
+- **Phase 2 is two items of nine.** `readBodyWithProgress` preallocation landed: the response now
   streams into a buffer sized from `content-length`, removing the second full copy (41.4 MB on the largest
   Marsa model). An over-declared, under-declared, absent or zero `content-length` all still round-trip
   byte-for-byte — the first version of this change silently corrupted the under-declared case, which its
-  own test caught. **Not done:** anchor-first parallel loading, rAF-coalesced progress, batched spatial
-  tree, the `web-ifc` alias split, the IFC worker, the ZIP worker, `ProcessPoolExecutor`, and the
+  own test caught. rAF-coalesced progress also landed: **1,402 `updateEntry` calls collapse to 26 store
+  commits (54x)**, with terminal phases bypassing the queue so a backgrounded tab still finishes.
+  **Not done:** anchor-first parallel loading, batched spatial tree, the `web-ifc` alias split, the IFC worker, the ZIP worker, `ProcessPoolExecutor`, and the
   dashboard lifecycle fix. The load-pipeline item is the significant one — it is where the audit's
   "first model 12.3 s -> 7.8 s" lives, and it carries the `baseCoordinates` anchor-first constraint that
   makes it the riskiest remaining change.
