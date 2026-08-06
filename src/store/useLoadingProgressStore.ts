@@ -10,6 +10,8 @@ export interface ModelLoadProgress {
   phase: LoadPhase
   readMs?: number
   parseMs?: number
+  /** 0-1, reported by the engine while it parses; absent for .glb */
+  parseProgress?: number
   error?: string
 }
 
@@ -106,7 +108,7 @@ export function sessionProgress(state: Pick<LoadingProgressState, 'order' | 'ent
     const size = e.sizeBytes || e.bytesRead || 1
     const readFrac = Math.min(1, e.bytesRead / size)
     let frac = 0.5 * readFrac
-    if (e.phase === 'parsing') frac = 0.5 + 0.25
+    if (e.phase === 'parsing') frac = 0.5 + 0.5 * (e.parseProgress ?? 0.5)
     else if (e.phase === 'done' || e.phase === 'error') frac = 1
     weightSum += size
     progressSum += size * frac

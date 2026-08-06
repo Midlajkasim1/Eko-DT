@@ -19,7 +19,10 @@ function statusLabel(e: ModelLoadProgress, source: 'disk' | 'server' | null) {
       const size = e.sizeBytes || 0
       return size ? `${readVerb} ${Math.min(100, Math.round((e.bytesRead / size) * 100))}%` : readVerb
     }
-    case 'parsing': return 'parsing…'
+    case 'parsing':
+      return e.parseProgress === undefined
+        ? 'parsing…'
+        : `parsing ${Math.min(100, Math.round(e.parseProgress * 100))}%`
     case 'done': return `done · ${fmtMs((e.readMs ?? 0) + (e.parseMs ?? 0))}`
     case 'error': return 'failed'
   }

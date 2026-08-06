@@ -79,7 +79,12 @@ export function useModelLoader(engineRef: React.MutableRefObject<FragmentsEngine
         if (existing) await engine.fragments.disposeModel(modelId)
 
         const parseStart = performance.now()
-        const model = await engine.fragments.load(fragBytes, { modelId })
+        const model = await engine.fragments.load(fragBytes, {
+          modelId,
+          onProgress: ({ progress: parseProgress }) => {
+            progress.updateEntry(modelId, { parseProgress })
+          },
+        })
         model.useCamera(engine.world.camera.three)
 
         model.object.userData.originalPosition = model.object.position.clone()
