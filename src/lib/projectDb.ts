@@ -1,7 +1,7 @@
 import { get, set, del, keys, createStore } from 'idb-keyval'
 import type JSZip from 'jszip'
 import { ASSETS_VERSION, buildTextureAsset, collectGarbage, TEXTURES_DIR } from '@/lib/textureAssets'
-import type { ProjectMeta, ProjectModel, RecentProjectCard } from '@/types'
+import type { ProjectMeta, ProjectModel, RecentProjectCard, TextureAsset } from '@/types'
 
 // Only used to CACHE folder handles for "recent projects" — no actual data stored here
 const handleStore = createStore('ifcviewer-handles', 'folder-handles')
@@ -372,22 +372,28 @@ async function addTexturesToZip(
   const textures = { ...(meta.textures || {}) }
   const overrides = { ...(meta.materialOverrides || {}) }
 
-  let externalised = 0
+  // Overrides commonly share one image, and re-encoding is by far the slowest part
+  // of an export, so each distinct data URL is converted once
+  const encoded = new Map<string, TextureAsset>()
   for (const [id, override] of Object.entries(overrides)) {
     if (!override.textureDataUrl) continue
-    const source = await (await fetch(override.textureDataUrl)).blob()
-    const { asset, blob } = await buildTextureAsset(source)
-    if (!textures[asset.hash]) {
-      textures[asset.hash] = asset
-      zip.file(`${prefix}${asset.src}`, await blob.arrayBuffer(), STORED)
+    let asset = encoded.get(override.textureDataUrl)
+    if (!asset) {
+      const source = await (await fetch(override.textureDataUrl)).blob()
+      const built = await buildTextureAsset(source)
+      asset = built.asset
+      encoded.set(override.textureDataUrl, asset)
+      if (!textures[asset.hash]) {
+        textures[asset.hash] = asset
+        zip.file(`${prefix}${asset.src}`, await built.blob.arrayBuffer(), STORED)
+      }
     }
     const hashed = { ...override, textureHash: asset.hash }
     delete hashed.textureDataUrl
     overrides[id] = hashed
-    externalised++
   }
-  if (externalised) {
-    console.info(`[export] externalised ${externalised} inline texture(s) into ${TEXTURES_DIR}/`)
+  if (encoded.size) {
+    console.info(`[export] encoded ${encoded.size} distinct texture(s) into ${TEXTURES_DIR}/`)
   }
 
   // Textures the project already keeps as sidecars are copied straight across
