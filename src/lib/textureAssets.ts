@@ -53,30 +53,40 @@ async function texturesDir(handle: FileSystemDirectoryHandle, create: boolean) {
   return handle.getDirectoryHandle(TEXTURES_DIR, { create })
 }
 
-/** Write an image into the project's textures/ folder, keyed by content hash. */
-export async function storeTexture(handle: FileSystemDirectoryHandle, source: Blob): Promise<TextureAsset> {
+/** Encode and hash an image without writing it anywhere. */
+export async function buildTextureAsset(source: Blob): Promise<{ asset: TextureAsset; blob: Blob }> {
   const { blob, width, height, sourceWidth, sourceHeight } = await encodeCapped(source)
   const bytes = await blob.arrayBuffer()
   const hash = await sha256Prefix(bytes)
   const mime = blob.type || 'image/webp'
   const name = `${hash}.${EXTENSIONS[mime] ?? 'bin'}`
 
+  return {
+    blob,
+    asset: {
+      hash,
+      src: `${TEXTURES_DIR}/${name}`,
+      mime,
+      width,
+      height,
+      sourceWidth,
+      sourceHeight,
+      bytes: bytes.byteLength,
+    },
+  }
+}
+
+/** Write an image into the project's textures/ folder, keyed by content hash. */
+export async function storeTexture(handle: FileSystemDirectoryHandle, source: Blob): Promise<TextureAsset> {
+  const { asset, blob } = await buildTextureAsset(source)
+
   const dir = await texturesDir(handle, true)
-  const file = await dir.getFileHandle(name, { create: true })
+  const file = await dir.getFileHandle(asset.src.slice(TEXTURES_DIR.length + 1), { create: true })
   const writable = await file.createWritable()
   await writable.write(blob)
   await writable.close()
 
-  return {
-    hash,
-    src: `${TEXTURES_DIR}/${name}`,
-    mime,
-    width,
-    height,
-    sourceWidth,
-    sourceHeight,
-    bytes: bytes.byteLength,
-  }
+  return asset
 }
 
 /** Resolve a texture to something THREE.TextureLoader can fetch.

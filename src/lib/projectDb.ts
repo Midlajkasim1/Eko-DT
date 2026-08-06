@@ -1,6 +1,6 @@
 import { get, set, del, keys, createStore } from 'idb-keyval'
 import type JSZip from 'jszip'
-import { collectGarbage, TEXTURES_DIR } from '@/lib/textureAssets'
+import { ASSETS_VERSION, buildTextureAsset, collectGarbage, TEXTURES_DIR } from '@/lib/textureAssets'
 import type { ProjectMeta, ProjectModel, RecentProjectCard } from '@/types'
 
 // Only used to CACHE folder handles for "recent projects" — no actual data stored here
@@ -361,22 +361,45 @@ function metaForBundledModels(meta: ProjectMeta, bundled: Set<string>): ProjectM
   return narrowed
 }
 
-/** Copy the textures the narrowed meta still references into the bundle */
+/** Ship every referenced texture as a sidecar file, converting any that the project
+ *  still stores inline. The project on disk is not touched — only the bundle. */
 async function addTexturesToZip(
   handle: FileSystemDirectoryHandle,
   meta: ProjectMeta,
   zip: JSZip,
   prefix: string
-) {
-  const assets = Object.values(meta.textures || {})
-  if (!assets.length) return
+): Promise<ProjectMeta> {
+  const textures = { ...(meta.textures || {}) }
+  const overrides = { ...(meta.materialOverrides || {}) }
+
+  let externalised = 0
+  for (const [id, override] of Object.entries(overrides)) {
+    if (!override.textureDataUrl) continue
+    const source = await (await fetch(override.textureDataUrl)).blob()
+    const { asset, blob } = await buildTextureAsset(source)
+    if (!textures[asset.hash]) {
+      textures[asset.hash] = asset
+      zip.file(`${prefix}${asset.src}`, await blob.arrayBuffer(), STORED)
+    }
+    const hashed = { ...override, textureHash: asset.hash }
+    delete hashed.textureDataUrl
+    overrides[id] = hashed
+    externalised++
+  }
+  if (externalised) {
+    console.info(`[export] externalised ${externalised} inline texture(s) into ${TEXTURES_DIR}/`)
+  }
+
+  // Textures the project already keeps as sidecars are copied straight across
   const dir = await handle.getDirectoryHandle(TEXTURES_DIR, { create: true })
-  for (const asset of assets) {
-    const name = asset.src.slice(TEXTURES_DIR.length + 1)
-    const bytes = await readBinary(dir, name)
+  for (const asset of Object.values(textures)) {
+    if (zip.file(`${prefix}${asset.src}`)) continue
+    const bytes = await readBinary(dir, asset.src.slice(TEXTURES_DIR.length + 1))
     if (bytes) zip.file(`${prefix}${asset.src}`, bytes, STORED)
     else console.warn(`[export] texture ${asset.src} is missing from disk`)
   }
+
+  return { ...meta, assetsVersion: ASSETS_VERSION, textures, materialOverrides: overrides }
 }
 
 /** Export entire project as a ZIP blob */
@@ -388,10 +411,12 @@ export async function exportProjectAsZip(handle: FileSystemDirectoryHandle, meta
   const models = await readBundledModels(handle, meta)
   const bundledMeta = metaForBundledModels(meta, new Set(models.map(m => m.modelId)))
 
+  const exportedMeta = await addTexturesToZip(handle, bundledMeta, zip, 'backend/')
+
   // Project metadata and models go inside backend/ so FastAPI can serve them.
   // Force finDirectMode off — this bundle ships the FastAPI backend, so the viewer
   // must proxy through it instead of calling FIN straight from the browser.
-  const backendMeta = { ...bundledMeta, apiSettings: { ...(bundledMeta.apiSettings || {}), finDirectMode: false } }
+  const backendMeta = { ...exportedMeta, apiSettings: { ...(exportedMeta.apiSettings || {}), finDirectMode: false } }
   zip.file('backend/project.json', JSON.stringify(backendMeta, null, 2))
 
   // Thumbnail
@@ -406,7 +431,6 @@ export async function exportProjectAsZip(handle: FileSystemDirectoryHandle, meta
     backendModelsFolder.file(model.fileName, model.bytes, STORED)
   }
 
-  await addTexturesToZip(handle, bundledMeta, zip, 'backend/')
 
   // Include Built Viewer App + Backend
   const res = await fetch('/viewer-assets.json?t=' + Date.now(), { cache: 'no-store' })
@@ -493,8 +517,10 @@ export async function exportFinProjectAsZip(handle: FileSystemDirectoryHandle, m
   const models = await readBundledModels(handle, meta)
   const bundledMeta = metaForBundledModels(meta, new Set(models.map(m => m.modelId)))
 
+  const exportedMeta = await addTexturesToZip(handle, bundledMeta, zip, '')
+
   // Force finDirectMode to true for the FIN standalone viewer since there is no backend
-  const finMeta = { ...bundledMeta, apiSettings: { ...(bundledMeta.apiSettings || {}), finDirectMode: true } }
+  const finMeta = { ...exportedMeta, apiSettings: { ...(exportedMeta.apiSettings || {}), finDirectMode: true } }
   zip.file('project.json', JSON.stringify(finMeta, null, 2))
 
   // Also include api-config.json for standalone FIN dashboard (direct API mode)
@@ -523,7 +549,6 @@ export async function exportFinProjectAsZip(handle: FileSystemDirectoryHandle, m
     zipModelsFolder.file(model.fileName, model.bytes, STORED)
   }
 
-  await addTexturesToZip(handle, bundledMeta, zip, '')
 
   try {
     const thumbFh = await handle.getFileHandle('thumbnail.webp')
