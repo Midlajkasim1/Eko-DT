@@ -534,11 +534,12 @@ now resolve and compare real paths. Reachable only by a client that does not nor
   not 663-706 MB. The 105× ratio and the structure of the fix are unchanged.
 - **0.13 is not a re-export.** Producing the ZIP needs `showDirectoryPicker` and a click in the studio UI.
   `dist/` is rebuilt and verified; the export itself remains an operator step, now impossible to ship broken.
-- **The 284 MB → 45 KB gain is not automatic.** `backend/migrate_textures.py` is an explicit operator tool
-  (`python migrate_textures.py <project-dir>`). It is deliberately **not** run at server startup: it rewrites
-  a 284 MB file in place, and doing that unattended on someone's project is not a decision this change should
-  make for them. Existing studio projects likewise stay v1 until it is run against their folder; new textures
-  are written as v2 from now on, and the read path still accepts v1 `textureDataUrl`.
+- **Exports are v2 unconditionally; migrating a project folder is separate and optional.** The exporter
+  externalises any still-inline texture as it builds the ZIP, so a v1 project produces a v2 bundle with no
+  preparation. That is safe to do automatically because the export writes a *new* archive from a meta built
+  in memory — nothing on disk is rewritten. `backend/migrate_textures.py` remains for shrinking a studio
+  *project folder* in place, which is what the studio itself needs to stop paying the 850 MB parse on every
+  open; that one stays manual because it does rewrite a 284 MB file in place.
 - **0.8 is a structural claim, not a profiled one.** One of three submissions is provably removed; no GPU
   profiler was run, so the 10-18 % figure remains `[E]`, as the audit itself stated.
 - **0.14 is not runtime-verified in a browser.** Evidence is the library's documented fallback plus the
