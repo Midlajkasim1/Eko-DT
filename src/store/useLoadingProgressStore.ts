@@ -27,33 +27,75 @@ interface LoadingProgressState {
   endSession: () => void
 }
 
-export const useLoadingProgressStore = create<LoadingProgressState>((set) => ({
-  sessionActive: false,
-  source: null,
-  startedAt: 0,
-  order: [],
-  entries: {},
-  beginSession: (models, source) =>
-    set({
-      sessionActive: models.length > 0,
-      source,
-      startedAt: performance.now(),
-      order: models.map(m => m.modelId),
-      entries: Object.fromEntries(
-        models.map(m => [
-          m.modelId,
-          { ...m, bytesRead: 0, phase: 'pending' as LoadPhase },
-        ])
-      ),
-    }),
-  updateEntry: (modelId, patch) =>
+export const useLoadingProgressStore = create<LoadingProgressState>((set) => {
+  const pending = new Map<string, Partial<ModelLoadProgress>>()
+  let frame = 0
+
+  const applyPending = () => {
+    frame = 0
+    if (pending.size === 0) return
     set(state => {
-      const entry = state.entries[modelId]
-      if (!entry) return state
-      return { entries: { ...state.entries, [modelId]: { ...entry, ...patch } } }
-    }),
-  endSession: () => set({ sessionActive: false, order: [], entries: {} }),
-}))
+      const entries = { ...state.entries }
+      for (const [modelId, patch] of pending) {
+        const entry = entries[modelId]
+        if (entry) entries[modelId] = { ...entry, ...patch }
+      }
+      pending.clear()
+      return { entries }
+    })
+  }
+
+  const drop = () => {
+    if (frame) cancelAnimationFrame(frame)
+    frame = 0
+    pending.clear()
+  }
+
+  return {
+    sessionActive: false,
+    source: null,
+    startedAt: 0,
+    order: [],
+    entries: {},
+    beginSession: (models, source) => {
+      drop()
+      set({
+        sessionActive: models.length > 0,
+        source,
+        startedAt: performance.now(),
+        order: models.map(m => m.modelId),
+        entries: Object.fromEntries(
+          models.map(m => [
+            m.modelId,
+            { ...m, bytesRead: 0, phase: 'pending' as LoadPhase },
+          ])
+        ),
+      })
+    },
+    updateEntry: (modelId, patch) => {
+      // Byte counts arrive per chunk. Only the terminal phases decide when the
+      // session is over, so those land immediately and never wait for a frame.
+      if (patch.phase !== 'done' && patch.phase !== 'error') {
+        const queued = pending.get(modelId)
+        pending.set(modelId, queued ? { ...queued, ...patch } : patch)
+        if (!frame) frame = requestAnimationFrame(applyPending)
+        return
+      }
+
+      if (frame) cancelAnimationFrame(frame)
+      applyPending()
+      set(state => {
+        const entry = state.entries[modelId]
+        if (!entry) return state
+        return { entries: { ...state.entries, [modelId]: { ...entry, ...patch } } }
+      })
+    },
+    endSession: () => {
+      drop()
+      set({ sessionActive: false, order: [], entries: {} })
+    },
+  }
+})
 
 export function sessionProgress(state: Pick<LoadingProgressState, 'order' | 'entries'>): number {
   let weightSum = 0
