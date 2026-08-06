@@ -598,3 +598,36 @@ Phase 2 was reviewed the same way. Findings that survived and were fixed:
 Not everything the reviewers raised was accepted: the suggestion to bound the spatial-tree `getItems` call
 was declined — one structured clone of the attributes is the point of the change, and the per-node version
 it replaced cloned the same data 9,331 times in 9,331 messages.
+
+### 6.5 End-to-end run against the shipped bundle
+
+`docs/Marsa_project (3)/Marsa_project` was re-exported with the fixed code (backend Python plus a fresh
+`dist/`), migrated to assetsVersion 2, narrowed by the exporter's model/override/texture filter, and then
+**served through the real FastAPI app** while walking the viewer's cold-open path.
+
+Before, the same bundle exhibited every symptom §4.8 predicted: `_has_session` gating on all routes, no
+`/project.json` ETag, no `/textures` route, `obcFragments` in the shipped chunk, no `SignInOverlay`, a
+`project.json?t=` cache-buster, and the pre-0.11 zinc parser.
+
+| | before | after |
+|---|---|---|
+| `project.json` served | 284,545,480 B | **35,214 B** (8,080x) |
+| blocking prefix @12.5 MB/s | 22.76 s | **0.0028 s** |
+| textures | 0 (embedded in the 284 MB) | **518,414 B**, one file, `immutable` |
+| models declared vs shipped | 13 declared / 5 present — 8 fetches 404 | **5 / 5, no 404s** |
+| bundle payload | 381,385,355 B | **97,393,503 B** (3.9x) |
+| first open | 30.51 s | **7.79 s** |
+| reopen | 30.51 s | **~0 s** (304 + cached models) |
+
+After the change the first open is dominated entirely by the 96,825,739 B of model geometry — 7.75 s of
+the 7.79 s — which is the wire floor for this project and the thing Phase 2's remaining worker items would
+have to attack. Every model answers 304 on revisit and none is gzipped; `/project.json` is not gzipped.
+
+Two notes on method. The re-export was done by copying the files `exportProjectAsZip` copies rather than by
+clicking Export in the studio, because that needs `showDirectoryPicker`; the meta narrowing was then applied
+separately, which is what surfaced that a hand copy alone still declares 13 models. And the texture filter
+is what drops the shipped textures from 3,166,930 B to 518,414 B: four of the five images belong to
+overrides on models this bundle does not contain.
+
+`project.json.v1.bak` is left in place, so the bundle reverts with a single rename; `docs/Marsa_project/`
+and `docs/Marsa_project (3).zip` are both untouched.
