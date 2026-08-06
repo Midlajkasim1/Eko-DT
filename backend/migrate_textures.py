@@ -143,6 +143,15 @@ def migrate(project_dir: str, *, force: bool = False) -> int:
         print("Nothing to externalise.")
         return 0
 
+    # Splicing a second catalogue in would shadow the existing one and strand its hashes
+    if b'"textures"' in buf[:PEEK_BYTES] or b'"textureHash"' in buf:
+        print(
+            "ABORT: this project already carries a textures catalogue alongside inline "
+            "data URLs, so it was part-migrated by the studio. Restore project.json.v1.bak "
+            "if one exists, or externalise the remaining textures from the studio instead."
+        )
+        return 5
+
     os.makedirs(textures_dir, exist_ok=True)
     catalogue: dict[str, dict] = {}
     replacements: list[tuple[int, int, bytes]] = []
