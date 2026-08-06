@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useLoadingProgressStore, sessionProgress } from '@/store/useLoadingProgressStore'
 import type { ModelLoadProgress } from '@/store/useLoadingProgressStore'
 
@@ -36,19 +36,12 @@ export function ModelLoadingProgress() {
   const entries = useLoadingProgressStore(s => s.entries)
   const endSession = useLoadingProgressStore(s => s.endSession)
 
-  const [elapsed, setElapsed] = useState(0)
   const loggedRef = useRef(false)
 
   const models = order.map(id => entries[id]).filter(Boolean)
   const doneCount = models.filter(e => e.phase === 'done' || e.phase === 'error').length
   const allDone = models.length > 0 && doneCount === models.length
   const percent = allDone ? 100 : sessionProgress({ order, entries })
-
-  useEffect(() => {
-    if (!sessionActive || allDone) return
-    const t = setInterval(() => setElapsed(performance.now() - startedAt), 250)
-    return () => clearInterval(t)
-  }, [sessionActive, allDone, startedAt])
 
   useEffect(() => {
     if (!sessionActive) { loggedRef.current = false; return }
@@ -72,28 +65,22 @@ export function ModelLoadingProgress() {
 
   if (!sessionActive || models.length === 0) return null
 
+  const active = models.find(e => e.phase !== 'done' && e.phase !== 'error') ?? models[models.length - 1]
+
   return (
-    <div className="model-loading-card">
-      <div className="model-loading-head">
+    <div className="model-loading-veil">
+      <div className="model-loading-panel">
         <span className="model-loading-title">
           {allDone ? 'Models loaded' : 'Loading models'}
         </span>
+        <span className="model-loading-name" title={active.name}>{active.name}</span>
+        <div className="model-loading-bar">
+          <div className="model-loading-bar-fill" style={{ width: `${percent}%` }} />
+        </div>
         <span className="model-loading-stats">
-          {doneCount}/{models.length} · {Math.round(percent)}%{!allDone && ` · ${(elapsed / 1000).toFixed(0)}s`}
+          {Math.round(percent)}% · {doneCount}/{models.length} models
+          {!allDone && ` · ${statusLabel(active, source)}`}
         </span>
-      </div>
-      <div className="model-loading-bar">
-        <div className="model-loading-bar-fill" style={{ width: `${percent}%` }} />
-      </div>
-      <div className="model-loading-list">
-        {models.map(e => (
-          <div key={e.modelId} className={`model-loading-row ${e.phase}`}>
-            <span className="model-loading-dot" />
-            <span className="model-loading-name" title={e.name}>{e.name}</span>
-            <span className="model-loading-size">{fmtMB(e.sizeBytes || e.bytesRead)}</span>
-            <span className="model-loading-status">{statusLabel(e, source)}</span>
-          </div>
-        ))}
       </div>
     </div>
   )
