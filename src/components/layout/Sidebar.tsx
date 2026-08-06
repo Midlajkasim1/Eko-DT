@@ -38,14 +38,20 @@ export function Sidebar({ onFiles, engineRef }: SidebarProps) {
   const [showSettings, setShowSettings] = useState(false)
 
   const handleExport = async (target: 'standalone' | 'backend') => {
+    // Zipping runs on the main thread, so a scene still rendering every frame
+    // starves it for the whole export
+    const renderer = engineRef.current?.world.renderer
+    const wasEnabled = renderer?.enabled
     try {
       setIsExporting(true)
+      if (renderer) renderer.enabled = false
       if (target === 'standalone') {
         await exportFinProjectAsZip()
       } else {
         await exportAsZip()
       }
     } finally {
+      if (renderer && wasEnabled !== undefined) renderer.enabled = wasEnabled
       setIsExporting(false)
     }
   }
