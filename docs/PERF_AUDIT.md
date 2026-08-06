@@ -543,6 +543,25 @@ now resolve and compare real paths. Reachable only by a client that does not nor
   profiler was run, so the 10-18 % figure remains `[E]`, as the audit itself stated.
 - **0.14 is not runtime-verified in a browser.** Evidence is the library's documented fallback plus the
   emitted asset reference and MIME check.
+- **Phase 2: six of ten rows landed, one was made unnecessary, three did not.**
+
+  | Phase 2 row | Outcome |
+  |---|---|
+  | Bounded-concurrency fetch + anchor-first commit | **landed** — downloads overlap two at a time, models reach the store in declared order so the `baseCoordinates` anchor is unchanged. 1.39x on simulated timings; verified against the adversarial case where the first model is slowest |
+  | `readBodyWithProgress` preallocation | **landed** — removes the second full copy (41.4 MB on the largest model). The first attempt corrupted an under-declared `content-length`; its own test caught that |
+  | rAF-coalesce progress | **landed** — 1,402 `updateEntry` calls collapse to 26 commits (54x); terminal phases bypass the queue so a backgrounded tab still finishes |
+  | Wire the library's `onProgress` | **landed** — real parse percentage instead of a hardcoded 75% |
+  | Batch spatial-tree enrichment | **landed** — 9,331 nodes go from 9,331 worker round trips to 1, with an identical tree |
+  | `window.Dashboard.destroy()` + idempotent `data-provider` | **landed** — five injections leave 2 live pollers rather than 10 |
+  | `ProcessPoolExecutor` for zinc parsing | **not needed after 0.11.** `parse_zinc_csv` over all three real grids is now **417 ms per 30 s cycle — 1.39% of it**, down from the audit's 1,849 ms. Moving that to a process pool means pickling ~1.9 MB of text out and ~2,000 row dicts back every cycle, which plausibly costs more than it saves. The audit anticipated this: *"do #0.11 first; it may make this unnecessary"* |
+  | Viewer-only `web-ifc` alias stub | **not done.** `@thatopen/fragments/dist/index.mjs:40` does `import * as WEBIFC from "web-ifc"` at the top level, and both entries import that package, so excluding it from the viewer needs a per-entry alias — i.e. splitting the single two-entry Vite build in two. That build is what produces `dist/viewer-assets.json`, which the whole export pipeline consumes, and the export cannot be regression-tested without driving the studio UI |
+  | Move `IfcImporter` into a Worker | **not done.** The largest remaining item; needs a browser to validate meaningfully |
+  | Move ZIP generation into a Worker | **not done.** Largely moot after Phase 1 — the audit's own estimate is that ~72% of the deflate cost was `project.json`, which is now 45 KB, and 0.9 already took the model entries off DEFLATE |
+
+- **0.8 is a structural claim, not a profiled one.** One of three submissions is provably removed; no GPU
+  profiler was run, so the 10-18 % figure remains `[E]`, as the audit itself stated.
+- **0.14 is not runtime-verified in a browser.** Evidence is the library's documented fallback plus the
+  emitted asset reference and MIME check.
 - **Phase 2 is two items of nine.** `readBodyWithProgress` preallocation landed: the response now
   streams into a buffer sized from `content-length`, removing the second full copy (41.4 MB on the largest
   Marsa model). An over-declared, under-declared, absent or zero `content-length` all still round-trip
