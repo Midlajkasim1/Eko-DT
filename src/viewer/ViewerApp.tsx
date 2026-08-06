@@ -9,6 +9,10 @@ import { SignInOverlay, checkSession } from '@/viewer/SignInOverlay'
 import type { FragmentsEngine } from '@/lib/fragmentsEngine'
 import type { LoadedModel, ProjectMeta } from '@/types'
 
+// Two keeps the link busy while a model parses, without holding many whole
+// model buffers in memory waiting for their turn to be committed
+const MODEL_FETCH_CONCURRENCY = 2
+
 async function readBodyWithProgress(
   res: Response,
   onBytes: (bytesRead: number, totalBytes: number) => void
@@ -234,8 +238,9 @@ export default function ViewerApp() {
         })), 'server')
 
         // Load each model via HTTP (FastAPI serves /models/{filename})
-        for (const m of meta.models) {
-          if (!m.fragFile) continue
+        const queued = meta.models.filter(m => m.fragFile)
+
+        const fetchModel = async (m: typeof queued[number]): Promise<LoadedModel | null> => {
           try {
             const readStart = performance.now()
             updateEntry(m.modelId, { phase: 'reading' })
@@ -245,7 +250,7 @@ export default function ViewerApp() {
             if (!modelRes.ok) {
               console.warn(`Failed to fetch model ${m.fragFile}: ${modelRes.status}`)
               updateEntry(m.modelId, { phase: 'error', error: `HTTP ${modelRes.status}` })
-              continue
+              return null
             }
             const buffer = await readBodyWithProgress(modelRes, (bytesRead, totalBytes) => {
               updateEntry(m.modelId, totalBytes ? { bytesRead, sizeBytes: totalBytes } : { bytesRead })
@@ -256,7 +261,7 @@ export default function ViewerApp() {
               bytesRead: buffer.byteLength,
               sizeBytes: buffer.byteLength,
             })
-            const model: LoadedModel = {
+            return {
               modelId: m.modelId,
               originalFileName: m.originalFileName,
               originalFileSizeBytes: m.originalFileSizeBytes,
@@ -268,12 +273,43 @@ export default function ViewerApp() {
               rotation: m.rotation,
               scale: m.scale,
             }
-            if (mounted) addModel(model)
           } catch (modelErr: any) {
             console.warn(`Could not load model ${m.fragFile}:`, modelErr)
             updateEntry(m.modelId, { phase: 'error', error: modelErr?.message ?? 'fetch failed' })
+            return null
           }
         }
+
+        // Downloads overlap, but models reach the store strictly in declared order:
+        // FragmentsModels takes its baseCoordinates from whichever model parses
+        // first and offsets the rest against it, so a racing first model would
+        // move the whole scene.
+        const fetched: (LoadedModel | null)[] = new Array(queued.length)
+        const landed = new Array<boolean>(queued.length).fill(false)
+        let commitAt = 0
+        let started = 0
+
+        const commitReady = () => {
+          while (commitAt < queued.length && landed[commitAt]) {
+            const model = fetched[commitAt]
+            if (model && mounted) addModel(model)
+            commitAt++
+          }
+        }
+
+        const worker = async () => {
+          for (;;) {
+            const index = started++
+            if (index >= queued.length) return
+            fetched[index] = await fetchModel(queued[index])
+            landed[index] = true
+            commitReady()
+          }
+        }
+
+        await Promise.all(
+          Array.from({ length: Math.min(MODEL_FETCH_CONCURRENCY, queued.length) }, worker)
+        )
 
         if (mounted) {
           setStep('viewing')
