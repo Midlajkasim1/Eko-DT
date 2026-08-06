@@ -4,28 +4,23 @@
 (function () {
   'use strict';
 
-  // Re-injecting this script leaves the previous generation's timers and
-  // dashboard-data listener alive; each stale listener writes into the one real
-  // right panel, so N generations rebuild it N times per poll
+  // Stale generations write into the one real right panel, N times per poll
   if (window.Dashboard && typeof window.Dashboard.destroy === 'function') {
     window.Dashboard.destroy();
   }
 
   const ownedTimers = [];
-  const ownedListeners = [];
+  const teardown = new AbortController();
+  const signal = teardown.signal;
 
   const own = (id) => { ownedTimers.push(id); return id; };
-  const listen = (target, type, handler) => {
-    target.addEventListener(type, handler);
-    ownedListeners.push({ target, type, handler });
-  };
+  const listen = (target, type, handler) => target.addEventListener(type, handler, { signal });
 
   window.Dashboard = {
     destroy() {
       ownedTimers.forEach(clearInterval);
       ownedTimers.length = 0;
-      ownedListeners.forEach(({ target, type, handler }) => target.removeEventListener(type, handler));
-      ownedListeners.length = 0;
+      teardown.abort();
     },
   };
 
@@ -2012,7 +2007,7 @@
       setTimeout(() => html.classList.remove('tfade'), 350);
     });
   }
-  document.addEventListener('keydown', (e) => {
+  listen(document, 'keydown', (e) => {
     if (e.key === 't' || e.key === 'T') {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       themeBtn?.click();
@@ -2027,7 +2022,7 @@
       html.dataset.nav = isMin ? 'max' : 'min';
     });
   }
-  document.addEventListener('keydown', (e) => {
+  listen(document, 'keydown', (e) => {
     if (e.key === '[') {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       collapseBtn?.click();
@@ -2223,7 +2218,7 @@
       propMenu.classList.toggle('open', !isOpen);
       propSwitcher.setAttribute('aria-expanded', !isOpen);
     });
-    document.addEventListener('click', (e) => {
+    listen(document, 'click', (e) => {
       if (!propSwitcher.contains(e.target) && !propMenu.contains(e.target)) {
         propMenu.classList.remove('open');
         propSwitcher.setAttribute('aria-expanded', 'false');
@@ -2301,7 +2296,7 @@
   });
 
   // Close when clicking outside of any hotspot or dialog
-  document.addEventListener('click', (e) => {
+  listen(document, 'click', (e) => {
     const isClickInside = e.target.closest('.hs-pin') || e.target.closest('.hs-dialog');
     if (!isClickInside) {
       closeAllDialogs();
@@ -2942,7 +2937,7 @@
     enterHistory(ageToLabel(cursorAge));
     updateStepBtns();
   }
-  document.addEventListener('keydown', (e) => {
+  listen(document, 'keydown', (e) => {
     const el = e.target;
     if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ||
                el.tagName === 'SELECT' || el.isContentEditable)) return;
@@ -2964,7 +2959,7 @@
     goLive();
   }
   initScrubbar();
-  window.addEventListener('resize', () => { renderTicks(); renderEventDots(); });
+  listen(window, 'resize', () => { renderTicks(); renderEventDots(); });
 
   /* ── Live data subscription ── */
   function updateConnectionPill() {
@@ -3057,7 +3052,7 @@
   if (rpOpenTab)     rpOpenTab.addEventListener('click',     expandRightPanel);
 
   // ] key shortcut to toggle right panel
-  document.addEventListener('keydown', (e) => {
+  listen(document, 'keydown', (e) => {
     if (e.key === ']') {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       if (rightPanel?.getAttribute('data-rp') === 'min') expandRightPanel();
@@ -3155,7 +3150,7 @@
     });
 
     // Keep the half-viewport cap when the window itself shrinks
-    window.addEventListener('resize', () => {
+    listen(window, 'resize', () => {
       const maxW = rpMaxWidth();
       if (rightPanel.getBoundingClientRect().width > maxW) setRightPanelWidth(maxW);
       syncRpWidenBtn();
@@ -3258,7 +3253,7 @@
 
     toolBtns.forEach((b) => b.addEventListener('click', () => activateTool(b.dataset.tool)));
 
-    document.addEventListener('click', (e) => {
+    listen(document, 'click', (e) => {
       if (floorsMenu && !floorsMenu.hidden &&
           !e.target.closest('.vp-floors-menu, .tool-btn[data-tool="floors"]')) {
         closeFloorsMenu();
@@ -3266,7 +3261,7 @@
     });
 
     // V / S / F / W / M / R shortcuts (advertised in the tooltips)
-    document.addEventListener('keydown', (e) => {
+    listen(document, 'keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === 'Escape') { closeFloorsMenu(); return; }
@@ -3454,7 +3449,7 @@
       }
     });
 
-    document.addEventListener('keydown', (e) => {
+    listen(document, 'keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault();
         if (palDialog.hidden) openPal();
@@ -3478,7 +3473,7 @@
       else closeReports();
     });
     if (reportsClose) reportsClose.addEventListener('click', closeReports);
-    document.addEventListener('click', (e) => {
+    listen(document, 'click', (e) => {
       if (!reportsPanel.hidden && !e.target.closest('#reportsPanel, #reportsBtn')) closeReports();
     });
   }
@@ -3571,17 +3566,17 @@
 
     // Stream effect
     let i = 0;
-    ekoStreamTimer = own(setInterval(() => {
+    ekoStreamTimer = setInterval(() => {
       i += 3;
       const done = i >= aiText.length;
       textBubble.innerHTML = aiText.slice(0, i);
       ekoMessages.scrollTop = ekoMessages.scrollHeight;
       if (done) clearInterval(ekoStreamTimer);
-    }, 14));
+    }, 14);
   }
 
   // Close & Clear actions using event delegation
-  document.body.addEventListener('click', (e) => {
+  listen(document.body, 'click', (e) => {
     if (e.target.closest('#ekoCloseChat')) {
       if (ekoModal) ekoModal.style.display = 'none';
       clearInterval(ekoStreamTimer);
@@ -3593,7 +3588,7 @@
     }
   });
 
-  document.addEventListener('keydown', (e) => {
+  listen(document, 'keydown', (e) => {
     if (e.key === 'Escape' && ekoModal && ekoModal.style.display !== 'none') {
       ekoModal.style.display = 'none';
       clearInterval(ekoStreamTimer);
@@ -3640,13 +3635,13 @@
       if (open) closeReports();
     });
 
-    document.addEventListener('click', (e) => {
+    listen(document, 'click', (e) => {
       if (!accountMenu.hidden && !accountMenu.contains(e.target) && !userMenuBtn.contains(e.target)) {
         closeAccountMenu();
       }
     });
 
-    document.addEventListener('keydown', (e) => {
+    listen(document, 'keydown', (e) => {
       if (e.key === 'Escape') closeAccountMenu();
     });
 

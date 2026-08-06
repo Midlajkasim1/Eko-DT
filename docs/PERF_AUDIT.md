@@ -558,20 +558,6 @@ now resolve and compare real paths. Reachable only by a client that does not nor
   | Move `IfcImporter` into a Worker | **not done.** The largest remaining item; needs a browser to validate meaningfully |
   | Move ZIP generation into a Worker | **not done.** Largely moot after Phase 1 — the audit's own estimate is that ~72% of the deflate cost was `project.json`, which is now 45 KB, and 0.9 already took the model entries off DEFLATE |
 
-- **0.8 is a structural claim, not a profiled one.** One of three submissions is provably removed; no GPU
-  profiler was run, so the 10-18 % figure remains `[E]`, as the audit itself stated.
-- **0.14 is not runtime-verified in a browser.** Evidence is the library's documented fallback plus the
-  emitted asset reference and MIME check.
-- **Phase 2 is two items of nine.** `readBodyWithProgress` preallocation landed: the response now
-  streams into a buffer sized from `content-length`, removing the second full copy (41.4 MB on the largest
-  Marsa model). An over-declared, under-declared, absent or zero `content-length` all still round-trip
-  byte-for-byte — the first version of this change silently corrupted the under-declared case, which its
-  own test caught. rAF-coalesced progress also landed: **1,402 `updateEntry` calls collapse to 26 store
-  commits (54x)**, with terminal phases bypassing the queue so a backgrounded tab still finishes.
-  **Not done:** anchor-first parallel loading, batched spatial tree, the `web-ifc` alias split, the IFC worker, the ZIP worker, `ProcessPoolExecutor`, and the
-  dashboard lifecycle fix. The load-pipeline item is the significant one — it is where the audit's
-  "first model 12.3 s -> 7.8 s" lives, and it carries the `baseCoordinates` anchor-first constraint that
-  makes it the riskiest remaining change.
 
 ### 6.4 Review
 
@@ -589,3 +575,26 @@ agents prompted to refute. Findings that survived and were fixed:
   the oldest bare-handle cache shape was being deleted rather than recovered. Both fixed.
 - **0.13's throw reached no UI** — both exporters now surface the message.
 
+
+Phase 2 was reviewed the same way. Findings that survived and were fixed:
+
+- **The parse-progress wiring made the bar run backwards.** `onProgress` reports progress *within a stage*,
+  and the engine emits `decompressing:1 → parsing:1 → generating:0…1 → done:1`, so feeding `progress`
+  straight through jumped the bar to 100 %, dropped it to 0 %, then climbed. Stages now map onto disjoint
+  spans of the bar, which is monotonic by construction.
+- **`data-provider.stop()` could not cancel an in-flight `start()`.** A teardown during either `await` in
+  `start()` cleared an empty timer list and then let `start()` install both pollers into a closure nobody
+  could reach again. `start()` now captures a generation and bails if `stop()` ran while it was awaiting.
+- **The download scheduler had no real memory bound.** Workers kept claiming indices while a slow first
+  model blocked the commit point, so every completed buffer piled up — the opposite of the "at most one
+  extra buffer" the comment claimed. Replaced with fixed groups, which bounds resident buffers at the
+  concurrency and preserves declared order by construction.
+- **`destroy()` only released the one listener it tracked.** Sixteen `document`/`window` bindings still
+  registered directly, each retaining its generation's detached DOM. All of them now bind against an
+  `AbortController` signal that `destroy()` aborts. The EKO reply-stream interval is deliberately left
+  untracked — it clears itself per reply, so tracking it would grow the list without bound.
+- **A stale Phase 2 block was left in this document**, contradicting the table above it. Removed.
+
+Not everything the reviewers raised was accepted: the suggestion to bound the spatial-tree `getItems` call
+was declined — one structured clone of the attributes is the point of the change, and the per-node version
+it replaced cloned the same data 9,331 times in 9,331 messages.

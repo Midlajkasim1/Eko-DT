@@ -9,8 +9,7 @@ import { SignInOverlay, checkSession } from '@/viewer/SignInOverlay'
 import type { FragmentsEngine } from '@/lib/fragmentsEngine'
 import type { LoadedModel, ProjectMeta } from '@/types'
 
-// Two keeps the link busy while a model parses, without holding many whole
-// model buffers in memory waiting for their turn to be committed
+// Bounds both the concurrent downloads and the model buffers held in memory
 const MODEL_FETCH_CONCURRENCY = 2
 
 async function readBodyWithProgress(
@@ -18,10 +17,11 @@ async function readBodyWithProgress(
   onBytes: (bytesRead: number, totalBytes: number) => void
 ): Promise<ArrayBuffer> {
   if (!res.body) return res.arrayBuffer()
-  const total = Number(res.headers.get('content-length')) || 0
+  const declaredLength = Number(res.headers.get('content-length'))
+  // A bogus header must not become a bogus allocation
+  const total = Number.isSafeInteger(declaredLength) && declaredLength > 0 ? declaredLength : 0
   const reader = res.body.getReader()
-  // Fill the final buffer directly. Anything content-length did not account for spills
-  // into chunks, which keeps a wrong content-length from corrupting the result.
+  // Anything content-length did not account for spills into chunks
   const declared = total > 0 ? new Uint8Array(total) : null
   const spill: Uint8Array[] = []
   let filled = 0
@@ -280,36 +280,16 @@ export default function ViewerApp() {
           }
         }
 
-        // Downloads overlap, but models reach the store strictly in declared order:
-        // FragmentsModels takes its baseCoordinates from whichever model parses
-        // first and offsets the rest against it, so a racing first model would
-        // move the whole scene.
-        const fetched: (LoadedModel | null)[] = new Array(queued.length)
-        const landed = new Array<boolean>(queued.length).fill(false)
-        let commitAt = 0
-        let started = 0
-
-        const commitReady = () => {
-          while (commitAt < queued.length && landed[commitAt]) {
-            const model = fetched[commitAt]
-            if (model && mounted) addModel(model)
-            commitAt++
+        // FragmentsModels anchors baseCoordinates on the first model to parse
+        for (let i = 0; i < queued.length; i += MODEL_FETCH_CONCURRENCY) {
+          const group = await Promise.all(
+            queued.slice(i, i + MODEL_FETCH_CONCURRENCY).map(fetchModel)
+          )
+          if (!mounted) return
+          for (const model of group) {
+            if (model) addModel(model)
           }
         }
-
-        const worker = async () => {
-          for (;;) {
-            const index = started++
-            if (index >= queued.length) return
-            fetched[index] = await fetchModel(queued[index])
-            landed[index] = true
-            commitReady()
-          }
-        }
-
-        await Promise.all(
-          Array.from({ length: Math.min(MODEL_FETCH_CONCURRENCY, queued.length) }, worker)
-        )
 
         if (mounted) {
           setStep('viewing')

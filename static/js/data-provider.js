@@ -1,8 +1,7 @@
 (function () {
   'use strict';
 
-  // Re-injecting this script would otherwise leave the previous closure's pollers
-  // running forever, unreachable once window.DashboardData is rebound
+  // A previous closure's pollers are unreachable once DashboardData is rebound
   if (window.DashboardData && typeof window.DashboardData.stop === 'function') {
     window.DashboardData.stop();
   }
@@ -88,6 +87,7 @@
     alarms: null,
     meters: null,
     timers: [],
+    generation: 0,
   };
 
   function emit(type, data) {
@@ -140,14 +140,18 @@
 
   async function start() {
     stop();
+    const generation = state.generation;
     state.config = await resolveConfig();
     state.provider = state.config && state.config.directMode ? new DirectProvider() : new BackendProvider();
     await Promise.all([pollRealtime(), pollLive()]);
+    // stop() during either await would otherwise be undone by the timers below
+    if (generation !== state.generation) return;
     state.timers.push(setInterval(pollLive, state.config ? state.config.liveMs : 5000));
     state.timers.push(setInterval(pollRealtime, state.config ? state.config.realtimeMs : 30000));
   }
 
   function stop() {
+    state.generation++;
     state.timers.forEach(clearInterval);
     state.timers = [];
   }

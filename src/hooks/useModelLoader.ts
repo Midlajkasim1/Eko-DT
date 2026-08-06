@@ -6,6 +6,14 @@ import { useModelStore } from '@/store/useModelStore'
 import { useLoadingProgressStore } from '@/store/useLoadingProgressStore'
 import type { FragmentsEngine } from '@/lib/fragmentsEngine'
 import { applyModelTransform } from '@/lib/transformUtils'
+
+// The engine reports progress within a stage, not overall
+const PARSE_STAGE_SPANS: Record<string, [number, number]> = {
+  decompressing: [0, 0.15],
+  parsing: [0.15, 0.3],
+  generating: [0.3, 1],
+  done: [1, 1],
+}
 export function useModelLoader(engineRef: React.MutableRefObject<FragmentsEngine | null>) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -81,8 +89,9 @@ export function useModelLoader(engineRef: React.MutableRefObject<FragmentsEngine
         const parseStart = performance.now()
         const model = await engine.fragments.load(fragBytes, {
           modelId,
-          onProgress: ({ progress: parseProgress }) => {
-            progress.updateEntry(modelId, { parseProgress })
+          onProgress: ({ stage, progress: withinStage }) => {
+            const [from, to] = PARSE_STAGE_SPANS[stage] ?? [0, 1]
+            progress.updateEntry(modelId, { parseProgress: from + (to - from) * withinStage })
           },
         })
         model.useCamera(engine.world.camera.three)

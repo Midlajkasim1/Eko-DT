@@ -10,7 +10,7 @@ export interface ModelLoadProgress {
   phase: LoadPhase
   readMs?: number
   parseMs?: number
-  /** 0-1, reported by the engine while it parses; absent for .glb */
+  /** 0-1 across the whole parse, mapped from the engine's per-stage events */
   parseProgress?: number
   error?: string
 }
@@ -75,8 +75,7 @@ export const useLoadingProgressStore = create<LoadingProgressState>((set) => {
       })
     },
     updateEntry: (modelId, patch) => {
-      // Byte counts arrive per chunk. Only the terminal phases decide when the
-      // session is over, so those land immediately and never wait for a frame.
+      // Terminal phases decide when the session ends, so they never wait for a frame
       if (patch.phase !== 'done' && patch.phase !== 'error') {
         const queued = pending.get(modelId)
         pending.set(modelId, queued ? { ...queued, ...patch } : patch)
