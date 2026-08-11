@@ -23,8 +23,11 @@ function viewerAssetsPlugin() {
               walk(itemPath, path.join(base, item))
             } else {
               if (item === 'viewer-assets.json') continue;
+              const rel = path.join(base, item).replace(/\\/g, '/')
+              // The exported viewer never converts IFC, so the 2.5 MB of wasm stays behind
+              if (rel.startsWith('wasm/')) continue;
               const content = fs.readFileSync(itemPath, 'base64')
-              files.push({ path: path.join(base, item).replace(/\\/g, '/'), content })
+              files.push({ path: rel, content })
             }
           }
         }
@@ -58,8 +61,10 @@ function viewerAssetsPlugin() {
             walk(itemPath, path.join(base, item))
           } else {
             if (item === 'viewer-assets.json') continue;
+            const rel = path.join(base, item).replace(/\\/g, '/')
+            if (rel.startsWith('wasm/')) continue;
             const content = fs.readFileSync(itemPath, 'base64')
-            files.push({ path: path.join(base, item).replace(/\\/g, '/'), content })
+            files.push({ path: rel, content })
           }
         }
       }
@@ -67,6 +72,32 @@ function viewerAssetsPlugin() {
       walk(templatesPath, 'templates')
       walk(staticPath, 'static')
       fs.writeFileSync(outPath, JSON.stringify(files))
+    }
+  }
+}
+
+// web-ifc's wasm, served locally so IFC conversion works with no internet. Studio only —
+// the exported viewer loads .frag bytes and never converts, so walk() skips wasm/.
+function wasmAssetsPlugin() {
+  const wasmDir = path.resolve(__dirname, 'node_modules', 'web-ifc')
+  const files = ['web-ifc.wasm', 'web-ifc-mt.wasm']
+  return {
+    name: 'wasm-assets',
+    configureServer(server: any) {
+      server.middlewares.use('/wasm', (req: any, res: any, next: any) => {
+        const name = path.basename((req.url || '').split('?')[0])
+        if (!files.includes(name)) return next()
+        res.setHeader('Content-Type', 'application/wasm')
+        res.end(fs.readFileSync(path.join(wasmDir, name)))
+      })
+    },
+    closeBundle() {
+      const outDir = path.resolve(__dirname, 'dist', 'wasm')
+      fs.mkdirSync(outDir, { recursive: true })
+      for (const name of files) {
+        const from = path.join(wasmDir, name)
+        if (fs.existsSync(from)) fs.copyFileSync(from, path.join(outDir, name))
+      }
     }
   }
 }
@@ -170,7 +201,7 @@ function staticFolderPlugin() {
 
 export default defineConfig({
   base: './',
-  plugins: [react(), wasm(), topLevelAwait(), viewerAssetsPlugin(), backendFilesPlugin(), templatesPlugin(), staticFolderPlugin()],
+  plugins: [react(), wasm(), topLevelAwait(), viewerAssetsPlugin(), wasmAssetsPlugin(), backendFilesPlugin(), templatesPlugin(), staticFolderPlugin()],
   server: {
     proxy: {
       '/api/fin': {
