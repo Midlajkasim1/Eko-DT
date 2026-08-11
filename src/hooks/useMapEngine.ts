@@ -33,6 +33,8 @@ export function useMapEngine(
 
     const created = createMapEngine(container, {
       ...initial,
+      // Read fresh: a captured resolver cannot see assets imported after the map mounted
+      resolveAsset: hash => optionsRef.current?.resolveAsset(hash) ?? Promise.resolve(null),
       onSelectLocation: location => handlersRef.current.onSelectLocation?.(location),
       onMapClick: lngLat => handlersRef.current.onMapClick?.(lngLat),
       onLocationMoved: (id, lngLat) => handlersRef.current.onLocationMoved?.(id, lngLat),

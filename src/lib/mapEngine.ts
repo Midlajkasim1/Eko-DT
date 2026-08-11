@@ -312,7 +312,8 @@ export function createMapEngine(container: HTMLDivElement, options: MapEngineOpt
       if (!sameQuad(previous.coordinates, overlay.coordinates)) {
         ;(map.getSource(id) as ImageSource).setCoordinates(overlay.coordinates as never)
       }
-      if (previous.hash !== overlay.hash) await fillImage(id, overlay.hash)
+      // held is only set on a successful upload, so a source that never got its texture retries
+      if (previous.hash !== overlay.hash || !held.has(id)) await fillImage(id, overlay.hash)
       if (!sameFade(previous, overlay)) {
         map.setPaintProperty(id, 'raster-opacity', opacityExpression(overlay) as never)
       }
