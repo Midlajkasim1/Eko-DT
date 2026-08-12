@@ -46,3 +46,4 @@ AUDIT_REPORT.md
 /scripts/_*.mjs
 /scripts/_shots/
 /scratch/
+/tests

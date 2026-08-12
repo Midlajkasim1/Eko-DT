@@ -5,7 +5,7 @@ import { useMapEngine } from '@/hooks/useMapEngine'
 import { useMapStore } from '@/store/useMapStore'
 import { createAssetResolver } from '@/lib/mapAssets'
 import { addLocation, updateLocation } from '@/lib/mapDraft'
-import { childrenOf, emptyMapConfig, findLocation, hasChildren, liveModelIds, pathTo } from '@/lib/mapConfig'
+import { childrenOf, emptyMapConfig, findLocation, hasChildren, liveModelIds, pathTo, withBuiltinRenders } from '@/lib/mapConfig'
 import { MapBreadcrumb } from '@/components/map/MapBreadcrumb'
 import { MapControls } from '@/components/map/MapControls'
 import { MapLocationPanel } from '@/components/map/MapLocationPanel'
@@ -39,7 +39,7 @@ export function MapView({ meta, folderHandle, adminMode, onOpenLocation, onExit 
 
   // A project being given its first map has nothing saved yet, so the blank config renders
   const config = useMemo(
-    () => (editing && draft) || meta.mapConfig || emptyMapConfig(),
+    () => withBuiltinRenders((editing && draft) || meta.mapConfig || emptyMapConfig()),
     [editing, draft, meta.mapConfig]
   )
   const levelId = path.length ? path[path.length - 1] : null

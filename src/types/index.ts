@@ -143,6 +143,8 @@ export interface MapConfig {
   /** maxBounds padding as a fraction of the content span */
   padding?: number
   basemap: MapBasemap
+  /** Set false to drop the bundled Dubai render pyramid, e.g. for a site somewhere else */
+  builtinRenders?: boolean
   overlays?: MapOverlay[]
   locations?: MapLocation[]
   categories?: { id: string; label: string; color?: string }[]

@@ -6,6 +6,7 @@
 //
 import { build } from 'esbuild'
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -27,7 +28,8 @@ if (![z, lon, lat, tilesX, tilesY].every(Number.isFinite)) {
   process.exit(1)
 }
 
-const bundled = path.join(root, 'scripts', '.geo.placeholder.mjs')
+// outside the project root: creating and deleting files Vite watches crashes its watcher
+const bundled = path.join(os.tmpdir(), `geo.placeholder.${process.pid}.mjs`)
 await build({
   entryPoints: [path.join(root, 'src', 'lib', 'geo.ts')],
   outfile: bundled,

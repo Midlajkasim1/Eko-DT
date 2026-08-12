@@ -1,4 +1,5 @@
 import { roundLngLat } from '@/lib/geo'
+import { BUILTIN_RENDERS } from '@/data/regions'
 import type { LngLat, MapConfig, MapLocation, MapOverlay, ProjectMeta } from '@/types'
 
 export const DEFAULT_MAP_CAMERA = { center: [55.161, 25.131] as LngLat, zoom: 12.35, bearing: -10, pitch: 40 }
@@ -10,6 +11,13 @@ export const emptyMapConfig = (): MapConfig => ({
   overlays: [],
   locations: [],
 })
+
+/** Composites the bundled pyramid beneath the project's own renders. Applied on the way into
+ *  the engine, never into the draft, so built-ins are not written back to project.json. */
+export const withBuiltinRenders = (config: MapConfig): MapConfig =>
+  config.builtinRenders === false
+    ? config
+    : { ...config, overlays: [...BUILTIN_RENDERS, ...(config.overlays ?? [])] }
 
 /** The single predicate behind routing and the project-list badge, so they cannot disagree */
 export const hasMap = (meta: ProjectMeta | null | undefined): boolean =>
@@ -66,8 +74,16 @@ export function subtreeIds(locations: MapLocation[] | undefined, id: string): Se
 export const wouldCycle = (locations: MapLocation[] | undefined, id: string, nextParentId?: string) =>
   !!nextParentId && subtreeIds(locations, id).has(nextParentId)
 
-export const overlaysForLevel = (overlays: MapOverlay[] | undefined, parentId: string | null) =>
-  (overlays ?? []).filter(o => !o.hidden && (o.parentId ?? null) === parentId)
+/** A level shows its own renders and every ancestor's, shallowest first, so region → site →
+ *  building composite as one pyramid and the zoom fades alone decide what is visible */
+export function overlaysForLevel(config: MapConfig, parentId: string | null): MapOverlay[] {
+  const depth = new Map<string | null, number>([[null, 0]])
+  pathTo(config.locations, parentId).forEach((id, index) => depth.set(id, index + 1))
+
+  return (config.overlays ?? [])
+    .filter(o => !o.hidden && depth.has(o.parentId ?? null))
+    .sort((a, b) => depth.get(a.parentId ?? null)! - depth.get(b.parentId ?? null)!)
+}
 
 export const roundLocation = (l: MapLocation): MapLocation => ({
   ...l,

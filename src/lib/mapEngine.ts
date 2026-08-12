@@ -229,26 +229,26 @@ export function createMapEngine(container: HTMLDivElement, options: MapEngineOpt
   }
 
   function applyLimits() {
-    const maxZoom = config.maxZoom ?? 18.4
+    const ceiling = config.maxZoom ?? 18.4
     const floor = config.minZoom ?? 1
 
-    if (config.basemap.kind === 'xyz' || config.basemap.kind === 'pack') {
+    const tiled = config.basemap.kind === 'xyz' || config.basemap.kind === 'pack'
+    const bounds = tiled ? null : quadUnion(imageryQuads())
+
+    let min = floor
+    if (bounds) {
+      const padded = expandBounds(bounds, config.padding ?? 0.15)
+      map.setMaxBounds(padded as never)
+      // never let the camera pull back past the imagery into the void
+      min = Math.max(floor, minZoomToCover(padded, container.clientWidth || 1, container.clientHeight || 1))
+    } else {
       map.setMaxBounds(null)
-      map.setMinZoom(floor)
-      return
     }
 
-    const bounds = quadUnion(imageryQuads())
-    if (!bounds) {
-      map.setMaxBounds(null)
-      map.setMinZoom(floor)
-      return
-    }
-
-    const padded = expandBounds(bounds, config.padding ?? 0.15)
-    map.setMaxBounds(padded as never)
-    const fit = minZoomToCover(padded, container.clientWidth || 1, container.clientHeight || 1)
-    map.setMinZoom(Math.max(floor, Math.min(fit, maxZoom - 0.5)))
+    // widen before narrowing — MapLibre rejects a max that sits below the current min
+    map.setMinZoom(0)
+    map.setMaxZoom(ceiling)
+    map.setMinZoom(Math.min(min, ceiling))
   }
 
   /* ── Image sources: filled after creation so the studio can hand over a decoded bitmap ── */
@@ -288,7 +288,7 @@ export function createMapEngine(container: HTMLDivElement, options: MapEngineOpt
   let visibleOverlays: MapOverlay[] = []
 
   async function syncOverlays() {
-    const next = overlaysForLevel(config.overlays, levelId)
+    const next = overlaysForLevel(config, levelId)
     const nextById = new Map(next.map(o => [overlayId(o), o]))
     const previousById = new Map(visibleOverlays.map(o => [overlayId(o), o]))
 

@@ -1,11 +1,25 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef, useState, useSyncExternalStore } from 'react'
 import { useMapStore } from '@/store/useMapStore'
 import { useProjectStore } from '@/store/useProjectStore'
 import { emptyMapConfig, childrenOf, findLocation } from '@/lib/mapConfig'
-import { removeLocation, updateLocation, setCamera } from '@/lib/mapDraft'
+import { removeLocation, updateLocation, setCamera, setZoomLimits } from '@/lib/mapDraft'
 import { MapOverlayEditor } from '@/components/map/MapOverlayEditor'
 import type { MapEngine } from '@/lib/mapEngine'
 import type { MapConfig, ProjectMeta } from '@/types'
+
+/** Renders ship with the app per region, so per-project imagery authoring stays out of the way */
+const SHOW_RENDER_EDITOR = false
+
+const parseLimit = (value: string) => (value.trim() === '' ? undefined : Number(value))
+
+/** Subscribes on its own so the camera does not re-render the whole panel */
+function ZoomReadout({ engine }: { engine: MapEngine | null }) {
+  const zoom = useSyncExternalStore(
+    useCallback((notify: () => void) => engine?.subscribe(notify) ?? (() => {}), [engine]),
+    useCallback(() => engine?.getState().zoom ?? 0, [engine])
+  )
+  return <p className="map-hint">Now at z{zoom.toFixed(1)}</p>
+}
 
 interface MapEditorPanelProps {
   engine: MapEngine | null
@@ -65,6 +79,17 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
   }
 
   const config = draft
+  const currentZoom = () => Math.round((engine?.getState().zoom ?? 12) * 10) / 10
+  const zoomLocked =
+    config?.minZoom !== undefined && config.minZoom === config.maxZoom
+
+  const toggleZoomLock = (on: boolean) => {
+    const zoom = currentZoom()
+    patchDraft(d => setZoomLimits(d, on
+      ? { minZoom: zoom, maxZoom: zoom }
+      : { minZoom: undefined, maxZoom: undefined }))
+  }
+
   const selected = findLocation(config?.locations, selectedId)
   const siblings = childrenOf(config?.locations, levelId)
 
@@ -102,6 +127,49 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
 
         {!selected && (
           <>
+            <div className="map-section-title">Zoom limits</div>
+            <label className="map-check">
+              <input type="checkbox" checked={zoomLocked} onChange={e => toggleZoomLock(e.target.checked)} />
+              Lock zoom at the current level
+            </label>
+            <div className="map-row">
+              <div className="map-field">
+                <label className="map-label" htmlFor="map-zoom-out">Zoom out limit</label>
+                <input
+                  id="map-zoom-out"
+                  className="map-input map-input-mono"
+                  type="number" step="0.1" placeholder="auto"
+                  value={config?.minZoom ?? ''}
+                  onChange={e => patchDraft(d => setZoomLimits(d, { minZoom: parseLimit(e.target.value) }))}
+                />
+              </div>
+              <div className="map-field">
+                <label className="map-label" htmlFor="map-zoom-in">Zoom in limit</label>
+                <input
+                  id="map-zoom-in"
+                  className="map-input map-input-mono"
+                  type="number" step="0.1" placeholder="18.4"
+                  value={config?.maxZoom ?? ''}
+                  onChange={e => patchDraft(d => setZoomLimits(d, { maxZoom: parseLimit(e.target.value) }))}
+                />
+              </div>
+            </div>
+            <div className="map-row">
+              <button className="map-ghost-btn" onClick={() => patchDraft(d => setZoomLimits(d, { minZoom: currentZoom() }))}>
+                Set out here
+              </button>
+              <button className="map-ghost-btn" onClick={() => patchDraft(d => setZoomLimits(d, { maxZoom: currentZoom() }))}>
+                Set in here
+              </button>
+              <button
+                className="map-ghost-btn"
+                onClick={() => patchDraft(d => setZoomLimits(d, { minZoom: undefined, maxZoom: undefined }))}
+              >
+                Clear
+              </button>
+            </div>
+            <ZoomReadout engine={engine} />
+
             <div className="map-section-title">Locations here</div>
             <button
               className={`map-ghost-btn ${editTool === 'pin' ? 'active' : ''}`}
@@ -245,7 +313,9 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
           </>
         )}
 
-        <MapOverlayEditor engine={engine} meta={meta} levelId={levelId} patchDraft={patchDraft} />
+        {SHOW_RENDER_EDITOR && (
+          <MapOverlayEditor engine={engine} meta={meta} levelId={levelId} patchDraft={patchDraft} />
+        )}
 
         <div className="map-row" style={{ marginTop: 'auto' }}>
           <button className="map-cta" onClick={finish} disabled={saving}>

@@ -59,5 +59,17 @@ export function removeOverlay(config: MapConfig, id: string): MapConfig {
 export const setCamera = (config: MapConfig, camera: MapConfig['camera']): MapConfig =>
   ({ ...config, camera })
 
+/** An absent limit means "auto", so clearing one deletes the key rather than storing undefined */
+export function setZoomLimits(config: MapConfig, limits: { minZoom?: number; maxZoom?: number }): MapConfig {
+  const next: MapConfig = { ...config }
+  for (const key of ['minZoom', 'maxZoom'] as const) {
+    if (!(key in limits)) continue
+    const value = limits[key]
+    if (value === undefined || Number.isNaN(value)) delete next[key]
+    else next[key] = value
+  }
+  return next
+}
+
 export const setBasemap = (config: MapConfig, basemap: MapConfig['basemap']): MapConfig =>
   ({ ...config, basemap })

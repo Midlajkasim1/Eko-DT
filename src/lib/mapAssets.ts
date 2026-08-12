@@ -1,4 +1,5 @@
 import { encodeCapped, sha256Prefix } from '@/lib/textureAssets'
+import { BUILTIN_PREFIX, BUILTIN_RENDERS_DIR } from '@/data/regions'
 import type { MapAsset, ProjectMeta } from '@/types'
 
 export const MAP_ASSETS_DIR = 'mapassets'
@@ -84,6 +85,11 @@ export function createAssetResolver(
   base = './'
 ): AssetResolver {
   return async (hash: string) => {
+    // Built-in renders ship with the app, so they resolve over HTTP even in the studio
+    if (hash.startsWith(BUILTIN_PREFIX)) {
+      const name = hash.slice(BUILTIN_PREFIX.length)
+      return { url: `${base}${BUILTIN_RENDERS_DIR}/${name}.webp` }
+    }
     const asset = meta.mapAssets?.[hash]
     if (!asset) return null
     if (!handle) return { url: base + asset.src }
