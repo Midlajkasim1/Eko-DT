@@ -402,8 +402,8 @@
 .map-editor.open .map-editor-tab { color: var(--map-acc); border-color: var(--map-acc); }
 
 .map-editor-body {
-  width: 300px;
-  padding: 14px;
+  width: 320px;
+  padding: 14px 14px 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -411,6 +411,20 @@
   background: var(--map-s1);
   border: 1px solid var(--map-bd1);
   border-inline-end: none;
+}
+
+/* A scrolling child's automatic minimum size is zero, so without this the lists collapse to a
+   sliver as soon as the panel overflows. The panel is the one thing that scrolls. */
+.map-editor-body > * { flex-shrink: 0; }
+
+/* margin-top parks it at the bottom of a short panel, sticky holds it there once one scrolls */
+.map-editor-foot {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  padding-block: 12px 14px;
+  background: var(--map-s1);
+  border-block-start: 1px solid var(--map-bd1);
 }
 
 .map-field { display: flex; flex-direction: column; gap: 5px; }
@@ -452,7 +466,7 @@
   border-block-end: 1px solid var(--map-bd1);
 }
 
-.map-list { display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto; }
+.map-list { display: flex; flex-direction: column; gap: 4px; max-height: 260px; overflow-y: auto; }
 .map-list-row {
   display: flex;
   align-items: center;
@@ -499,6 +513,8 @@
 }
 
 .map-layer :focus-visible { outline: 2px solid var(--map-acc); outline-offset: 2px; border-radius: 4px; }
+
+.map-layer * { scrollbar-width: thin; scrollbar-color: var(--map-bd2) transparent; }
 
 @media (prefers-reduced-motion: reduce) {
   .map-layer,

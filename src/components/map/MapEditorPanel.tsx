@@ -203,10 +203,6 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
           {editTool === 'pin' ? 'Click the map to place…' : '+ Add location'}
         </button>
 
-        <button className="map-ghost-btn" onClick={captureView}>
-          {selected ? 'Use current view for this pin' : 'Use current view as start'}
-        </button>
-
         {selected && config ? (
           <>
             <div className="map-section-title">Location</div>
@@ -263,6 +259,10 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
               </div>
             </div>
 
+            <button className="map-ghost-btn" onClick={captureView}>
+              Use current view for this pin
+            </button>
+
             {selected.parentId != null && (
               <>
                 <div className="map-section-title">Models ({selected.modelIds?.length ?? 0})</div>
@@ -301,8 +301,8 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
             )}
 
             <p className="map-hint">
-              A location with sub-locations or a render of its own becomes a level; a location with
-              models opens the 3D viewer.
+              A location with sub-locations becomes a level you click into; one with models opens
+              the 3D viewer on a double click.
             </p>
 
             {/* Offered for empty pins too — it is how a first sub-location gets a level to sit in */}
@@ -337,6 +337,11 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
           </>
         ) : (
           <>
+            <div className="map-section-title">Main map</div>
+            <button className="map-ghost-btn" onClick={captureView}>
+              Use current view as start
+            </button>
+
             <div className="map-section-title">Zoom limits</div>
             <label className="map-check">
               <input type="checkbox" checked={zoomLocked} onChange={e => toggleZoomLock(e.target.checked)} />
@@ -386,7 +391,7 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
           <MapOverlayEditor engine={engine} meta={meta} levelId={levelId} patchDraft={patchDraft} />
         )}
 
-        <div className="map-row" style={{ marginTop: 'auto' }}>
+        <div className="map-row map-editor-foot">
           <button className="map-cta" onClick={finish} disabled={saving}>
             {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save map'}
           </button>

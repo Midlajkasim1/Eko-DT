@@ -14,6 +14,7 @@ export function MapLocationPanel({
   location, childCount, canExplore, busy, onExplore, onClose,
 }: MapLocationPanelProps) {
   const drills = childCount > 0
+  const hasBody = drills || !!location.description || !!location.stats?.length
 
   return (
     <aside className="map-panel" role="dialog" aria-label={location.name}>
@@ -29,6 +30,7 @@ export function MapLocationPanel({
         </button>
       </header>
 
+      {hasBody && (
       <div className="map-panel-body">
         {location.description && <p className="map-panel-text">{location.description}</p>}
 
@@ -49,6 +51,7 @@ export function MapLocationPanel({
           </p>
         )}
       </div>
+      )}
 
       {canExplore && (
         <footer className="map-panel-foot">
