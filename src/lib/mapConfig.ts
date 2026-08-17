@@ -2,15 +2,59 @@ import { roundLngLat } from '@/lib/geo'
 import { BUILTIN_RENDERS } from '@/data/regions'
 import type { LngLat, MapConfig, MapLocation, MapOverlay, ProjectMeta } from '@/types'
 
-export const DEFAULT_MAP_CAMERA = { center: [55.161, 25.131] as LngLat, zoom: 12.35, bearing: -10, pitch: 40 }
+export const DEFAULT_MAP_CAMERA = { center: [55.161, 25.131] as LngLat, zoom: 12, bearing: 0, pitch: 0 }
 
-export const emptyMapConfig = (): MapConfig => ({
-  version: 1,
-  camera: { ...DEFAULT_MAP_CAMERA },
-  basemap: { kind: 'void' },
-  overlays: [],
-  locations: [],
-})
+export const emptyMapConfig = (): MapConfig => {
+  const mainPinId = newId('loc')
+  const subPinId = newId('loc')
+
+  return {
+    version: 1,
+    camera: { ...DEFAULT_MAP_CAMERA },
+    basemap: { kind: 'void' },
+    locations: [
+      {
+        id: mainPinId,
+        name: 'Coastal Resort',
+        description: 'Main exterior view of the coastal property.',
+        position: [55.186, 25.145],
+        view: { center: [55.18707, 25.14528], zoom: 15.5, bearing: 0, pitch: 0 },
+      },
+      {
+        id: subPinId,
+        parentId: mainPinId,
+        name: 'Resort Interior',
+        description: 'Detailed view of the resort facilities.',
+        position: [55.188, 25.145],
+        view: { center: [55.18844, 25.14528], zoom: 16.8, bearing: 0, pitch: 0 },
+      }
+    ],
+    overlays: [
+      {
+        id: newId('ovl'),
+        hash: 'builtin/dubai/marsa-al-arab/l2',
+        parentId: mainPinId,
+        coordinates: [
+          [55.18157959, 25.1502571],
+          [55.19256592, 25.1502571],
+          [55.19256592, 25.14031191],
+          [55.18157959, 25.14031191],
+        ],
+      },
+      {
+        id: newId('ovl'),
+        hash: 'builtin/dubai/marsa-al-arab/l3',
+        parentId: subPinId,
+        coordinates: [
+          [55.18569946, 25.14777088],
+          [55.19119263, 25.14777088],
+          [55.19119263, 25.14279829],
+          [55.18569946, 25.14279829],
+        ],
+      }
+    ],
+  }
+}
 
 /** Composites the bundled pyramid beneath the project's own renders. Applied on the way into
  *  the engine, never into the draft, so built-ins are not written back to project.json. */
@@ -77,12 +121,8 @@ export const wouldCycle = (locations: MapLocation[] | undefined, id: string, nex
 /** A level shows its own renders and every ancestor's, shallowest first, so region → site →
  *  building composite as one pyramid and the zoom fades alone decide what is visible */
 export function overlaysForLevel(config: MapConfig, parentId: string | null): MapOverlay[] {
-  const depth = new Map<string | null, number>([[null, 0]])
-  pathTo(config.locations, parentId).forEach((id, index) => depth.set(id, index + 1))
-
-  return (config.overlays ?? [])
-    .filter(o => !o.hidden && depth.has(o.parentId ?? null))
-    .sort((a, b) => depth.get(a.parentId ?? null)! - depth.get(b.parentId ?? null)!)
+  // Only return overlays EXACTLY matching the current level to hide parent maps
+  return (config.overlays ?? []).filter(o => !o.hidden && (o.parentId ?? null) === parentId)
 }
 
 export const roundLocation = (l: MapLocation): MapLocation => ({

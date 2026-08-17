@@ -40,13 +40,7 @@
 }
 
 .map-vignette {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  pointer-events: none;
-  background:
-    radial-gradient(ellipse at center, transparent 68%, rgba(6, 10, 20, 0.2) 100%),
-    linear-gradient(180deg, rgba(9, 14, 26, 0.2) 0%, transparent 14%, transparent 88%, rgba(9, 14, 26, 0.16) 100%);
+  display: none;
 }
 
 /* ── Markers ── */
@@ -370,9 +364,18 @@
   display: grid;
   place-items: center;
   pointer-events: none;
-  text-align: center;
-  color: var(--map-t3);
+}
+.map-empty p {
+  padding: 10px 16px;
+  background: var(--map-panel);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 8px;
+  border: 1px solid var(--map-bd1);
+  color: var(--map-t2);
   font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--map-shadow);
 }
 
 /* ── Authoring panel ── */

@@ -43,31 +43,12 @@ export function MapLocationPanel({ location, models, childCount, busy, onOpen, o
           </div>
         )}
 
-        {drills ? (
-          <p className="map-panel-text" style={{ marginTop: 14 }}>
+        {drills && (
+          <p className="map-panel-text" style={{ marginTop: 14, opacity: 0.7 }}>
             {childCount} location{childCount === 1 ? '' : 's'} inside.
-          </p>
-        ) : models.length ? (
-          <div className="map-model-list">
-            {models.map(model => (
-              <div className="map-model-row" key={model.modelId}>
-                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{model.originalFileName}</span>
-                <span style={{ opacity: 0.7 }}>{formatMb(model.convertedFileSizeBytes || model.originalFileSizeBytes || 0)}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="map-panel-text map-danger" style={{ marginTop: 14 }}>
-            No models assigned to this location yet.
           </p>
         )}
       </div>
-
-      <footer className="map-panel-foot">
-        <button className="map-cta" onClick={onOpen} disabled={!canOpen || busy}>
-          {busy ? 'Loading…' : drills ? 'Enter level' : 'Open model'}
-        </button>
-      </footer>
     </aside>
   )
 }

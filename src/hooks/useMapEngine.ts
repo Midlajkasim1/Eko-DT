@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createMapEngine } from '@/lib/mapEngine'
 import type { MapEngine, MapEngineOptions } from '@/lib/mapEngine'
 
-type Handlers = Pick<MapEngineOptions, 'onSelectLocation' | 'onMapClick' | 'onLocationMoved'>
+type Handlers = Pick<MapEngineOptions, 'onSelectLocation' | 'onDoubleClickLocation' | 'onMapClick' | 'onLocationMoved'>
 type Options = Omit<MapEngineOptions, keyof Handlers>
 
 /** Creates the map once per container and disposes it on unmount, mirroring useFragmentsEngine.
@@ -36,6 +36,7 @@ export function useMapEngine(
       // Read fresh: a captured resolver cannot see assets imported after the map mounted
       resolveAsset: hash => optionsRef.current?.resolveAsset(hash) ?? Promise.resolve(null),
       onSelectLocation: location => handlersRef.current.onSelectLocation?.(location),
+      onDoubleClickLocation: location => handlersRef.current.onDoubleClickLocation?.(location),
       onMapClick: lngLat => handlersRef.current.onMapClick?.(lngLat),
       onLocationMoved: (id, lngLat) => handlersRef.current.onLocationMoved?.(id, lngLat),
     })

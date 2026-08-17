@@ -37,6 +37,8 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
   const updateDraft = useMapStore(s => s.updateDraft)
   const setEditTool = useMapStore(s => s.setEditTool)
   const select = useMapStore(s => s.select)
+  const enterLevel = useMapStore(s => s.enterLevel)
+  const goToLevel = useMapStore(s => s.goToLevel)
 
   const saveMapConfig = useProjectStore(s => s.saveMapConfig)
   const setDirty = useProjectStore(s => s.setDirty)
@@ -170,7 +172,7 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
             </div>
             <ZoomReadout engine={engine} />
 
-            <div className="map-section-title">Locations here</div>
+            <div className="map-section-title">All Locations</div>
             <button
               className={`map-ghost-btn ${editTool === 'pin' ? 'active' : ''}`}
               onClick={() => setEditTool(editTool === 'pin' ? 'none' : 'pin')}
@@ -179,21 +181,51 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
             </button>
 
             <div className="map-list">
-              {siblings.map(location => (
-                <div
-                  key={location.id}
-                  className="map-list-row"
-                  onClick={() => select(location.id)}
-                >
-                  <span className="map-list-row-name">{location.name}</span>
-                  <span className="map-list-row-meta">
-                    {childrenOf(config?.locations, location.id).length
-                      ? `${childrenOf(config?.locations, location.id).length} sub`
-                      : `${location.modelIds?.length ?? 0} mdl`}
-                  </span>
-                </div>
-              ))}
-              {!siblings.length && <p className="map-hint">Nothing here yet.</p>}
+              <div
+                className={`map-list-row ${!selectedId && !levelId ? 'selected' : ''}`}
+                onClick={() => {
+                  goToLevel(null)
+                  select(null)
+                }}
+              >
+                <span className="map-list-row-name" style={{ fontWeight: 600 }}>🌍 Main Map</span>
+                {levelId === null && <span className="map-list-row-meta">current</span>}
+              </div>
+              
+              {childrenOf(config?.locations, null).map(function renderNode(location) {
+                const depth = 1
+                const children = childrenOf(config?.locations, location.id)
+                
+                // We define a recursive helper inline to easily pass depth
+                const RecursiveNode = ({ loc, d }: { loc: MapLocation, d: number }) => {
+                  const kids = childrenOf(config?.locations, loc.id)
+                  return (
+                    <div key={loc.id}>
+                      <div
+                        className={`map-list-row ${selectedId === loc.id ? 'selected' : ''}`}
+                        style={{ paddingLeft: 8 + d * 12 }}
+                        onClick={() => {
+                          goToLevel(loc.parentId ?? null)
+                          select(loc.id)
+                        }}
+                      >
+                        <span className="map-list-row-name">{loc.name}</span>
+                        <span className="map-list-row-meta">
+                          {levelId === loc.id && <span style={{ color: 'var(--map-acc)', marginRight: 6 }}>current</span>}
+                          {kids.length ? `${kids.length} sub` : `${loc.modelIds?.length ?? 0} mdl`}
+                        </span>
+                      </div>
+                      {kids.map(child => <RecursiveNode key={child.id} loc={child} d={d + 1} />)}
+                    </div>
+                  )
+                }
+                
+                return <RecursiveNode key={location.id} loc={location} d={depth} />
+              })}
+              
+              {!childrenOf(config?.locations, null).length && (
+                <p className="map-hint" style={{ marginTop: 8 }}>Nothing here yet.</p>
+              )}
             </div>
           </>
         )}
@@ -252,38 +284,42 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
               </div>
             </div>
 
-            <div className="map-section-title">Models ({selected.modelIds?.length ?? 0})</div>
-            <div className="map-list">
-              {meta.models.map(model => {
-                const checked = selected.modelIds?.includes(model.modelId) ?? false
-                const alsoIn = (config.locations ?? [])
-                  .filter(l => l.id !== selected.id && l.modelIds?.includes(model.modelId))
-                  .map(l => l.name)
-                return (
-                  <label className="map-list-row" key={model.modelId}>
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={e => {
-                        const next = new Set(selected.modelIds ?? [])
-                        if (e.target.checked) next.add(model.modelId)
-                        else next.delete(model.modelId)
-                        patchDraft(d => updateLocation(d, selected.id, { modelIds: [...next] }))
-                      }}
-                    />
-                    <span className="map-list-row-name" title={model.originalFileName}>
-                      {model.originalFileName}
-                    </span>
-                    {!!alsoIn.length && (
-                      <span className="map-list-row-meta" title={`also in: ${alsoIn.join(', ')}`}>
-                        +{alsoIn.length}
-                      </span>
-                    )}
-                  </label>
-                )
-              })}
-              {!meta.models.length && <p className="map-hint">This project has no models yet.</p>}
-            </div>
+            {selected.parentId != null && (
+              <>
+                <div className="map-section-title">Models ({selected.modelIds?.length ?? 0})</div>
+                <div className="map-list">
+                  {meta.models.map(model => {
+                    const checked = selected.modelIds?.includes(model.modelId) ?? false
+                    const alsoIn = (config.locations ?? [])
+                      .filter(l => l.id !== selected.id && l.modelIds?.includes(model.modelId))
+                      .map(l => l.name)
+                    return (
+                      <label className="map-list-row" key={model.modelId}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={e => {
+                            const next = new Set(selected.modelIds ?? [])
+                            if (e.target.checked) next.add(model.modelId)
+                            else next.delete(model.modelId)
+                            patchDraft(d => updateLocation(d, selected.id, { modelIds: [...next] }))
+                          }}
+                        />
+                        <span className="map-list-row-name" title={model.originalFileName}>
+                          {model.originalFileName}
+                        </span>
+                        {!!alsoIn.length && (
+                          <span className="map-list-row-meta" title={`also in: ${alsoIn.join(', ')}`}>
+                            +{alsoIn.length}
+                          </span>
+                        )}
+                      </label>
+                    )
+                  })}
+                  {!meta.models.length && <p className="map-hint">This project has no models yet.</p>}
+                </div>
+              </>
+            )}
 
             <p className="map-hint">
               A location with sub-locations becomes a level; one with models opens the 3D viewer.
@@ -309,7 +345,22 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
               </button>
             )}
 
-            <button className="map-ghost-btn" onClick={() => select(null)}>Back to level</button>
+            <div className="map-row">
+              {levelId === null && (
+                <button 
+                  className="map-ghost-btn map-acc" 
+                  onClick={() => {
+                    enterLevel(selected.id)
+                    if (selected.view) engine?.flyToCamera(selected.view, 1200)
+                  }}
+                >
+                  Enter level
+                </button>
+              )}
+              <button className="map-ghost-btn" onClick={() => select(null)}>
+                Back
+              </button>
+            </div>
           </>
         )}
 

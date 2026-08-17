@@ -1,9 +1,9 @@
 import { Map as MaplibreMap, Marker, setWorkerUrl } from 'maplibre-gl'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-import { expandBounds, minZoomToCover, quadContains, quadUnion } from '@/lib/geo'
+import { expandBounds, MAX_LATITUDE, minZoomToCover, quadContains, quadUnion } from '@/lib/geo'
 import { childrenOf, overlaysForLevel } from '@/lib/mapConfig'
 import type { AssetHandle, AssetResolver } from '@/lib/mapAssets'
-import type { GeoQuad, MapConfig, MapLocation, MapOverlay } from '@/types'
+import type { GeoQuad, LngLat, MapConfig, MapLocation, MapOverlay } from '@/types'
 import type { ImageSource, RasterLayerSpecification, StyleSpecification } from 'maplibre-gl'
 
 setWorkerUrl(workerUrl)
@@ -98,6 +98,7 @@ export interface MapEngineOptions {
   levelId: string | null
   reducedMotion?: boolean
   onSelectLocation?: (location: MapLocation) => void
+  onDoubleClickLocation?: (location: MapLocation) => void
   onMapClick?: (lngLat: [number, number]) => void
   onLocationMoved?: (id: string, lngLat: [number, number]) => void
 }
@@ -142,19 +143,27 @@ export function createMapEngine(container: HTMLDivElement, options: MapEngineOpt
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const duration = (ms: number) => (reduced ? 0 : ms)
 
+  // For void basemaps the only imagery is from image overlays with fixed coordinates.
+  // Any bearing/pitch rotates the viewport past those images and exposes the void, so lock to 0.
+  const imageOnly = config.basemap.kind === 'void' || config.basemap.kind === 'image'
+  const safeBearing = imageOnly ? 0 : (config.camera.bearing ?? 0)
+  const safePitch = imageOnly ? 0 : (config.camera.pitch ?? 0)
+
   const map = new MaplibreMap({
     container,
     style: buildStyle(config),
     center: config.camera.center,
     zoom: config.camera.zoom,
-    bearing: config.camera.bearing ?? 0,
-    pitch: config.camera.pitch ?? 0,
+    bearing: safeBearing,
+    pitch: safePitch,
     minZoom: config.minZoom ?? 1,
     maxZoom: config.maxZoom ?? 18.4,
-    maxPitch: config.maxPitch ?? 70,
+    maxPitch: imageOnly ? 0 : (config.maxPitch ?? 70),
     renderWorldCopies: false,
     attributionControl: false,
     fadeDuration: reduced ? 0 : 200,
+    dragRotate: !imageOnly,
+    touchPitch: !imageOnly,
   })
 
   const on = (type: string, handler: never, layer?: string) => {
@@ -223,7 +232,7 @@ export function createMapEngine(container: HTMLDivElement, options: MapEngineOpt
   /** Only imagery constrains the camera. Pins alone must not, or a project with two pins and
    *  no renders would be locked into the degenerate box between them. */
   function imageryQuads(): GeoQuad[] {
-    const quads = (config.overlays ?? []).map(o => o.coordinates)
+    const quads = overlaysForLevel(config, levelId).map(o => o.coordinates)
     if (config.basemap.kind === 'image') quads.push(config.basemap.coordinates)
     return quads
   }
@@ -233,14 +242,40 @@ export function createMapEngine(container: HTMLDivElement, options: MapEngineOpt
     const floor = config.minZoom ?? 1
 
     const tiled = config.basemap.kind === 'xyz' || config.basemap.kind === 'pack'
-    const bounds = tiled ? null : quadUnion(imageryQuads())
+    const rawBounds = tiled ? null : quadUnion(imageryQuads())
 
     let min = floor
-    if (bounds) {
-      const padded = expandBounds(bounds, config.padding ?? 0.15)
-      map.setMaxBounds(padded as never)
-      // never let the camera pull back past the imagery into the void
-      min = Math.max(floor, minZoomToCover(padded, container.clientWidth || 1, container.clientHeight || 1))
+
+    if (rawBounds) {
+      // For image-only basemaps: the image must always fill the entire viewport.
+      // Calculate minZoom from the RAW image bounds (no padding), so the camera
+      // can never zoom out past where the image covers the screen.
+      const w = container.clientWidth || 1
+      const h = container.clientHeight || 1
+      min = Math.max(floor, minZoomToCover(rawBounds, w, h))
+
+      // Use the raw image bounds as maxBounds so panning can't expose void.
+      map.setMaxBounds(rawBounds as never)
+    } else if (tiled) {
+      // For tiled basemaps, derive bounds from the camera center so the user
+      // cannot pan away from the project area into empty void.
+      const center = config.camera.center
+      const z = floor
+      const w = container.clientWidth || 1
+      const h = container.clientHeight || 1
+      const lngSpan = (360 * w) / (512 * Math.pow(2, z)) * 2
+      const latSpan = (180 * h) / (512 * Math.pow(2, z)) * 2
+      const tileBounds: [LngLat, LngLat] = [
+        [
+          Math.max(-180, center[0] - lngSpan),
+          Math.max(-MAX_LATITUDE, center[1] - latSpan),
+        ],
+        [
+          Math.min(180, center[0] + lngSpan),
+          Math.min(MAX_LATITUDE, center[1] + latSpan),
+        ],
+      ]
+      map.setMaxBounds(tileBounds as never)
     } else {
       map.setMaxBounds(null)
     }
@@ -303,12 +338,21 @@ export function createMapEngine(container: HTMLDivElement, options: MapEngineOpt
 
     for (const [id, overlay] of nextById) {
       const previous = previousById.get(id)
-      if (!previous || !map.getSource(id)) {
+      
+      let isNewSource = false
+      if (!map.getSource(id)) {
         map.addSource(id, { type: 'image', url: TRANSPARENT_PX, coordinates: overlay.coordinates })
+        isNewSource = true
+      }
+      if (!map.getLayer(id)) {
         map.addLayer(overlayLayer(overlay))
+      }
+      
+      if (!previous || isNewSource) {
         await fillImage(id, overlay.hash)
         continue
       }
+
       if (!sameQuad(previous.coordinates, overlay.coordinates)) {
         ;(map.getSource(id) as ImageSource).setCoordinates(overlay.coordinates as never)
       }
@@ -415,6 +459,11 @@ export function createMapEngine(container: HTMLDivElement, options: MapEngineOpt
           const current = markers.get(spec.id)?.spec
           if (current) options.onSelectLocation?.(current)
         })
+        body.addEventListener('dblclick', event => {
+          event.stopPropagation()
+          const current = markers.get(spec.id)?.spec
+          if (current) options.onDoubleClickLocation?.(current)
+        })
         body.id = `map-pin-${spec.id}`
         marker.on('dragend', () => {
           const { lng, lat } = marker.getLngLat()
@@ -437,8 +486,8 @@ export function createMapEngine(container: HTMLDivElement, options: MapEngineOpt
     map.flyTo({
       center: camera.center,
       zoom: camera.zoom,
-      bearing: camera.bearing ?? 0,
-      pitch: camera.pitch ?? 0,
+      bearing: imageOnly ? 0 : (camera.bearing ?? 0),
+      pitch: imageOnly ? 0 : (camera.pitch ?? 0),
       duration: duration(ms),
     })
   }
@@ -455,8 +504,8 @@ export function createMapEngine(container: HTMLDivElement, options: MapEngineOpt
     map.flyTo({
       center: location.position,
       zoom: covered ? 13.8 : 13.2,
-      pitch: covered ? 30 : 58,
-      bearing: config.camera.bearing ?? 0,
+      pitch: imageOnly ? 0 : (covered ? 30 : 58),
+      bearing: imageOnly ? 0 : (config.camera.bearing ?? 0),
       duration: duration(FOCUS_DURATION),
     })
   }
@@ -467,14 +516,14 @@ export function createMapEngine(container: HTMLDivElement, options: MapEngineOpt
     map.jumpTo({
       center: config.camera.center,
       zoom: config.camera.zoom - intro.pullBack,
-      bearing: (config.camera.bearing ?? 0) + intro.bearingOffset,
+      bearing: imageOnly ? 0 : ((config.camera.bearing ?? 0) + intro.bearingOffset),
       pitch: 0,
     })
     map.once('idle', () => {
       map.flyTo({
         center: config.camera.center,
         zoom: config.camera.zoom,
-        bearing: config.camera.bearing ?? 0,
+        bearing: imageOnly ? 0 : (config.camera.bearing ?? 0),
         pitch: config.camera.pitch ?? 0,
         duration: intro.duration,
         curve: 1.15,
@@ -525,8 +574,13 @@ export function createMapEngine(container: HTMLDivElement, options: MapEngineOpt
     setLevel(next: string | null) {
       levelId = next
       if (!map.isStyleLoaded()) return
+      // Hide basemap tiles when inside a sub-level so overlays fill the screen
+      if (map.getLayer(BASEMAP_SOURCE)) {
+        map.setLayoutProperty(BASEMAP_SOURCE, 'visibility', next === null ? 'visible' : 'none')
+      }
       void syncOverlays()
       syncMarkers()
+      applyLimits()
     },
 
     setDraggable(next: boolean) {
