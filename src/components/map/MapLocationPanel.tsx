@@ -1,19 +1,19 @@
-import type { MapLocation, ProjectModelEntry } from '@/types'
+import type { MapLocation } from '@/types'
 
 interface MapLocationPanelProps {
   location: MapLocation
-  models: ProjectModelEntry[]
   childCount: number
+  /** Only ever the models. Going into a level is what the click on the pin already did. */
+  canExplore: boolean
   busy: boolean
-  onOpen: () => void
+  onExplore: () => void
   onClose: () => void
 }
 
-const formatMb = (bytes: number) => `${(bytes / 1048576).toFixed(1)} MB`
-
-export function MapLocationPanel({ location, models, childCount, busy, onOpen, onClose }: MapLocationPanelProps) {
+export function MapLocationPanel({
+  location, childCount, canExplore, busy, onExplore, onClose,
+}: MapLocationPanelProps) {
   const drills = childCount > 0
-  const canOpen = drills || models.length > 0
 
   return (
     <aside className="map-panel" role="dialog" aria-label={location.name}>
@@ -49,6 +49,14 @@ export function MapLocationPanel({ location, models, childCount, busy, onOpen, o
           </p>
         )}
       </div>
+
+      {canExplore && (
+        <footer className="map-panel-foot">
+          <button className="map-cta" onClick={onExplore} disabled={busy}>
+            {busy ? 'Loading…' : 'Explore'}
+          </button>
+        </footer>
+      )}
     </aside>
   )
 }

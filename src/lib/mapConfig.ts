@@ -1,59 +1,53 @@
 import { roundLngLat } from '@/lib/geo'
-import { BUILTIN_RENDERS } from '@/data/regions'
+import { BUILTIN_RENDERS, findBuiltinRender } from '@/data/regions'
 import type { LngLat, MapConfig, MapLocation, MapOverlay, ProjectMeta } from '@/types'
 
 export const DEFAULT_MAP_CAMERA = { center: [55.161, 25.131] as LngLat, zoom: 12, bearing: 0, pitch: 0 }
 
-export const emptyMapConfig = (): MapConfig => {
-  const mainPinId = newId('loc')
-  const subPinId = newId('loc')
+export const blankMapConfig = (): MapConfig => ({
+  version: 1,
+  camera: { ...DEFAULT_MAP_CAMERA },
+  basemap: { kind: 'void' },
+  overlays: [],
+  locations: [],
+})
 
-  return {
-    version: 1,
-    camera: { ...DEFAULT_MAP_CAMERA },
-    basemap: { kind: 'void' },
-    locations: [
-      {
-        id: mainPinId,
-        name: 'Coastal Resort',
-        description: 'Main exterior view of the coastal property.',
-        position: [55.186, 25.145],
-        view: { center: [55.18707, 25.14528], zoom: 15.5, bearing: 0, pitch: 0 },
-      },
-      {
-        id: subPinId,
-        parentId: mainPinId,
-        name: 'Resort Interior',
-        description: 'Detailed view of the resort facilities.',
-        position: [55.188, 25.145],
-        view: { center: [55.18844, 25.14528], zoom: 16.8, bearing: 0, pitch: 0 },
-      }
-    ],
-    overlays: [
-      {
-        id: newId('ovl'),
-        hash: 'builtin/dubai/marsa-al-arab/l2',
-        parentId: mainPinId,
-        coordinates: [
-          [55.18157959, 25.1502571],
-          [55.19256592, 25.1502571],
-          [55.19256592, 25.14031191],
-          [55.18157959, 25.14031191],
-        ],
-      },
-      {
-        id: newId('ovl'),
-        hash: 'builtin/dubai/marsa-al-arab/l3',
-        parentId: subPinId,
-        coordinates: [
-          [55.18569946, 25.14777088],
-          [55.19119263, 25.14777088],
-          [55.19119263, 25.14279829],
-          [55.18569946, 25.14279829],
-        ],
-      }
-    ],
-  }
+/** Fixed, not generated: the view renders this config while the editor drafts its own copy,
+ *  and a pin the two disagree about selects nothing. */
+const STARTER_SITE = 'loc-starter-site'
+const STARTER_INTERIOR = 'loc-starter-interior'
+const STARTER_RENDER = 'dubai-marsa-l2'
+
+const STARTER_LOCATIONS: MapLocation[] = [
+  {
+    id: STARTER_SITE,
+    name: 'Coastal Resort',
+    description: 'Exterior view of the property.',
+    position: [55.18707, 25.14528],
+    view: { center: [55.18707, 25.14528], zoom: 15.5 },
+  },
+  {
+    id: STARTER_INTERIOR,
+    parentId: STARTER_SITE,
+    name: 'Resort Interior',
+    description: 'The buildings and grounds inside the property.',
+    position: [55.18844, 25.14528],
+  },
+]
+
+/** The map a project without one starts on: a site to go into, framed by a bundled render, and
+ *  a pin inside it to hang models on. */
+export function starterMapConfig(): MapConfig {
+  const render = findBuiltinRender(STARTER_RENDER)
+  const overlays: MapOverlay[] = render
+    ? [{
+        id: `ovl-${STARTER_SITE}`,
+        hash: render.hash,
+        coordinates: render.coordinates,
+        parentId: STARTER_SITE,
+      }]
+    : []
+  return { ...blankMapConfig(), locations: STARTER_LOCATIONS.map(l => ({ ...l })), overlays }
 }
 
 /** Composites the bundled pyramid beneath the project's own renders. Applied on the way into
@@ -78,6 +72,8 @@ export const findLocation = (locations: MapLocation[] | undefined, id: string | 
 
 export const isPin = (l: MapLocation) => (l.kind ?? 'pin') === 'pin'
 
+/** The one thing that makes a pin a level. A render of its own does not: the deepest pin is
+ *  where the models are, and going into it would only put the map between them and the click. */
 export const hasChildren = (locations: MapLocation[] | undefined, id: string) =>
   (locations ?? []).some(l => l.parentId === id)
 
@@ -118,12 +114,10 @@ export function subtreeIds(locations: MapLocation[] | undefined, id: string): Se
 export const wouldCycle = (locations: MapLocation[] | undefined, id: string, nextParentId?: string) =>
   !!nextParentId && subtreeIds(locations, id).has(nextParentId)
 
-/** A level shows its own renders and every ancestor's, shallowest first, so region → site →
- *  building composite as one pyramid and the zoom fades alone decide what is visible */
-export function overlaysForLevel(config: MapConfig, parentId: string | null): MapOverlay[] {
-  // Only return overlays EXACTLY matching the current level to hide parent maps
-  return (config.overlays ?? []).filter(o => !o.hidden && (o.parentId ?? null) === parentId)
-}
+/** A level shows its own renders and nothing else. Ancestors are deliberately excluded: a level
+ *  is a framed view of one render, and imagery behind it would show through at its edges. */
+export const overlaysForLevel = (config: MapConfig, parentId: string | null): MapOverlay[] =>
+  (config.overlays ?? []).filter(o => !o.hidden && (o.parentId ?? null) === parentId)
 
 export const roundLocation = (l: MapLocation): MapLocation => ({
   ...l,

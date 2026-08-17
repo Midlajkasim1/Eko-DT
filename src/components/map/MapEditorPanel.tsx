@@ -1,11 +1,11 @@
 import { useCallback, useRef, useState, useSyncExternalStore } from 'react'
 import { useMapStore } from '@/store/useMapStore'
 import { useProjectStore } from '@/store/useProjectStore'
-import { emptyMapConfig, childrenOf, findLocation } from '@/lib/mapConfig'
+import { childrenOf, findLocation, pathTo, starterMapConfig } from '@/lib/mapConfig'
 import { removeLocation, updateLocation, setCamera, setZoomLimits } from '@/lib/mapDraft'
 import { MapOverlayEditor } from '@/components/map/MapOverlayEditor'
 import type { MapEngine } from '@/lib/mapEngine'
-import type { MapConfig, ProjectMeta } from '@/types'
+import type { MapConfig, MapLocation, ProjectMeta } from '@/types'
 
 /** Renders ship with the app per region, so per-project imagery authoring stays out of the way */
 const SHOW_RENDER_EDITOR = false
@@ -19,6 +19,49 @@ function ZoomReadout({ engine }: { engine: MapEngine | null }) {
     useCallback(() => engine?.getState().zoom ?? 0, [engine])
   )
   return <p className="map-hint">Now at z{zoom.toFixed(1)}</p>
+}
+
+interface TreeNodeProps {
+  location: MapLocation
+  locations: MapLocation[] | undefined
+  depth: number
+  levelId: string | null
+  selectedId: string | null
+  onPick: (location: MapLocation) => void
+}
+
+function TreeNode({ location, locations, depth, levelId, selectedId, onPick }: TreeNodeProps) {
+  const children = childrenOf(locations, location.id)
+  return (
+    <>
+      <button
+        type="button"
+        className={`map-list-row ${selectedId === location.id ? 'selected' : ''}`}
+        style={{ paddingInlineStart: 8 + depth * 12 }}
+        onClick={() => onPick(location)}
+      >
+        <span className="map-list-row-name">{location.name}</span>
+        <span className="map-list-row-meta">
+          {levelId === location.id
+            ? 'current'
+            : children.length
+              ? `${children.length} sub`
+              : `${location.modelIds?.length ?? 0} mdl`}
+        </span>
+      </button>
+      {children.map(child => (
+        <TreeNode
+          key={child.id}
+          location={child}
+          locations={locations}
+          depth={depth + 1}
+          levelId={levelId}
+          selectedId={selectedId}
+          onPick={onPick}
+        />
+      ))}
+    </>
+  )
 }
 
 interface MapEditorPanelProps {
@@ -38,7 +81,7 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
   const setEditTool = useMapStore(s => s.setEditTool)
   const select = useMapStore(s => s.select)
   const enterLevel = useMapStore(s => s.enterLevel)
-  const goToLevel = useMapStore(s => s.goToLevel)
+  const setPath = useMapStore(s => s.setPath)
 
   const saveMapConfig = useProjectStore(s => s.saveMapConfig)
   const setDirty = useProjectStore(s => s.setDirty)
@@ -58,8 +101,13 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
     setSaved(false)
   }, [updateDraft, setDirty])
 
+  const goToLocation = useCallback((location: MapLocation) => {
+    setPath(pathTo(draft?.locations, location.parentId ?? null))
+    select(location.id)
+  }, [draft, setPath, select])
+
   const start = () => {
-    beginEdit(meta.mapConfig ?? emptyMapConfig())
+    beginEdit(meta.mapConfig ?? starterMapConfig())
     setOpen(true)
   }
 
@@ -93,7 +141,7 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
   }
 
   const selected = findLocation(config?.locations, selectedId)
-  const siblings = childrenOf(config?.locations, levelId)
+  const roots = childrenOf(config?.locations, null)
 
   const captureView = () => {
     if (!engine) return
@@ -101,7 +149,6 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
     const camera = { center: state.center, zoom: state.zoom, bearing: state.bearing, pitch: state.pitch }
     if (selected) patchDraft(d => updateLocation(d, selected.id, { view: camera }))
     else patchDraft(d => setCamera(d, camera))
-    setSaved(false)
   }
 
   if (!editing) {
@@ -119,119 +166,51 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
       </button>
 
       <div className="map-editor-body">
-        <div className="map-section-title">
-          {selected ? 'Location' : levelId ? 'This level' : 'Map'}
+        <div className="map-section-title">All locations</div>
+
+        <div className="map-list">
+          <button
+            type="button"
+            className={`map-list-row ${!selectedId && !levelId ? 'selected' : ''}`}
+            onClick={() => {
+              setPath([])
+              select(null)
+            }}
+          >
+            <span className="map-list-row-name">Main map</span>
+            {levelId === null && <span className="map-list-row-meta">current</span>}
+          </button>
+
+          {roots.map(location => (
+            <TreeNode
+              key={location.id}
+              location={location}
+              locations={config?.locations}
+              depth={1}
+              levelId={levelId}
+              selectedId={selectedId}
+              onPick={goToLocation}
+            />
+          ))}
+
+          {!roots.length && <p className="map-hint">Nothing here yet.</p>}
         </div>
+
+        <button
+          className={`map-ghost-btn ${editTool === 'pin' ? 'active' : ''}`}
+          onClick={() => setEditTool(editTool === 'pin' ? 'none' : 'pin')}
+        >
+          {editTool === 'pin' ? 'Click the map to place…' : '+ Add location'}
+        </button>
 
         <button className="map-ghost-btn" onClick={captureView}>
           {selected ? 'Use current view for this pin' : 'Use current view as start'}
         </button>
 
-        {!selected && (
+        {selected && config ? (
           <>
-            <div className="map-section-title">Zoom limits</div>
-            <label className="map-check">
-              <input type="checkbox" checked={zoomLocked} onChange={e => toggleZoomLock(e.target.checked)} />
-              Lock zoom at the current level
-            </label>
-            <div className="map-row">
-              <div className="map-field">
-                <label className="map-label" htmlFor="map-zoom-out">Zoom out limit</label>
-                <input
-                  id="map-zoom-out"
-                  className="map-input map-input-mono"
-                  type="number" step="0.1" placeholder="auto"
-                  value={config?.minZoom ?? ''}
-                  onChange={e => patchDraft(d => setZoomLimits(d, { minZoom: parseLimit(e.target.value) }))}
-                />
-              </div>
-              <div className="map-field">
-                <label className="map-label" htmlFor="map-zoom-in">Zoom in limit</label>
-                <input
-                  id="map-zoom-in"
-                  className="map-input map-input-mono"
-                  type="number" step="0.1" placeholder="18.4"
-                  value={config?.maxZoom ?? ''}
-                  onChange={e => patchDraft(d => setZoomLimits(d, { maxZoom: parseLimit(e.target.value) }))}
-                />
-              </div>
-            </div>
-            <div className="map-row">
-              <button className="map-ghost-btn" onClick={() => patchDraft(d => setZoomLimits(d, { minZoom: currentZoom() }))}>
-                Set out here
-              </button>
-              <button className="map-ghost-btn" onClick={() => patchDraft(d => setZoomLimits(d, { maxZoom: currentZoom() }))}>
-                Set in here
-              </button>
-              <button
-                className="map-ghost-btn"
-                onClick={() => patchDraft(d => setZoomLimits(d, { minZoom: undefined, maxZoom: undefined }))}
-              >
-                Clear
-              </button>
-            </div>
-            <ZoomReadout engine={engine} />
+            <div className="map-section-title">Location</div>
 
-            <div className="map-section-title">All Locations</div>
-            <button
-              className={`map-ghost-btn ${editTool === 'pin' ? 'active' : ''}`}
-              onClick={() => setEditTool(editTool === 'pin' ? 'none' : 'pin')}
-            >
-              {editTool === 'pin' ? 'Click the map to place…' : '+ Add location'}
-            </button>
-
-            <div className="map-list">
-              <div
-                className={`map-list-row ${!selectedId && !levelId ? 'selected' : ''}`}
-                onClick={() => {
-                  goToLevel(null)
-                  select(null)
-                }}
-              >
-                <span className="map-list-row-name" style={{ fontWeight: 600 }}>🌍 Main Map</span>
-                {levelId === null && <span className="map-list-row-meta">current</span>}
-              </div>
-              
-              {childrenOf(config?.locations, null).map(function renderNode(location) {
-                const depth = 1
-                const children = childrenOf(config?.locations, location.id)
-                
-                // We define a recursive helper inline to easily pass depth
-                const RecursiveNode = ({ loc, d }: { loc: MapLocation, d: number }) => {
-                  const kids = childrenOf(config?.locations, loc.id)
-                  return (
-                    <div key={loc.id}>
-                      <div
-                        className={`map-list-row ${selectedId === loc.id ? 'selected' : ''}`}
-                        style={{ paddingLeft: 8 + d * 12 }}
-                        onClick={() => {
-                          goToLevel(loc.parentId ?? null)
-                          select(loc.id)
-                        }}
-                      >
-                        <span className="map-list-row-name">{loc.name}</span>
-                        <span className="map-list-row-meta">
-                          {levelId === loc.id && <span style={{ color: 'var(--map-acc)', marginRight: 6 }}>current</span>}
-                          {kids.length ? `${kids.length} sub` : `${loc.modelIds?.length ?? 0} mdl`}
-                        </span>
-                      </div>
-                      {kids.map(child => <RecursiveNode key={child.id} loc={child} d={d + 1} />)}
-                    </div>
-                  )
-                }
-                
-                return <RecursiveNode key={location.id} loc={location} d={depth} />
-              })}
-              
-              {!childrenOf(config?.locations, null).length && (
-                <p className="map-hint" style={{ marginTop: 8 }}>Nothing here yet.</p>
-              )}
-            </div>
-          </>
-        )}
-
-        {selected && config && (
-          <>
             <div className="map-field">
               <label className="map-label" htmlFor="map-loc-name">Name</label>
               <input
@@ -322,13 +301,24 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
             )}
 
             <p className="map-hint">
-              A location with sub-locations becomes a level; one with models opens the 3D viewer.
+              A location with sub-locations or a render of its own becomes a level; a location with
+              models opens the 3D viewer.
             </p>
+
+            {/* Offered for empty pins too — it is how a first sub-location gets a level to sit in */}
+            <div className="map-row">
+              {levelId !== selected.id && (
+                <button className="map-ghost-btn" onClick={() => enterLevel(selected.id)}>
+                  Enter level
+                </button>
+              )}
+              <button className="map-ghost-btn" onClick={() => select(null)}>Back to level</button>
+            </div>
 
             {confirmDelete === selected.id ? (
               <div className="map-row">
                 <button
-                  className="map-ghost-btn"
+                  className="map-ghost-btn map-danger"
                   onClick={() => {
                     patchDraft(d => removeLocation(d, selected.id))
                     select(null)
@@ -344,23 +334,51 @@ export function MapEditorPanel({ engine, meta, levelId }: MapEditorPanelProps) {
                 Remove location
               </button>
             )}
-
+          </>
+        ) : (
+          <>
+            <div className="map-section-title">Zoom limits</div>
+            <label className="map-check">
+              <input type="checkbox" checked={zoomLocked} onChange={e => toggleZoomLock(e.target.checked)} />
+              Lock zoom at the current level
+            </label>
             <div className="map-row">
-              {levelId === null && (
-                <button 
-                  className="map-ghost-btn map-acc" 
-                  onClick={() => {
-                    enterLevel(selected.id)
-                    if (selected.view) engine?.flyToCamera(selected.view, 1200)
-                  }}
-                >
-                  Enter level
-                </button>
-              )}
-              <button className="map-ghost-btn" onClick={() => select(null)}>
-                Back
+              <div className="map-field">
+                <label className="map-label" htmlFor="map-zoom-out">Zoom out limit</label>
+                <input
+                  id="map-zoom-out"
+                  className="map-input map-input-mono"
+                  type="number" step="0.1" placeholder="auto"
+                  value={config?.minZoom ?? ''}
+                  onChange={e => patchDraft(d => setZoomLimits(d, { minZoom: parseLimit(e.target.value) }))}
+                />
+              </div>
+              <div className="map-field">
+                <label className="map-label" htmlFor="map-zoom-in">Zoom in limit</label>
+                <input
+                  id="map-zoom-in"
+                  className="map-input map-input-mono"
+                  type="number" step="0.1" placeholder="18.4"
+                  value={config?.maxZoom ?? ''}
+                  onChange={e => patchDraft(d => setZoomLimits(d, { maxZoom: parseLimit(e.target.value) }))}
+                />
+              </div>
+            </div>
+            <div className="map-row">
+              <button className="map-ghost-btn" onClick={() => patchDraft(d => setZoomLimits(d, { minZoom: currentZoom() }))}>
+                Set out here
+              </button>
+              <button className="map-ghost-btn" onClick={() => patchDraft(d => setZoomLimits(d, { maxZoom: currentZoom() }))}>
+                Set in here
+              </button>
+              <button
+                className="map-ghost-btn"
+                onClick={() => patchDraft(d => setZoomLimits(d, { minZoom: undefined, maxZoom: undefined }))}
+              >
+                Clear
               </button>
             </div>
+            <ZoomReadout engine={engine} />
           </>
         )}
 
