@@ -52,10 +52,9 @@ window.EKO_P = (function(){
     const cfg = Object.assign({}, (model&&model.config)||{ markers:true });
     const scene = E.state.modelFs
       ? `<div id="modelfs" role="region" aria-label="${C().esc(E.t('mModel'))}">${V().viewer(E, Object.assign({}, cfg, { timeline:false }), '')}
-           ${E.state.locFocus ? '' : `<button class="btnG btnSm mfsclose" data-act="modelFs">${C().icon('x',14)} ${C().esc(E.t('mCloseModel'))}</button>`}</div>`   /* in focus, Back to Assets closes it */
+           <button class="btnG btnSm mfsclose" data-act="modelFs">${C().icon('x',14)} ${C().esc(E.t('mCloseModel'))}</button></div>`
       : (peek ? `<div class="mpeek">${V().viewer(E, Object.assign({}, cfg, { dock:'none', pills:false, timeline:false }), '')}
            <button class="btnP btnSm mpeekopen" data-act="modelFs">${C().icon('maximize',14)} ${C().esc(E.t('mOpenModel'))}</button></div>` : '');
-    if(E.state.locFocus) return `<div class="mpage">${scene}</div>`;   /* Locate in 3D: the model alone */
     return `<div class="mpage">${scene}${summary ? widget(E,summary) : ''}${E.state.assetSel ? C().assetPanel(E) : (panel ? widget(E,panel) : '')}</div>`;
   }
 
@@ -65,7 +64,6 @@ window.EKO_P = (function(){
     const model = byType(doc,'viewer3d');
     const alarms = byType(doc,'alarmPanel');
     if(E.stacked()) return stackedLanding(E, doc, summary, alarms, true);
-    if(E.state.locFocus) return V().viewer(E, (model&&model.config)||{}, '');   /* Locate in 3D: the viewer alone */
     return V().viewer(E, (model&&model.config)||{}, summary ? widget(E,summary) : '')
       + (E.state.assetSel ? C().assetPanel(E) : (alarms ? widget(E,alarms) : ''));
   }
@@ -90,12 +88,15 @@ window.EKO_P = (function(){
   function registerPage(E, doc){
     const model = byType(doc,'viewerStrip');
     const table = byType(doc,'registerTable');
-    const mn = !!E.state.regMin;   /* D128: the strip collapses like the side panels (chevron, Home/Enter on the splitter) */
+    /* Locate in 3D (locFocus, no `from`): only the table goes, the model takes its room; the rail, the
+       summary and the asset panel stay. Back to Assets / Escape bring the table back. */
+    const noTable = !!(E.state.locFocus && !E.state.locFocus.from);
+    const mn = !!E.state.regMin && !noTable;   /* D128: the strip collapses like the side panels (chevron, Home/Enter on the splitter) */
     return (model ? `<div class="regmodelwrap deskwide" data-min="${mn ? 1 : 0}">${
         V().viewer(E, (model&&model.config)||{ markers:true, dock:'none', pills:false }, '')}
         <button class="ovcollapse regcollapse tipU" data-act="regMin" data-tip="${C().esc(E.t(mn ? 'mpExpand' : 'mpCollapse'))}" aria-label="${C().esc(E.t(mn ? 'mpExpand' : 'mpCollapse'))}" aria-expanded="${!mn}">${C().icon(mn ? 'chevR' : 'chevL', 12)}</button>
         <span class="tCap regmodelhint">${C().esc(E.t('regModelHint'))}</span></div>` : '')
-      + (table ? widget(E,table) : '')
+      + (table && !noTable ? widget(E,table) : '')
       + (E.state.assetSel ? C().assetPanel(E) : '');
   }
 

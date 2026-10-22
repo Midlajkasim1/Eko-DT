@@ -178,7 +178,7 @@
       const gate = window.EKO_ADDONS && window.EKO_ADDONS.lockFor(this, module ?? this.state.module, sub);   /* D125: a gated route opens its add-on, never a half page */
       if(gate){ this.set({ born:'dlg', teaserKey: gate, dlg:'teaser', mobMore:false }); return; }
       if(pageId !== this.state.pageId) this.state._prev = { pageId: this.state.pageId, module: this.state.module, sub: this.state.sub };
-      this.state.locFocus = null;   /* any navigation (the logo, a module, search, Back) ends Locate-in-3D focus */
+      this.state.locFocus = null;   /* any navigation (the logo, a module, search, Back) ends Locate in 3D */
       if(window.EKO_SURF) window.EKO_SURF.closeAll();          /* R4 (D67) */
       const targetModule = module ?? this.state.module;
       const targetSub = sub ?? null;
@@ -1066,20 +1066,27 @@
       if(window.EKO_CMMS) window.EKO_CMMS.createWorkOrder({ assetId: id });
       else { delete E.state.woPhase[id]; render(); } },
     woOpen(el){ E.set({ assetSel: el.dataset.asset, apTab: 'alarms' }); },
+    /* Locate in 3D keeps the asset and its panel, and flies the camera. On the register (with its model
+       strip on screen) only the table goes, so the model has its room (locFocus). A page with no model
+       on screen (a narrow register, a detail page) goes to the Overview, which has one; locFocus.from
+       is where Back to Assets returns. Nothing is saved: no panel preference changes. */
     locate(el){ const id = el.dataset.asset;
       const a = E.data.alarms.find(x => x.asset === id);
-      /* Locate in 3D = focus mode (locFocus): the Overview's viewer alone, no rail, register, summary or
-         asset panel (go() closes it, R4). The asset is kept for Back to Assets; its highlight stays.
-         Nothing here is saved: the rail and summary preferences are untouched. */
-      if(E.state.pageId !== 'marsa-overview') E.go('marsa-overview', 'overview', null);
-      E.set({ locFocus: { assetSel: id }, assetSel: null, mkPop: null, modelFs: E.stacked(),
+      const vp = document.getElementById('vpmain'), seen = !!(vp && vp.getClientRects().length);
+      const page = [E.state.pageId, E.state.module, E.state.sub];
+      let focus = null;
+      if(!seen){ E.go('marsa-overview', 'overview', null); if(page[0] === 'assets-register') focus = { assetSel: id, from: page }; }   /* go() closes the panel (R4): reopened below */
+      else if(page[0] === 'assets-register') focus = { assetSel: id };
+      E.set({ locFocus: focus, assetSel: id, mkPop: null,   /* no full-screen model on a narrow screen: it would cover the Studio's sidebar */
               mkPulse: a ? a.id : null, paint: id });   /* located equipment is coloured like a marker tap */
       E.engine.flyTo(id);
       setTimeout(() => { E.state.mkPulse = null; render(); }, 2200); },
-    /* Back to Assets (also Escape): the register as it was, the asset's panel open again. go() resets
-       the model for the new page (camera home, no highlight); the asset just located stays coloured */
-    locBack(){ const sel = E.state.locFocus && E.state.locFocus.assetSel;
-      E.go('assets-register', 'assets', 'reg'); if(sel) E.set({ assetSel: sel, paint: sel }); },
+    /* Back to Assets (also Escape): the table again, the asset still selected. go() resets the model for
+       the new page (camera home, no highlight); the asset just located stays coloured. */
+    locBack(){ const f = E.state.locFocus; if(!f) return;
+      const sel = E.state.assetSel || f.assetSel;
+      if(!f.from){ E.set({ locFocus: null }); return; }
+      E.go(f.from[0], f.from[1], f.from[2]); if(sel) E.set({ assetSel: sel, paint: sel }); },
 
     /* One handler for the bar, the sheet, the radial, and the shortcut keys.
        Select and Measure share the click. Slice stays on until it is clicked off or Reset. */

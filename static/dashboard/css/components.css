@@ -846,13 +846,14 @@
   touch-action:none
 }
 
-/* Locate-in-3D focus (data-locfocus): no rail, its width given back to the viewer (--navw also
-   places #histframe). The register, summary and asset panel are simply not rendered. */
-.dashboard-native-container[data-locfocus="1"] {
-  --navw:0px
+/* Locate in 3D on the register (data-locfocus): the table is not rendered, so the model strip takes
+   its room. The strip's own width, collapse chevron and drag handle mean nothing meanwhile. */
+.dashboard-native-container[data-locfocus="1"] .regmodelwrap {
+  flex:1 1 0;
+  min-width:0
 }
 
-.dashboard-native-container[data-locfocus="1"] #ekonav {
+.dashboard-native-container[data-locfocus="1"] .regmodelhint,.dashboard-native-container[data-locfocus="1"] .regcollapse,.dashboard-native-container[data-locfocus="1"] .sphandle[data-split="regviewer"] {
   display:none
 }
 
@@ -1950,6 +1951,22 @@
 .dashboard-native-container #ovp[data-min="1"] {
   bottom:auto;
   inline-size:auto
+}
+
+/* Energy summary only (data-fit): as tall as its cards with 16px under the last, not the viewer's full
+   height. A definite height makes the bottom inset stop stretching it, and max-height:stretch keeps
+   it inside that inset, so on a short screen it still ends above the timeline and toolbar and the
+   cards scroll inside it. Desktop only: the stacked shell lays the summary out in the page. */
+@media (min-width:1024px) {
+  .dashboard-native-container #vpmain > #ovp[data-fit="1"]:not([data-min="1"]) {
+    height:fit-content;
+    max-height:-webkit-fill-available;
+    max-height:stretch;
+    --ovFade:16px
+  }
+  .dashboard-native-container #vpmain > #ovp[data-fit="1"]:not([data-min="1"]) .ovpad {
+    padding-block-end:16px !important   /* the timeline variants above reserve room for a longer fade */
+  }
 }
 
 .dashboard-native-container #ovp[data-min="1"] .ovglass,.dashboard-native-container #ovp[data-min="1"] .ovtint,.dashboard-native-container #ovp[data-min="1"] .ovvs,.dashboard-native-container #ovp[data-min="1"] .ovrz,.dashboard-native-container #ovp[data-min="1"] .ovpad {

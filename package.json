@@ -22,6 +22,7 @@
     "test:backend": "python -m unittest discover -s backend/tests -t backend -v",
     "test:isolation": "node scripts/test-project-isolation.mjs",
     "test:fin-switch": "node scripts/test-fin-project-switch.mjs",
+    "test:layout": "node scripts/test-studio-layout.mjs",
     "build:renders": "node scripts/buildBuiltinRenders.mjs"
   },
   "dependencies": {

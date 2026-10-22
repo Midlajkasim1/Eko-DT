@@ -221,9 +221,9 @@ window.EKO_C = (function(){
   /* --------------------- summary panel (#ovp overlay) ----------------------
      Reference anatomy: absolute overlay on the viewer; ovglass blur mask,
      ovtint gradient, ovvs shade, title row, KPI rows. */
-  function summaryShell(E, title, inner){
+  function summaryShell(E, title, inner, fit){
     const mn = E.state.ovpMin;
-    return `<div id="ovp" data-min="${mn?1:0}">
+    return `<div id="ovp" data-min="${mn?1:0}"${fit ? ' data-fit="1"' : ''}>
       <div class="ovglass" aria-hidden="true"></div>
       <div class="ovtint" aria-hidden="true"></div>
       <div class="ovvs" aria-hidden="true"></div>
@@ -321,7 +321,7 @@ window.EKO_C = (function(){
             ${chip ? `<div class="scrow"><span class="ovkcap msA" data-tone="warn">${esc(chip)}</span></div>`
                    : `<div class="scrow"><span class="ovkcap msA" data-tone="t3">${esc(cap)}</span></div>`}</div>`;
         })()
-      + '</div>');
+      + '</div>', true);   // fit: as tall as its cards (components.css, #ovp[data-fit])
   }
 
   /* Utilities landing summary (D40, Final mock): domain-hue 5% washed rows

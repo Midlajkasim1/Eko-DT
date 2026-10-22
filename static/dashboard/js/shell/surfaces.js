@@ -128,6 +128,7 @@ window.EKO_SURF = (function(){
   function escape(){
     const top = topmost();
     if(top){
+      if(top === 'asset' && E.state.locFocus && E.locExit){ E.locExit(); return 'locate'; }   /* Locate in 3D: the panel stays, the table comes back */
       if(top === 'pal' && E.state.palQ){ E.state.palQ = ''; E.state.palSel = 0; E.set({}); return 'cleared'; }
       byId[top].close(); E.set({}); return top;
     }
