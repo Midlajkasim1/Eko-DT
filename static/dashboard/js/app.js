@@ -1002,7 +1002,11 @@
     settingsTab(el){ E.state.rlAsk = false; E.set({ settingsTab: el.dataset.v }); },
     signOut(){ E.set({ born:'dlg', dlg:'signout' }); },
     signOut2(){ try{ if(window.EKO_CTL && window.EKO_CTL.ACTS.ctlLockNow) window.EKO_CTL.ACTS.ctlLockNow(); }catch(e){}   /* the control session ends with the user */
-      if(window.EKO_SURF) window.EKO_SURF.closeAll(); E.state.rolePreview = null; E.set({ dlg:null, assetSel:null, mobMore:false, signedOut:true }); },
+      if(window.EKO_SURF) window.EKO_SURF.closeAll(); E.state.rolePreview = null; E.set({ dlg:null, assetSel:null, mobMore:false, signedOut:true });
+      /* a project with a backend: end THIS browser's session there (never another user's); then the
+         bell and the Studio panel ask the server who is signed in here, which is now nobody */
+      if(window.EKO_NOTIF && window.EKO_NOTIF.REMOTE) fetch('/api/auth/logout', { method:'POST', credentials:'same-origin' })
+        .catch(() => {}).then(() => window.dispatchEvent(new Event('eko-auth-changed'))); },
     signIn(){ location.reload(); },   /* prototype: production sends the user to the identity provider (production-readiness.md) */
     wallOpen(){ const url = wallUrl(wallScope(), 'tab', E.state.wallCfgId); E.state.dlg = null; if(window.__wallOpenHook) window.__wallOpenHook(url); else window.open(url, '_blank', 'noopener'); render(); },   /* D107 */
     /* D109: the control room settings dialog, per display */
