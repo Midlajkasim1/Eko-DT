@@ -187,6 +187,7 @@ window.EKO_I18N.ar = {
   "toneDot": "نقاط",
   "toneSepia": "بني داكن",
   "layAll": "كل الطبقات",
+  "layDisciplines": "التخصصات",
   "layArch": "العمارة",
   "layElec": "الكهرباء",
   "layInt": "التصميم الداخلي",
